@@ -85,8 +85,11 @@ def ensure_deps(dry: bool, base: Path | None = None) -> dict:
     py = venv / "bin" / "python"
     if not py.exists():
         py = venv / "Scripts" / "python.exe"  # windows
-    pip_cmd = [shutil.which("uv"), "pip", "install", "-r", str(req)] if shutil.which("uv") \
-        else [str(py), "-m", "pip", "install", "-r", str(req)]
+    uv = shutil.which("uv")
+    if uv:
+        pip_cmd = [uv, "pip", "install", "--python", str(py), "-r", str(req)]
+    else:
+        pip_cmd = [str(py), "-m", "pip", "install", "-r", str(req)]
     try:
         p = subprocess.run([c for c in pip_cmd if c], check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as exc:
