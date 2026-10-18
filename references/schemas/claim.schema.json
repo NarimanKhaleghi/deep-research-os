@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/claim.schema.json",
+  "title": "Claim record",
+  "description": "A checkable statement with lifecycle status (claims.jsonl).",
+  "type": "object",
+  "required": ["id", "text", "type", "tags", "evidence_ids", "numbers", "critical", "status", "created_at", "updated_at"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^CL-[0-9]{4}$" },
+    "text": { "type": "string", "minLength": 8 },
+    "type": { "enum": ["statistic", "causal", "forecast", "opinion", "methodological", "definition"] },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "angles": { "type": "array", "items": { "type": "string" } },
+    "evidence_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^EV-[0-9]{4}$" } },
+    "critical": { "type": "boolean", "default": false },
+    "numbers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["raw", "value"],
+        "properties": {
+          "raw": { "type": "string" },
+          "value": { "type": "number" },
+          "unit": { "type": ["string", "null"] },
+          "decimals": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "status": { "enum": ["unverified", "supported", "weakly_supported", "contradicted", "unverifiable", "resolved", "outweighed"] },
+    "status_reason": { "type": "string" },
+    "contradiction_ids": { "type": "array", "items": { "type": "string", "pattern": "^CX-[0-9]{4}$" } },
+    "origin_keys": { "type": "array", "items": { "type": "string" }, "description": "distinct origins of supporting sources (computed at verify)" },
+    "verified_at": { "type": ["string", "null"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  }
+}

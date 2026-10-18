@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/capability.schema.json",
+  "title": "Capability front-matter",
+  "description": "Header of learnings/capabilities/CAP-###-name.md.",
+  "type": "object",
+  "required": ["id", "name", "status", "level", "trigger", "tags", "created_at"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^CAP-[0-9]{3}$" },
+    "name": { "type": "string", "minLength": 4 },
+    "status": { "enum": ["candidate", "active", "retired"] },
+    "level": { "enum": ["routine", "playbook"] },
+    "trigger": { "type": "string", "minLength": 8, "description": "when this capability activates (situation, not topic)" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "uses": { "type": "integer", "minimum": 0 },
+        "successes": { "type": "integer", "minimum": 0 },
+        "last_used": { "type": ["string", "null"] },
+        "success_rate": { "type": ["number", "null"] }
+      }
+    },
+    "origin": { "type": ["string", "null"], "description": "project slug where it proved itself" },
+    "parent": { "type": ["string", "null"] },
+    "created_at": { "type": "string" }
+  }
+}

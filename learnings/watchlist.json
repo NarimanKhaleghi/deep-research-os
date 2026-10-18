@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "updated_at": null,
+  "watch": [
+    {
+      "name": "DeepResearchAgent (upstream scan baseline)",
+      "repo": "assafelovic/gpt-researcher",
+      "why": "reference implementation for multi-step web research; watch as a capability-adoption candidate",
+      "added_at": null,
+      "last_seen_release": null
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/evidence.schema.json",
+  "title": "Evidence record",
+  "description": "One verbatim quote from a snapshotted source (evidence.jsonl).",
+  "type": "object",
+  "required": ["id", "source_id", "quote", "locator", "relevance", "angle", "added_at"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^EV-[0-9]{4}$" },
+    "source_id": { "type": "string", "pattern": "^SRC-[0-9]{4}$" },
+    "quote": { "type": "string", "minLength": 8 },
+    "locator": { "type": "string", "minLength": 1, "description": "p.12 / 'Section 3.2' / 'para 4' / timestamp" },
+    "char_start": { "type": ["integer", "null"], "minimum": 0 },
+    "char_end": { "type": ["integer", "null"], "minimum": 0 },
+    "relevance": { "enum": ["supports", "refutes", "contextual", "methodological"] },
+    "angle": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "numbers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["raw", "value"],
+        "properties": {
+          "raw": { "type": "string" },
+          "value": { "type": "number" },
+          "unit": { "type": ["string", "null"] },
+          "decimals": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "verified_in_snapshot": { "type": "boolean", "default": false },
+    "added_at": { "type": "string" },
+    "note": { "type": "string" }
+  }
+}

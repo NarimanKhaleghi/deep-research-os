@@ -1,0 +1,33 @@
+# Preference Check — {{ ctx.project }}
+
+**Why you're seeing this:** the run produced a real A/B comparison{{ ctx.why }}, and your
+answer will tune how future runs of this kind are done. It takes 30 seconds and is
+the *only* kind of question this skill ever asks mid-collection. (Answer with
+`learn pref answer {{ ctx.pref_id }} --choice A|B`, or ignore — ignoring is free.)
+
+---
+
+## Option A — {{ ctx.a.label }}
+
+{{ ctx.a.excerpt }}
+
+**When this works better:** {{ ctx.a.better_when }}
+
+---
+
+## Option B — {{ ctx.b.label }}
+
+{{ ctx.b.excerpt }}
+
+**When this works better:** {{ ctx.b.better_when }}
+
+---
+
+**Which do you prefer for this kind of task?**
+
+- `A` — {{ ctx.a.short }} (`learn pref answer {{ ctx.pref_id }} --choice A`)
+- `B` — {{ ctx.b.short }} (`learn pref answer {{ ctx.pref_id }} --choice B`)
+- `both-contextual` — each wins a context; you'll be asked the context once (optional)
+- `skip` — no preference recorded; the trigger may re-arm next run
+
+*(detail: {{ ctx.detail }})*

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/brief.schema.json",
+  "title": "Brief front-matter",
+  "description": "Front-matter of brief.md (phase 0 contract).",
+  "type": "object",
+  "required": ["question", "title", "profile", "cutoff", "deliverable", "success_criteria", "angles", "maintenance", "privacy_mode"],
+  "properties": {
+    "question": { "type": "string", "minLength": 10 },
+    "title": { "type": "string", "minLength": 3 },
+    "profile": { "enum": ["quick", "standard", "deep", "max"] },
+    "cutoff": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "deliverable": { "type": "string", "minLength": 3 },
+    "success_criteria": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "angles": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+    "maintenance": { "enum": ["ok", "due"] },
+    "privacy_mode": { "type": "boolean" },
+    "allow_paid": { "type": "boolean", "default": false },
+    "domain": { "enum": ["academic", "market", "data", "osint", "due-diligence", "technical", "general"], "default": "general" },
+    "out_of_scope": { "type": "array", "items": { "type": "string" } },
+    "created": { "type": "string" }
+  }
+}

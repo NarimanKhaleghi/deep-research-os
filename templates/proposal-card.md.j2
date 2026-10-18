@@ -1,0 +1,48 @@
+# Proposal {{ p.id }} — {{ p.title }}
+
+**Class:** `{{ p.class }}` · **Status:** `{{ p.status }}` · **Raised:** {{ p.at }}
+**Source:** `learn maintain`{% if p.origin %} · project `{{ p.origin }}`{% endif %}
+
+## Summary
+
+{{ p.summary }}
+
+## Evidence
+
+| Signal | Value |
+| --- | --- |
+{% for k, v in p.evidence.stats.items() %}
+| {{ k }} | {{ v }} |
+{% endfor %}
+{% if p.evidence.eval_delta is not none %}
+| eval Δ | {{ "%+.2f"|format(p.evidence.eval_delta) }} |
+{% endif %}
+{% if p.evidence.preferences %}
+| preference votes | {{ p.evidence.preferences }} |
+{% endif %}
+{% if p.evidence.adjudications %}
+| adjudications | {{ p.evidence.adjudications }} |
+{% endif %}
+{% if p.evidence.notes %}
+| notes | {{ p.evidence.notes }} |
+{% endif %}
+
+## What Changes
+
+{% for c in p.changes %}
+- `{{ c.action }}` — `{{ c.file }}`{% if c.diff_summary %} — {{ c.diff_summary }}{% endif %}
+{% endfor %}
+
+## Risk & Rollback
+
+- **Rollback:** {{ p.rollback }}
+- On approval: offline eval suite runs first; a regression auto-reverts and marks
+  this proposal `regressed` (see `references/learning-protocol.md` §7).
+
+## Decision
+
+- Approve: `learn approve {{ p.id }}`
+- Reject:  `learn reject {{ p.id }} --note "..."`
+- Inspect: `learn explain {{ p.title|lower }}`
+
+*Pending proposals expire after 30 days; reappearing requires fresh evidence.*

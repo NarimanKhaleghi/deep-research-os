@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/proposal.schema.json",
+  "title": "Learning proposal",
+  "description": "A governed change request (learnings/proposals.jsonl).",
+  "type": "object",
+  "required": ["id", "at", "class", "title", "summary", "evidence", "status"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^PRO-[0-9]{4}$" },
+    "at": { "type": "string" },
+    "class": {
+      "enum": ["promote", "retire", "merge", "adopt_source", "adopt_method", "adopt_tool", "template", "weight", "rubric"]
+    },
+    "title": { "type": "string", "minLength": 6 },
+    "summary": { "type": "string", "minLength": 20 },
+    "evidence": {
+      "type": "object",
+      "description": "numeric backing: stats, eval deltas, preference counts, adjudications",
+      "properties": {
+        "stats": { "type": "object" },
+        "eval_delta": { "type": ["number", "null"] },
+        "preferences": { "type": "integer", "minimum": 0 },
+        "adjudications": { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string" }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "action"],
+        "properties": {
+          "file": { "type": "string" },
+          "action": { "enum": ["create", "modify", "move", "delete"] },
+          "diff_summary": { "type": "string" }
+        }
+      }
+    },
+    "rollback": { "type": "string", "description": "how learn revert restores state" },
+    "status": { "enum": ["proposed", "invalid", "approved", "rejected", "applied", "regressed", "reverted", "expired"] },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "ok": { "type": "boolean" },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "properties": {
+        "by": { "type": "string" },
+        "at": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "regression": {
+      "type": "object",
+      "properties": {
+        "ran": { "type": "boolean" },
+        "pass": { "type": ["boolean", "null"] },
+        "checks": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "applied_at": { "type": ["string", "null"] },
+    "backup_dir": { "type": ["string", "null"], "description": "pre-change file copies for revert" }
+  }
+}

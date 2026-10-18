@@ -1,0 +1,65 @@
+---
+question: "{{ question }}"
+title: "{{ title }}"
+profile: {{ profile }}
+cutoff: {{ cutoff }}
+deliverable: {{ deliverable or "research memo" }}
+domain: {{ domain or "general" }}
+maintenance: {{ maintenance or "ok" }}
+privacy_mode: {{ privacy_mode|lower }}
+allow_paid: false
+success_criteria:
+{% for s in success_criteria %}
+  - "{{ s }}"
+{% endfor %}
+{% if not success_criteria %}
+  - "TODO: define what makes this run useful (edit and re-run: research_ctl.py brief set ...)"
+{% endif %}
+angles:
+{% for a in angles %}
+  - "{{ a }}"
+{% endfor %}
+{% if not angles %}
+  - "TODO: angle 1"
+  - "TODO: angle 2"
+{% endif %}
+created: "{{ created_at }}"
+---
+
+# Brief — {{ title }}
+
+## Question
+
+{{ question }}
+
+## Scope & Out of Scope
+
+- **In scope:** (fill during phase 0)
+- **Out of scope:** (this list seeds the report's Limitations)
+
+## Deliverable
+
+{{ deliverable or "research memo with cited findings" }}
+
+## Success Criteria
+
+{% for s in success_criteria %}- {{ s }}
+{% endfor %}
+
+## Angles (sub-questions)
+
+{% for a in angles %}1. {{ a }}
+{% endfor %}
+
+## Budget
+
+Ceilings are profile defaults (see `references/integrations/budget-policy.md`),
+recorded in `state.json`. Exceptions get logged with reasons.
+
+## Maintenance
+
+`learn status` was checked at intake: **{{ maintenance or "ok" }}**.
+
+## Notes
+
+(free-form notes; will survive across sessions)

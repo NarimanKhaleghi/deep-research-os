@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+:root{--ink:#1a1d21;--muted:#5c6470;--line:#e3e6ea;--bg:#fbfbfc;--accent:#0b6e4f;--warn:#b7791f;--bad:#c0392b;--chip:#eef2f4}
+@media(prefers-color-scheme:dark){:root{--ink:#e8eaed;--muted:#9aa3ad;--line:#2a2f36;--bg:#14171a;--accent:#4ade80;--chip:#1f242a}}
+*{box-sizing:border-box}
+body{font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Georgia,serif;color:var(--ink);background:var(--bg);margin:0}
+main{max-width:860px;margin:0 auto;padding:48px 24px 80px}
+h1{font-size:2rem;line-height:1.2;margin:0 0 .5rem}
+h2{font-size:1.35rem;margin:2.2rem 0 .8rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
+h3{font-size:1.08rem;margin:1.6rem 0 .4rem}
+blockquote.run{background:var(--chip);border-left:4px solid var(--accent);margin:1rem 0;padding:.8rem 1rem;border-radius:6px;color:var(--muted);font-size:.92rem}
+blockquote.run strong{color:var(--ink)}
+.badge{display:inline-block;font-size:.72rem;font-weight:600;padding:.15rem .5rem;border-radius:999px;background:var(--chip);color:var(--muted);margin-left:.3rem;vertical-align:middle}
+.badge.established,.badge.high{background:#dcfce7;color:#166534}
+.badge.supported,.badge.medium{background:#fef3c7;color:#92400e}
+.badge.tentative,.badge.low{background:#fee2e2;color:#991b1b}
+@media(prefers-color-scheme:dark){.badge.established,.badge.high{background:#14351f;color:#7ee2a8}.badge.supported,.badge.medium{background:#3a2c10;color:#f5c66b}.badge.tentative,.badge.low{background:#3a1512;color:#f2a09a}}
+ul{/* RTL-friendly markers */;padding-left:1.2rem}
+li{margin:.35rem 0}
+li.cited{/* every fact line must carry a citation */ }
+code{background:var(--chip);padding:.1rem .35rem;border-radius:4px;font:.85em ui-monospace,Menlo,monospace}
+a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;margin:.6rem 0}
+th,td{border:1px solid var(--line);padding:.45rem .6rem;text-align:left}
+th{background:var(--chip);font-weight:600}
+details{margin:.5rem 0}
+summary{cursor:pointer;color:var(--muted)}
+footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+<h1>{{ title }}</h1>
+<blockquote class="run">
+<strong>Question.</strong> {{ question }}<br>
+Run <code>{{ slug }}</code> · profile <code>{{ profile }}</code> · generated {{ generated_at }} · deep-research-os v{{ version }}<br>
+Citation precision <strong>{{ citation_precision }}</strong> · {{ sources_count }} sources · {{ evidence_count }} evidence records · verify: {{ verify_mode }}
+</blockquote>
+
+<h2>Executive Summary</h2>
+<ul>
+{% for s in executive_summary %}
+<li><strong>{{ s.title }}</strong> — {{ s.text }} <span class="badge {{ s.confidence }}">{{ s.confidence }}</span>{% for c in s.claims %} <code>{{ c }}</code>{% endfor %}</li>
+{% endfor %}
+</ul>
+
+<h2>Findings</h2>
+{% for f in findings %}
+<h3>{{ f.id }} · {{ f.title }} <span class="badge {{ f.strength }}">{{ f.strength }}</span> <span class="badge {{ f.confidence }}">{{ f.confidence }}</span></h3>
+{{ f.body_html | safe }}
+<p class="cite">Evidence: {% for c in f.claims %}<code>{{ c }}</code> {% endfor %}{% if f.sources %}&nbsp;·&nbsp; Sources: {% for s in f.sources %}<code>{{ s }}</code> {% endfor %}{% endif %}</p>
+{% if f.counterpoints %}<details><summary>Counterpoints</summary><ul>{% for c in f.counterpoints %}<li>{{ c }}</li>{% endfor %}</ul></details>{% endif %}
+{% if f.gaps %}<details><summary>Gaps</summary><ul>{% for g in f.gaps %}<li>{{ g }}</li>{% endfor %}</ul></details>{% endif %}
+{% endfor %}
+
+<h2>Contradictions &amp; Resolutions</h2>
+{% if contradictions %}
+<table><thead><tr><th>ID</th><th>Kind</th><th>Severity</th><th>Conflict</th><th>Status</th><th>Resolution</th></tr></thead><tbody>
+{% for c in contradictions %}<tr><td>{{ c.id }}</td><td>{{ c.kind }}</td><td>{{ c.severity }}</td><td>{{ c.detail }}</td><td>{{ c.status }}</td><td>{{ c.resolution or "open" }}</td></tr>{% endfor %}
+</tbody></table>
+{% else %}<p>No contradictions detected among verified claims.</p>{% endif %}
+
+<h2>Methodology</h2>
+<ul>
+<li>Profile <code>{{ profile }}</code> · searches {{ budget.searches }}/{{ budget.ceilings.searches }} · sources {{ budget.sources_read }}/{{ budget.ceilings.sources_read }} · evidence {{ budget.evidence }}/{{ budget.ceilings.evidence }}</li>
+<li>Verification: {{ verify_mode }} · {{ methodology.verified_count }} citations resolved · corroboration gaps: {{ methodology.corroboration_gaps|length }}</li>
+</ul>
+<table><thead><tr><th>Angle</th><th>Sources</th><th>Evidence</th><th>Claims</th><th>Bands</th></tr></thead><tbody>
+{% for row in coverage %}<tr><td>{{ row.angle }}</td><td>{{ row.sources }}</td><td>{{ row.evidence }}</td><td>{{ row.claims }}</td><td>{{ row.bands }}</td></tr>{% endfor %}
+</tbody></table>
+
+<h2>Limitations</h2>
+<ul>{% for l in limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+
+<h2>Bibliography</h2>
+<ol>
+{% for b in bibliography %}
+<li>{{ b.authors }} ({{ b.year }}). <em>{{ b.title }}</em>. {{ b.publisher }}.{% if b.doi %} <a href="https://doi.org/{{ b.doi }}">DOI {{ b.doi }}</a>.{% endif %} <a href="{{ b.url }}">link</a> · credibility <strong>{{ b.band }}</strong> ({{ b.score }}) · snapshot <code>{{ b.source_id }}</code></li>
+{% endfor %}
+</ol>
+
+<footer>Generated by <a href="https://github.com/deep-research-os">deep-research-os</a> — every claim traces to a verbatim quote in a SHA-256-snapshotted source. Gates: {{ gates_summary }}.</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-10-18T15:59:44Z",
+  "mode": "offline",
+  "per_source": {
+    "SRC-0001": {
+      "verification": {
+        "status": "verified",
+        "title_match": null,
+        "method": "snapshot-hash",
+        "detail": "offline mode: snapshot integrity only",
+        "at": "2026-10-18T15:59:44Z"
+      },
+      "retraction": {
+        "status": "unknown",
+        "source_flag": null,
+        "checked_at": "2026-10-18T15:59:44Z"
+      }
+    },
+    "SRC-0002": {
+      "verification": {
+        "status": "verified",
+        "title_match": null,
+        "method": "snapshot-hash",
+        "detail": "offline mode: snapshot integrity only",
+        "at": "2026-10-18T15:59:44Z"
+      },
+      "retraction": {
+        "status": "unknown",
+        "source_flag": null,
+        "checked_at": "2026-10-18T15:59:44Z"
+      }
+    }
+  },
+  "citation_precision": 1.0,
+  "checked_citations": 2,
+  "fabrication_suspected": [],
+  "number_mismatches": [],
+  "corroboration_gaps": [],
+  "claims_summary": {
+    "supported": 2
+  },
+  "open_contradictions": []
+}

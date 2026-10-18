@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/feedback.schema.json",
+  "title": "Feedback record",
+  "description": "One learning signal (learnings/feedback.jsonl).",
+  "type": "object",
+  "required": ["id", "at", "type", "label"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^FB-[0-9]{4,}$" },
+    "at": { "type": "string" },
+    "project": { "type": ["string", "null"] },
+    "type": { "enum": ["explicit", "implicit", "adjudication", "preference", "source_outcome", "run_outcome"] },
+    "label": { "type": "string", "minLength": 3, "description": "short privacy-scrubbed label, e.g. 'accepted as-is', 'missing pricing angle'" },
+    "detail": { "type": ["string", "null"] },
+    "weight": { "type": "number", "default": 1.0 },
+    "source_id": { "type": ["string", "null"] },
+    "capability_id": { "type": ["string", "null"] },
+    "scrubbed": { "type": "boolean", "default": true }
+  }
+}

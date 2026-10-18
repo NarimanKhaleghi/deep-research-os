@@ -1,0 +1,54 @@
+{
+  "id": "SRC-0001",
+  "url": "https://example.org/trial-a",
+  "doi": "10.1234/test.a.2024",
+  "title": "IF and lean mass RCT",
+  "authors": [
+    "Smith, J."
+  ],
+  "publisher": "Journal of Tests",
+  "published": "2024-05-01",
+  "accessed_at": "2026-10-18T15:59:43Z",
+  "service": "pubmed",
+  "type": "journal-article",
+  "tier": 1,
+  "origin_key": "example.org",
+  "angles_covered": [
+    "physiology"
+  ],
+  "snapshot": {
+    "path": "sources/SRC-0001.txt",
+    "sha256": "7ff990e6c10152210f621f5a2cca74e500b6a37bb3b1c807ef4126b52240c4fd",
+    "bytes": 247,
+    "kind": "text",
+    "archived_url": null
+  },
+  "extra": {},
+  "credibility": {
+    "score": 71,
+    "band": "B",
+    "dimensions": {
+      "authority": 16,
+      "review": 16,
+      "recency": 8.49,
+      "evidence": 14,
+      "coi": 8,
+      "integrity": 9
+    },
+    "rationale": "journal-article via pubmed; DOI present; 900d old vs 1095d half-life",
+    "scored_at": "2026-10-18T15:59:43Z",
+    "overrides": []
+  },
+  "retraction": {
+    "status": "unknown",
+    "source_flag": null,
+    "checked_at": "2026-10-18T15:59:44Z"
+  },
+  "verification": {
+    "status": "verified",
+    "title_match": null,
+    "method": "snapshot-hash",
+    "detail": "offline mode: snapshot integrity only",
+    "at": "2026-10-18T15:59:44Z"
+  }
+}

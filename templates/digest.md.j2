@@ -1,0 +1,76 @@
+# Learning Digest — {{ month }}
+
+> Monthly story of how deep-research-os is evolving. Generated {{ generated_at }}.
+> Raw data: `feedback.jsonl`, `source_stats.json`, `proposals.jsonl`, run retrospectives.
+
+## Headline
+
+{{ headline }}
+
+## Metrics Trend
+
+| Metric | {{ month }} | previous | direction |
+| --- | --- | --- | --- |
+{% for m in metrics %}
+| {{ m.name }} | {{ m.current }} | {{ m.previous }} | {{ m.direction }} |
+{% endfor %}
+
+{% if alerts %}
+## ⚠️ Alerts
+
+{% for a in alerts %}
+- {{ a }}
+{% endfor %}
+
+{% endif %}
+## Source Landscape (top movers)
+
+| Source | Domain | Weight Δ | Yield | Verified |
+| --- | --- | --- | --- | --- |
+{% for s in sources %}
+| {{ s.name }} | {{ s.domain }} | {{ s.delta }} | {{ s.yield }} | {{ s.verified }} |
+{% endfor %}
+
+## Capabilities
+
+{% if capabilities.promoted %}
+**Promoted this month:** {% for c in capabilities.promoted %}`{{ c }}` {% endfor %}
+{% endif %}
+{% if capabilities.candidates %}
+**Candidates brewing:** {% for c in capabilities.candidates %}`{{ c }}` {% endfor %}
+{% endif %}
+{% if capabilities.retired %}
+**Retired:** {% for c in capabilities.retired %}`{{ c }}` {% endfor %}
+{% endif %}
+
+## Proposals
+
+{% if proposals.pending %}
+**Waiting for you ({{ proposals.pending|length }}):**
+{% for p in proposals.pending %}
+- `{{ p.id }}` {{ p.title }} — since {{ p.at[:10] }}
+{% endfor %}
+{% else %}
+No pending proposals.
+{% endif %}
+{% if proposals.applied %}
+**Applied:** {% for p in proposals.applied %}`{{ p.id }}` {% endfor %}
+{% endif %}
+{% if proposals.regressed %}
+**Auto-reverted (regressions):** {% for p in proposals.regressed %}`{{ p.id }}` ({{ p.note }}) {% endfor %}
+{% endif %}
+
+## What I learned about you
+
+{% for p in preferences %}
+- {{ p }}
+{% endfor %}
+
+## Next month's intent
+
+{{ next_intent }}
+
+---
+
+*Answer pending proposals with `learn approve <id>` / `learn reject <id>`.
+Kill switch: `learn mode off`.*

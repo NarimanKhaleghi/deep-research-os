@@ -1,0 +1,53 @@
+{
+  "slug": "does-intermittent-fasting-reduce-lean-mass",
+  "title": "Does intermittent fasting reduce lean mass?",
+  "question": "Does intermittent fasting reduce lean mass?",
+  "profile": "quick",
+  "privacy_mode": false,
+  "created_at": "2026-10-18T15:59:40Z",
+  "updated_at": "2026-10-18T15:59:46Z",
+  "phase_current": 9,
+  "counters": {
+    "searches": 0,
+    "sources_read": 0,
+    "evidence": 2,
+    "claims": 2,
+    "verify_passes": 1
+  },
+  "phases": {
+    "0": {},
+    "9": {
+      "completed_at": "2026-10-18T15:59:46Z"
+    }
+  },
+  "gate_waivers": [],
+  "ran": {
+    "steps": [
+      "verify",
+      "contradictions",
+      "report",
+      "retrospect"
+    ],
+    "last_verify_at": "2026-10-18T15:59:44Z",
+    "last_contradictions_scan_at": "2026-10-18T15:59:45Z",
+    "last_credibility_at": "2026-10-18T15:59:43Z",
+    "last_report_check_at": "2026-10-18T15:59:45Z"
+  },
+  "preferences_asked": 0,
+  "source_health": {},
+  "capability_used": [],
+  "schema_version": "1.0.0",
+  "budget": {
+    "ceilings": {
+      "searches": 3,
+      "sources_read": 3,
+      "evidence": 10,
+      "claims": 5,
+      "verify_passes": 1,
+      "preferences": 0,
+      "max_spend_usd": 0
+    },
+    "spent_usd": 0.0,
+    "exceptions": []
+  }
+}

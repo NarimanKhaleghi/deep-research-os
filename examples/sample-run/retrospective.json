@@ -1,0 +1,34 @@
+{
+  "slug": "does-intermittent-fasting-reduce-lean-mass",
+  "at": "2026-10-18T15:59:46Z",
+  "worked": [
+    "offline verify kept citations honest"
+  ],
+  "failed": [
+    "no PDF locators available offline"
+  ],
+  "budget_used": {
+    "searches": 0,
+    "sources_read": 0,
+    "evidence": 2,
+    "claims": 2,
+    "verify_passes": 1,
+    "spent_usd": 0.0
+  },
+  "metrics": {
+    "citation_precision": 1.0,
+    "verify_mode": "offline",
+    "contradictions": {
+      "total": 0,
+      "adjudicated": 0,
+      "open": 0
+    },
+    "phases_completed": []
+  },
+  "suggestions": [
+    "add pdftotext-ladder eval"
+  ],
+  "capability_candidate": null,
+  "feedback_skipped": false,
+  "feedback_skipped_reason": null
+}

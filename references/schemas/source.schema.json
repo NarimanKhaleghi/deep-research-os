@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/source.schema.json",
+  "title": "Source record",
+  "description": "One collected source in the evidence ledger (sources/SRC-####.json).",
+  "type": "object",
+  "required": ["id", "title", "url", "accessed_at", "tier", "angles_covered", "snapshot"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^SRC-[0-9]{4}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "url": { "type": "string" },
+    "doi": { "type": ["string", "null"] },
+    "authors": { "type": "array", "items": { "type": "string" } },
+    "published": { "type": ["string", "null"], "description": "ISO date, best known" },
+    "publisher": { "type": ["string", "null"] },
+    "type": { "enum": ["journal-article", "preprint", "report", "news", "statistics", "filing", "webpage", "book", "dataset", "other"] },
+    "abstract": { "type": ["string", "null"] },
+    "service": { "type": "string", "description": "connector or mcp that yielded it" },
+    "origin_key": { "type": "string", "description": "registered domain or publisher key for corroboration counting" },
+    "accessed_at": { "type": "string", "description": "ISO 8601 timestamp" },
+    "tier": { "enum": [1, 2, 3] },
+    "angles_covered": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "snapshot": {
+      "type": "object",
+      "required": ["path", "sha256", "kind"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "kind": { "enum": ["text", "html", "metadata"] },
+        "archived_url": { "type": ["string", "null"], "description": "Wayback URL when archived" }
+      }
+    },
+    "credibility": {
+      "type": ["object", "null"],
+      "required": ["score", "band", "scored_at"],
+      "properties": {
+        "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "band": { "enum": ["A", "B", "C", "D"] },
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "authority": { "type": "number" },
+            "review": { "type": "number" },
+            "recency": { "type": "number" },
+            "evidence": { "type": "number" },
+            "coi": { "type": "number" },
+            "integrity": { "type": "number" }
+          }
+        },
+        "rationale": { "type": "string" },
+        "scored_at": { "type": "string" },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["dimension", "delta", "reason"],
+            "properties": {
+              "dimension": { "type": "string" },
+              "delta": { "type": "number" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": ["object", "null"],
+      "properties": {
+        "status": { "enum": ["verified", "review", "mismatch", "unreachable", "unknown"] },
+        "title_match": { "type": ["number", "null"] },
+        "method": { "type": "string" },
+        "detail": { "type": "string" },
+        "at": { "type": "string" }
+      }
+    },
+    "retraction": {
+      "type": ["object", "null"],
+      "properties": {
+        "status": { "enum": ["clean", "retracted", "eoc", "corrected", "unknown"] },
+        "source_flag": { "type": ["string", "null"] },
+        "checked_at": { "type": "string" }
+      }
+    },
+    "notes": { "type": "string" },
+    "extra": { "type": "object" }
+  }
+}

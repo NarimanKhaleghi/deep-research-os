@@ -1,0 +1,54 @@
+{
+  "id": "SRC-0002",
+  "url": "https://cdc.gov/data/tre",
+  "doi": null,
+  "title": "TRE adherence registry",
+  "authors": [
+    "Smith, J."
+  ],
+  "publisher": "Journal of Tests",
+  "published": "2025-02-10",
+  "accessed_at": "2026-10-18T15:59:43Z",
+  "service": "web",
+  "type": "statistics",
+  "tier": 1,
+  "origin_key": "cdc.gov",
+  "angles_covered": [
+    "clinical outcomes"
+  ],
+  "snapshot": {
+    "path": "sources/SRC-0002.txt",
+    "sha256": "3460c4e0c9231e6d4929d5b22bbfea68765648bd6aee0eb6498718426e98aec3",
+    "bytes": 162,
+    "kind": "text",
+    "archived_url": null
+  },
+  "extra": {},
+  "credibility": {
+    "score": 76,
+    "band": "B",
+    "dimensions": {
+      "authority": 20,
+      "review": 18,
+      "recency": 6.81,
+      "evidence": 16,
+      "coi": 8,
+      "integrity": 7
+    },
+    "rationale": "statistics via web; official/institutional domain; 615d old vs 540d half-life",
+    "scored_at": "2026-10-18T15:59:43Z",
+    "overrides": []
+  },
+  "retraction": {
+    "status": "unknown",
+    "source_flag": null,
+    "checked_at": "2026-10-18T15:59:44Z"
+  },
+  "verification": {
+    "status": "verified",
+    "title_match": null,
+    "method": "snapshot-hash",
+    "detail": "offline mode: snapshot integrity only",
+    "at": "2026-10-18T15:59:44Z"
+  }
+}

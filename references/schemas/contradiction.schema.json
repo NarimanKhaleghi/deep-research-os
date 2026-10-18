@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/contradiction.schema.json",
+  "title": "Contradiction record",
+  "description": "A detected conflict between claims and its adjudication (contradictions.jsonl).",
+  "type": "object",
+  "required": ["id", "claim_ids", "kind", "severity", "detail", "status", "created_at"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^CX-[0-9]{4}$" },
+    "claim_ids": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "string", "pattern": "^CL-[0-9]{4}$" }
+    },
+    "kind": { "enum": ["numeric", "polarity", "scope", "study-vs-study"] },
+    "severity": { "enum": ["high", "medium", "low"] },
+    "detail": { "type": "string", "minLength": 8, "description": "exact values/terms in conflict" },
+    "status": { "enum": ["open", "adjudicated", "accepted_ambiguity"] },
+    "resolution": { "enum": ["source_a_wins", "source_b_wins", "scope_difference", "outweighed", "unresolved_both", "superseded", null] },
+    "rationale": { "type": ["string", "null"], "description": "which adjudication-ladder step, with numbers" },
+    "resolved_by": { "type": ["string", "null"], "description": "agent | human:<name>" },
+    "created_at": { "type": "string" },
+    "resolved_at": { "type": ["string", "null"] }
+  }
+}

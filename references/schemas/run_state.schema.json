@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/run_state.schema.json",
+  "title": "Run state",
+  "description": "Project state.json — the resumability contract.",
+  "type": "object",
+  "required": ["slug", "title", "question", "profile", "created_at", "updated_at", "counters", "budget", "phases", "ran"],
+  "properties": {
+    "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,60}$" },
+    "title": { "type": "string" },
+    "question": { "type": "string" },
+    "profile": { "enum": ["quick", "standard", "deep", "max"] },
+    "privacy_mode": { "type": "boolean", "default": false },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "phase_current": { "type": "integer", "minimum": 0, "maximum": 9 },
+    "counters": {
+      "type": "object",
+      "properties": {
+        "searches": { "type": "integer", "minimum": 0 },
+        "sources_read": { "type": "integer", "minimum": 0 },
+        "evidence": { "type": "integer", "minimum": 0 },
+        "claims": { "type": "integer", "minimum": 0 },
+        "verify_passes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "required": ["ceilings", "spent_usd"],
+      "properties": {
+        "ceilings": { "type": "object" },
+        "spent_usd": { "type": "number", "minimum": 0 },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["counter", "ceiling", "actual", "reason", "at"],
+            "properties": {
+              "counter": { "type": "string" },
+              "ceiling": { "type": "integer" },
+              "actual": { "type": "integer" },
+              "reason": { "type": "string" },
+              "at": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "phases": {
+      "type": "object",
+      "description": "per-phase completion + waivers, keyed by phase number string",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "completed_at": { "type": ["string", "null"] },
+          "waivers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["check", "reason", "at"],
+              "properties": {
+                "check": { "type": "string" },
+                "reason": { "type": "string" },
+                "at": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "gate_waivers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["phase", "check", "reason", "at"],
+        "properties": {
+          "phase": { "type": "integer" },
+          "check": { "type": "string" },
+          "reason": { "type": "string" },
+          "at": { "type": "string" }
+        }
+      }
+    },
+    "ran": {
+      "type": "object",
+      "properties": {
+        "steps": { "type": "array", "items": { "type": "string" } },
+        "last_verify_at": { "type": ["string", "null"] },
+        "last_contradictions_scan_at": { "type": ["string", "null"] },
+        "last_credibility_at": { "type": ["string", "null"] },
+        "last_report_check_at": { "type": ["string", "null"] }
+      }
+    },
+    "preferences_asked": { "type": "integer", "minimum": 0 },
+    "source_health": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "attempts": { "type": "integer" },
+          "failures": { "type": "integer" },
+          "last_error": { "type": ["string", "null"] },
+          "cost_usd": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "capability_used": { "type": "array", "items": { "type": "string" } },
+    "schema_version": { "type": "string" }
+  }
+}
