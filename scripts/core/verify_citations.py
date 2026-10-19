@@ -113,7 +113,7 @@ def run(project: Path, online: bool = False) -> dict:
                                        "origins": origins})
 
     report = {
-        "generated_at": now,
+        "generated_at": util.utcnow_iso(),
         "mode": "online" if online else "offline",
         "per_source": per_source,
         "citation_precision": citation_precision,

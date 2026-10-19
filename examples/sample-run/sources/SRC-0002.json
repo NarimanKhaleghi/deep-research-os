@@ -8,7 +8,7 @@
   ],
   "publisher": "Journal of Tests",
   "published": "2025-02-10",
-  "accessed_at": "2026-10-19T13:52:35Z",
+  "accessed_at": "2026-10-19T17:41:38Z",
   "service": "web",
   "type": "statistics",
   "tier": 1,
@@ -36,19 +36,19 @@
       "integrity": 7
     },
     "rationale": "statistics via web; official/institutional domain; 616d old vs 540d half-life",
-    "scored_at": "2026-10-19T13:52:35Z",
+    "scored_at": "2026-10-19T17:41:38Z",
     "overrides": []
   },
   "retraction": {
     "status": "unknown",
     "source_flag": null,
-    "checked_at": "2026-10-19T13:52:35Z"
+    "checked_at": "2026-10-19T17:41:39Z"
   },
   "verification": {
     "status": "verified",
     "title_match": null,
     "method": "snapshot-hash",
     "detail": "offline mode: snapshot integrity only",
-    "at": "2026-10-19T13:52:35Z"
+    "at": "2026-10-19T17:41:39Z"
   }
 }

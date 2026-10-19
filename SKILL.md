@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: deep-research-os contributors
-  version: "1.1.0"
+  version: "1.1.1"
   homepage: https://github.com/NarimanKhaleghi/deep-research-os
 ---
 

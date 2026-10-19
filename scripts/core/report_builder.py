@@ -197,7 +197,7 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
             "version_note": apa["version_note"],
             "flags": apa["flags"],
             "publisher": s.get("publisher") or util.domain_of(s.get("url", "")) or "—",
-            "url": s.get("url") or "",
+            "url": apa["url"],
             "band": cred.get("band", "?"),
             "score": cred.get("score", "?"),
             "source_id": s["id"],

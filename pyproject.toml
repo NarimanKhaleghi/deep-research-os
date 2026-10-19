@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deep-research-os"
-version = "1.1.0"
+version = "1.1.1"
 description = "A self-improving, agent-native research skill: evidence ledger, verification gates, contradiction detection and a governed continuous-learning loop. Works keyless out of the box."
 readme = "README.md"
 license = { text = "MIT" }

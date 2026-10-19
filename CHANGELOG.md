@@ -4,6 +4,20 @@ All notable changes to **deep-research-os** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] — 2026-10-19
+
+Fixes found while validating v1.1.0 on the fintech research re-run:
+
+### Fixed
+- `verify` stamped `verify_report.generated_at` before updating claims, so the
+  freshness gates (`verify_report_fresh`, `contradictions_scanned`) failed right
+  after a verify pass. The timestamp is now taken after the claim loop, and the
+  doc'd order (`verify` → `contradictions scan`) satisfies both gates.
+- Bibliography printed the DOI twice when the source URL was the DOI link; URLs
+  are deduplicated against the normalized DOI, and DOIs that arrive as full
+  `https://doi.org/...` URLs are normalized before rendering.
+- Report builder ignored the deduplicated URL from `bibmeta.apa_reference`.
+
 ## [1.1.0] — 2026-10-19
 
 Hardening release driven by a real end-to-end run (fintech stage-gate research,

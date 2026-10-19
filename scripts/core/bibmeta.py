@@ -216,19 +216,25 @@ def apa_reference(source: dict) -> dict:
         parts.append(f"*{venue}*{f', {vol}{issue}{pages}' if (vol or issue or pages) else ''}.")
     elif source.get("publisher"):
         parts.append(f"{source['publisher']}.")
-    doi = source.get("published_doi") or source.get("doi") or ""
+    doi = (source.get("published_doi") or source.get("doi") or "").strip()
+    doi = re.sub(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", "", doi, flags=re.I)
     flags = []
     if PREPRINT_DOI_RE.search(doi) or source.get("preprint_doi"):
         flags.append("preprint")
     if (source.get("retraction") or {}).get("status") == "retracted":
         flags.append("retracted")
+    url = str(source.get("url") or "").strip()
+    if doi and url:
+        doi_link = "https://doi.org/" + doi
+        if url.rstrip("/").lower() == doi_link.rstrip("/").lower():
+            url = ""
     return {
         "authors": authors_apa(source),
         "year": year,
         "title": title,
         "venue_parts": " ".join(parts),
         "doi": doi,
-        "url": source.get("url") or "",
+        "url": url,
         "accessed": str(source.get("accessed_at") or "")[:10],
         "version_note": version_note(source),
         "flags": ", ".join(flags),

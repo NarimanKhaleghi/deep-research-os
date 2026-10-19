@@ -11,13 +11,13 @@ domain: general
 maintenance: ok
 privacy_mode: false
 allow_paid: false
-project_dir: "/tmp/dros-example-nifdroj2/vault/projects/does-intermittent-fasting-reduce-lean-mass"
+project_dir: "/tmp/dros-example-e0tzuba0/vault/projects/does-intermittent-fasting-reduce-lean-mass"
 success_criteria:
   - "supported answer with citations"
 angles:
   - "physiology"
   - "clinical outcomes"
-created: "2026-10-19T13:52:34Z"
+created: "2026-10-19T17:41:35Z"
 ---
 
 # Brief — Does intermittent fasting reduce lean mass?
@@ -35,10 +35,10 @@ Does intermittent fasting reduce lean mass?
 
 research memo with cited findings
 
-- **Deliverable type:** `report`- **Review protocol:** `none`> **Outputs location:** this project lives in `/tmp/dros-example-nifdroj2/vault/projects/does-intermittent-fasting-reduce-lean-mass`.
+- **Deliverable type:** `report`- **Review protocol:** `none`> **Outputs location:** this project lives in `/tmp/dros-example-e0tzuba0/vault/projects/does-intermittent-fasting-reduce-lean-mass`.
 > Keep everything for this run inside that folder; learning data stays in
 > `~/.config/deep-research-os/`. From another cwd, address it with
-> `--project "/tmp/dros-example-nifdroj2/vault/projects/does-intermittent-fasting-reduce-lean-mass"` or `export RESEARCH_OS_PROJECT=…`.
+> `--project "/tmp/dros-example-e0tzuba0/vault/projects/does-intermittent-fasting-reduce-lean-mass"` or `export RESEARCH_OS_PROJECT=…`.
 
 ## Requirements (extracted from the user's prompt)
 
