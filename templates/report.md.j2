@@ -11,6 +11,16 @@
 - **{{ s.title }}** — {{ s.text }} _[{{ s.confidence }} confidence]_{% for c in s.claims %} [{{ c }}]{% endfor %}
 {% endfor %}
 
+{% if requirements.total %}
+## Requirement Coverage
+
+| ID | Requirement | Status | Mapped to | Waiver reason |
+| --- | --- | --- | --- | --- |
+{% for r in requirements.rows %}
+| {{ r.id }} | {{ r.text }} | {{ r.status }} | {{ r.mapped_to or "—" }} | {{ r.waiver_reason or "—" }} |
+{% endfor %}
+
+{% endif %}
 ## Findings
 
 {% for f in findings %}
@@ -34,6 +44,18 @@ _Evidence claims: {% for c in f.claims %}[{{ c }}]{% if not loop.last %} {% endi
 
 {% endfor %}
 
+{% if matrix %}
+## Literature Comparison Matrix
+
+Key studies reviewed for positioning and gap analysis ("—" = field not recorded; fill via `sources review`).
+
+| Study | Problem | Framework | Method | Context | Findings | Limitations | Relevance |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+{% for m in matrix %}
+| {{ m.citation }} [{{ m.source_id }}] | {{ m.problem }} | {{ m.framework }} | {{ m.method }} | {{ m.context }} | {{ m.findings }} | {{ m.limitations }} | {{ m.relevance }} |
+{% endfor %}
+
+{% endif %}
 ## Contradictions & Resolutions
 
 {% if contradictions %}
@@ -63,6 +85,28 @@ No contradictions detected among verified claims.
 | {{ row.angle }} | {{ row.sources }} | {{ row.evidence }} | {{ row.claims }} | {{ row.bands }} |
 {% endfor %}
 
+{% if search_method.entries %}
+- **Search & screening (reproducibility):** {{ search_method.entries }} logged search(es){% if search_method.first_at %} between {{ search_method.first_at[:10] }} and {{ search_method.last_at[:10] }}{% endif %}; screening outcomes: {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}.
+
+| Search log | Query | Engine | Angle | Hits | Kept | At |
+| --- | --- | --- | --- | --- | --- | --- |
+{% for q in search_method.queries %}
+| {{ q.id }} | {{ q.query }} | {{ q.engine }} | {{ q.angle or "—" }} | {{ q.hits }} | {{ q.kept }} | {{ (q.at or "")[:16] }} |
+{% endfor %}
+{% for e in search_method.engines %}
+- Engine `{{ e.engine }}`: {{ e.queries }} queries, {{ e.hits }} hits, {{ e.kept }} kept.
+{% endfor %}
+{% if search_method.excluded %}
+
+Excluded at screening (with reasons):
+
+| Source | Title | Exclusion reason |
+| --- | --- | --- |
+{% for x in search_method.excluded %}
+| {{ x.id }} | {{ x.title }} | {{ x.reason }} |
+{% endfor %}
+{% endif %}
+{% endif %}
 ## Limitations
 
 {% for l in limitations %}
@@ -72,7 +116,7 @@ No contradictions detected among verified claims.
 ## Bibliography
 
 {% for b in bibliography %}
-{{ b.n }}. {{ b.authors }} ({{ b.year }}). *{{ b.title }}*. {{ b.publisher }}.{% if b.doi %} DOI: [{{ b.doi }}](https://doi.org/{{ b.doi }}).{% endif %} URL: {{ b.url }} — credibility **{{ b.band }}** ({{ b.score }}). Snapshot: `{{ b.source_id }}` sha256 `{{ b.sha256[:12] }}…` [{{ b.source_id }}]
+{{ b.n }}. {{ b.authors }} ({{ b.year }}). *{{ b.title }}*.{% if b.venue_parts %} {{ b.venue_parts }}{% elif b.publisher %} {{ b.publisher }}.{% endif %}{% if b.doi %} {{ b.doi if b.doi.startswith("http") else "https://doi.org/" + b.doi }}{% endif %}{% if b.url %} {{ b.url }}{% endif %}{% if b.version_note %} — ⚠ {{ b.version_note }}{% endif %}{% if b.flags %} [{{ b.flags }}]{% endif %} — credibility **{{ b.band }}** ({{ b.score }}). Snapshot: `{{ b.source_id }}` sha256 `{{ b.sha256[:12] }}…` [{{ b.source_id }}]
 {% endfor %}
 
 ---

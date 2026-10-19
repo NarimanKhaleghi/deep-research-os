@@ -18,6 +18,8 @@ if _SCRIPTS not in sys.path:
 
 from core import budget as budget_mod  # noqa: E402
 from core import report_builder  # noqa: E402
+from core import requirements as requirements_mod  # noqa: E402
+from core import searchlog  # noqa: E402
 from core import snapshot as snapshot_mod  # noqa: E402
 from core.evidence_store import Ledger  # noqa: E402
 from lib import paths, util  # noqa: E402
@@ -28,6 +30,12 @@ STRENGTHS = {"established", "supported", "tentative"}
 CONFIDENCES = {"high", "medium", "low"}
 CLAIM_STATUSES = {"supported", "weakly_supported", "contradicted",
                   "unverifiable", "resolved", "outweighed"}
+
+
+def _strict(state: dict) -> bool:
+    """Academic deliverables follow PRISMA-style reproducibility hard gates."""
+    return (state.get("deliverable_type") == "academic-paper"
+            or state.get("review_protocol") in ("prisma", "systematic-review"))
 
 
 def run(project: Path, phase: int, waivers: list[dict] | None = None, persist: bool = True) -> dict:
@@ -55,7 +63,7 @@ def run(project: Path, phase: int, waivers: list[dict] | None = None, persist: b
     elif phase == 6:
         _phase6(project, state, ledger, add)
     elif phase == 7:
-        _phase7(project, ledger, add)
+        _phase7(project, state, ledger, add)
     elif phase == 8:
         _phase8(project, state, add)
     elif phase == 9:
@@ -119,6 +127,13 @@ def _phase0(project, state, brief_meta, angles, add) -> None:
     need = {"searches", "sources_read", "evidence", "claims", "verify_passes"}
     ok = need <= set(ceilings)
     add("budget_ceilings", ok, detail="ok" if ok else f"missing: {sorted(need - set(ceilings))}")
+
+    if _strict(state):
+        n = len(requirements_mod.load(project))
+        add("requirements_recorded", n >= 1,
+            detail=f"{n} requirement(s)" if n
+            else "no requirements recorded — capture each explicit prompt constraint "
+                 "with `requirements add --text ...`")
 
 
 # --------------------------------------------------------------- phase 1
@@ -197,6 +212,20 @@ def _phase3(project, state, ledger, angles, add) -> None:
     over = [u for u in b["exceeded"] if u == "sources_read"]
     add("sources_budget", not over,
         detail="exceeded sources_read" if over else f"{b['usage'].get('sources_read', {}).get('used', 0)} used")
+
+    # reproducibility gates (academic / PRISMA deliverables)
+    if _strict(state):
+        slog = searchlog.summarize(project)
+        add("search_logged", slog["entries"] >= 1,
+            detail=f"{slog['entries']} logged search(es)" if slog["entries"]
+            else "no searches logged — connector searches log automatically; "
+                 "record manual ones with `searchlog add`")
+        no_status = [s["id"] for s in sources if not s.get("status")]
+        no_reason = [s["id"] for s in sources
+                     if s.get("status") == "excluded" and not s.get("exclusion_reason")]
+        add("screening_reasons", not no_status and not no_reason,
+            detail=", ".join([f"{i}(no status)" for i in no_status]
+                             + [f"{i}(excluded, no reason)" for i in no_reason]) or "ok")
 
 
 # --------------------------------------------------------------- phase 4
@@ -311,7 +340,7 @@ def _phase6(project, state, ledger, add) -> None:
 
 # --------------------------------------------------------------- phase 7
 
-def _phase7(project, ledger, add) -> None:
+def _phase7(project, state, ledger, add) -> None:
     fdir = project / "findings"
     files = sorted(fdir.glob("FN-*.md")) if fdir.exists() else []
     add("findings_exist", len(files) >= 1, detail=f"{len(files)} file(s)")
@@ -356,6 +385,32 @@ def _phase7(project, ledger, add) -> None:
             if c.get("status") == "contradicted" and meta.get("strength") == "established":
                 offenders.append(f"{meta.get('id')}→{cid}")
     add("findings_supported", not offenders, detail=", ".join(offenders) or "ok")
+
+    # academic deliverables: the model / scenarios / sensitivity findings must exist
+    if _strict(state):
+        kinds = []
+        for f in files:
+            meta, _ = util.parse_front_matter(util.load_text(f))
+            kinds.append(str(meta.get("kind") or "analysis"))
+        missing_kinds = [k for k in ("model", "scenarios", "sensitivity") if k not in kinds]
+        add("findings_kinds", not missing_kinds,
+            detail=("missing finding kinds: " + ", ".join(missing_kinds)
+                    + " (`findings new --kind ...`)") if missing_kinds
+            else f"kinds: {', '.join(sorted(set(kinds)))}")
+
+        target = int(state.get("key_studies_target") or 8)
+        fields = ("problem", "framework", "method", "context", "findings",
+                  "limitations", "relevance")
+        keys = [s for s in ledger.sources() if s.get("key_study")]
+        incomplete = [s["id"] for s in keys
+                      if not all((s.get("review") or {}).get(k) for k in fields)]
+        detail = ""
+        if len(keys) < target:
+            detail = f"{len(keys)}/{target} key studies marked (`sources review --key`)"
+        elif incomplete:
+            detail = "incomplete review fields: " + ", ".join(incomplete)
+        add("key_studies_reviewed", len(keys) >= target and not incomplete,
+            detail=detail or f"{len(keys)} key studies reviewed")
 
 
 # --------------------------------------------------------------- phase 8

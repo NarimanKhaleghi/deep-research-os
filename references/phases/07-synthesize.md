@@ -15,18 +15,32 @@
 2. **Every finding references claims** (`claims: [CL-0004, CL-0009]` in front-matter).
    Prose statements that assert facts outside claim refs are violations — turn them
    into claims or delete them.
-3. **Strength & confidence:**
+3. **Tag the finding kind** (`--kind`): `analysis` (default), `model`, `scenarios`,
+   `sensitivity`, `literature-matrix`, `methodology`, `conclusion`.
+   - Academic deliverables **must** have `model`, `scenarios`, and `sensitivity`
+     findings (gate `findings_kinds`); see `references/methods/decision-modeling.md`.
+   - `scenarios`: ≥5 scenarios including one combination scenario (two stressors at
+     once), each with driver values, model output, decision change, and an
+     early-warning indicator.
+   - `sensitivity`: one-at-a-time variation of the top 3–5 variables with numeric
+     breakpoints and a dominance ranking — not prose.
+4. **Key-study matrix** (academic deliverables): mark ≥ `key_studies_target` sources
+   with `sources review --key` and fill all seven comparison fields — these render as
+   the report's Literature Comparison Matrix and are the evidence for the gap claim.
+5. **Strength & confidence:**
    - `strength`: how much the evidence supports it (`established | supported | tentative`).
    - `confidence`: `high | medium | low` — from source tiers, corroboration, and
      verification status. `weakly_supported` claims can never yield more than `tentative`.
-4. **Counterpoints are mandatory fields**, even if empty (`[]`). Where refuting or
+6. **Counterpoints are mandatory fields**, even if empty (`[]`). Where refuting or
    contradicting evidence exists: state it, cite it, and say how the finding stands
    (outweighs / narrows scope / remains genuinely uncertain).
-5. **Numbers stay faithful:** keep source precision in findings; rounding in prose is
+7. **Numbers stay faithful:** keep source precision in findings; rounding in prose is
    allowed only with `~` and must not exceed one significant digit of loss.
-6. **Gap logging:** each finding ends with `gaps:` — what a skeptic would still want
+8. **Gap logging:** each finding ends with `gaps:` — what a skeptic would still want
    (missing region, vintage, methodology). These roll up into the report's Limitations.
-7. **Synthesis ordering rule:** conclusions must not depend on a single C-band source;
+   For a research-gap claim, point to the specific empty matrix cell(s) rather than
+   asserting "few studies exist".
+9. **Synthesis ordering rule:** conclusions must not depend on a single C-band source;
    if the story only works that way, the honest output is "insufficient evidence" —
    write *that* as the finding.
 
@@ -34,12 +48,17 @@
 
 - `findings/FN-01.md`, `FN-02.md`, … front-matter schema
   `references/schemas/finding.schema.json` (`id, title, strength, confidence,
-  claims[], counterpoints[], gaps[]`).
+  kind, claims[], counterpoints[], gaps[]`).
 
 ```bash
-$R findings new --id FN-01 --title "EU charging UX: queue pain dominates" \
+$R findings new --title "EU charging UX: queue pain dominates" \
                 --strength supported --confidence medium --claims CL-0004,CL-0009 \
-                --counterpoints "CX-0002 narrowed to urban networks"
+                --kind analysis --counterpoints "CX-0002 narrowed to urban networks"
+$R findings new --title "Staged option value under five scenarios" \
+                --claims CL-0012,CL-0015 --kind scenarios
+$R sources review --source-id SRC-0003 --key --problem "…" --framework "…" \
+                  --method "…" --context "…" --findings "…" --limitations "…" \
+                  --relevance "…"
 # then write the body prose with [CL-xxxx] markers inline
 $R gate --phase 7
 ```
@@ -54,6 +73,9 @@ $R gate --phase 7
       `supported` or `resolved`.
 - [ ] No finding references a claim whose evidence was later invalidated
       (`contradicted` without resolution).
+- [ ] Academic/PRISMA deliverables: `model`, `scenarios`, `sensitivity` findings
+      exist (`findings_kinds`); ≥ `key_studies_target` key studies with complete
+      review fields (`key_studies_reviewed`).
 
 ## Failure modes
 

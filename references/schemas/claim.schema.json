@@ -9,6 +9,8 @@
     "id": { "type": "string", "pattern": "^CL-[0-9]{4}$" },
     "text": { "type": "string", "minLength": 8 },
     "type": { "enum": ["statistic", "causal", "forecast", "opinion", "methodological", "definition"] },
+    "kind": { "enum": ["empirical", "normative", "theoretical"], "default": "empirical", "description": "normative claims require an official/primary source at verify time" },
+    "modality": { "type": "boolean", "description": "claim text contains prohibition/obligation language (computed at creation)" },
     "tags": { "type": "array", "items": { "type": "string" } },
     "angles": { "type": "array", "items": { "type": "string" } },
     "evidence_ids": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^EV-[0-9]{4}$" } },

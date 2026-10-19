@@ -4,10 +4,14 @@ title: "{{ title }}"
 profile: {{ profile }}
 cutoff: {{ cutoff }}
 deliverable: {{ deliverable or "research memo" }}
+deliverable_type: {{ deliverable_type or "report" }}
+review_protocol: {{ review_protocol or "none" }}
+key_studies_target: {{ key_studies_target or 0 }}
 domain: {{ domain or "general" }}
 maintenance: {{ maintenance or "ok" }}
 privacy_mode: {{ privacy_mode|lower }}
 allow_paid: false
+project_dir: "{{ project_dir or "" }}"
 success_criteria:
 {% for s in success_criteria %}
   - "{{ s }}"
@@ -40,6 +44,28 @@ created: "{{ created_at }}"
 ## Deliverable
 
 {{ deliverable or "research memo with cited findings" }}
+
+- **Deliverable type:** `{{ deliverable_type or "report" }}`{% if deliverable_type == "academic-paper" %} — activates the review-protocol, key-study matrix and analysis-finding gates{% endif %}
+- **Review protocol:** `{{ review_protocol or "none" }}`{% if review_protocol == "prisma" %} — every search is logged (`searchlog`), excluded sources need reasons, and the report embeds the screening flow{% endif %}
+{% if key_studies_target %}- **Key-study matrix target:** {{ key_studies_target }} studies need `sources review` comparison fields
+{% endif %}
+> **Outputs location:** this project lives in `{{ project_dir or "(project dir)" }}`.
+> Keep everything for this run inside that folder; learning data stays in
+> `~/.config/deep-research-os/`. From another cwd, address it with
+> `--project "{{ project_dir or "" }}"` or `export RESEARCH_OS_PROJECT=…`.
+
+## Requirements (extracted from the user's prompt)
+
+Every explicit requirement of the user prompt is tracked in `requirements.json`:
+
+```bash
+python scripts/research_ctl.py requirements add --text "«…»"
+python scripts/research_ctl.py requirements map RQ-01 "Report §11 Sensitivity"
+python scripts/research_ctl.py requirements waive RQ-03 --reason "…"
+```
+
+`report build` fails until each requirement is mapped (its anchor text must appear
+in the report) or explicitly waived with a reason shown in Limitations.
 
 ## Success Criteria
 

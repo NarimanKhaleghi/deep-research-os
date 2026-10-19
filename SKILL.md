@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: deep-research-os contributors
-  version: "1.0.0"
+  version: "1.1.0"
   homepage: https://github.com/NarimanKhaleghi/deep-research-os
 ---
 
@@ -37,11 +37,21 @@ engagement). **Before any phase:** read its doc in `references/phases/`.
    then synthesize.
 4. **Verify before you trust** — run `verify` before `report build`; run
    `contradictions scan` before synthesis. Numbers get precision checks.
-5. **Governed learning** — you may journal feedback and stats freely; you may
+   Normative/regulatory statements need official sources and modality-checked
+   quotes (`claims add --kind normative`).
+5. **Output location** — research projects go in a folder the **user** chooses
+   (`~/Research/<slug>`, a named vault, or `--dir`); never inside the skill
+   install, repo, or runtime dir. `init` refuses those paths; use
+   `project move --to <folder>` to relocate an existing project.
+6. **Requirements contract** — every explicit prompt requirement is captured
+   (`requirements add`) and either mapped to a report anchor or waived with a
+   reason; `report build` fails on unmet requirements. Waivers print in
+   Limitations.
+7. **Governed learning** — you may journal feedback and stats freely; you may
    *never* silently change capabilities, weights beyond bounds, methods or
    templates. Those go through `learn propose` → human approval → regression
    check → apply. See `references/learning-protocol.md`.
-6. **Resumability** — all state lives in the project directory; a new session
+8. **Resumability** — all state lives in the project directory; a new session
    resumes from `status`, never from memory.
 
 ## Setup check (first run in a session)
@@ -57,6 +67,16 @@ python scripts/research_ctl.py doctor   # environment + capability discovery (JS
 `~/.config/deep-research-os/capabilities.json`. The router reads it — no config
 editing needed.
 
+**Where research gets written:** pick the user's output folder *before* `init`.
+The default vault is `./research-os` in the current directory, but `init` refuses
+to write inside the skill/repo/runtime tree. Name the folder explicitly:
+
+```bash
+python scripts/research_ctl.py init "question" --profile deep --dir ~/Research/my-topic
+# later commands find the newest project automatically (runtime registry),
+# or: export RESEARCH_OS_PROJECT=~/Research/my-topic / --project <path>
+```
+
 ## The 10-phase workflow
 
 Each phase has a doc in `references/phases/` and a machine-checkable gate:
@@ -66,31 +86,36 @@ any time to see where you are and what is missing.
 
 | # | Phase | You produce | Complete when (summary — full list in phase doc) |
 | --- | --- | --- | --- |
-| 0 | **Intake** | `brief.md` (question, angles, deliverable, cutoff, profile, budget) | Question decomposed; success criteria explicit; profile chosen; maintenance-due checked |
+| 0 | **Intake** | `brief.md` (question, angles, deliverable, cutoff, profile, budget) + `requirements.json` | Question decomposed; deliverable type set; explicit requirements captured; output folder chosen (user's, via `--dir`) |
 | 1 | **Landscape** | `plan.md` part 1: terminology, actors, source map | Key terms + synonyms (multilingual), candidate sources per domain, initial queries |
 | 2 | **Plan** | `plan.md` part 2: collection matrix | For each angle: ≥2 independent query strategies + target sources + stop rules |
-| 3 | **Collect** | `sources/SRC-*.json` + snapshots | Every source has metadata + snapshot + hash; coverage check vs angles |
+| 3 | **Collect** | `sources/SRC-*.json` + snapshots + `searches.jsonl` | Every source has metadata + snapshot + hash; coverage vs angles; searches logged (manual ones via `searchlog add`); exclusions carry reasons |
 | 4 | **Extract** | `evidence.jsonl` records | Material passages quoted verbatim with locators; no paraphrase in evidence |
 | 5 | **Assess** | credibility scores per source | Every source scored A–D by rubric; tier + retraction + COI recorded |
-| 6 | **Verify** | `claims.jsonl` + `verify_report.json` + contradictions | Every claim classified (supported/weakly/contradicted); citations verified; contradictions adjudicated or logged |
-| 7 | **Synthesize** | `findings/*.md` | Findings reference claim IDs; strength labeled; counterpoints attached; gaps logged |
-| 8 | **Report** | `report.md` (+ `report.html`) | `report check` passes: zero uncited claims, bibliography complete, numbers consistent |
+| 6 | **Verify** | `claims.jsonl` + `verify_report.json` + contradictions | Every claim classified (supported/weakly/contradicted); citations verified; modality/official-source checks for normative claims; contradictions adjudicated or logged |
+| 7 | **Synthesize** | `findings/*.md` (tagged with `--kind`) | Findings reference claim IDs; strength labeled; counterpoints attached; gaps logged; academic deliverables include model/scenarios/sensitivity findings + reviewed key studies |
+| 8 | **Report** | `report.md` (+ `report.html`) | `report check` passes: zero uncited claims, requirements covered, APA-7 bibliography complete, numbers consistent |
 | 9 | **Retrospect** | `retrospective.json` + feedback journal | What worked/failed journaled; capabilities candidate; preference question asked if triggered |
 
 ### Suggested CLI flow
 
 ```bash
 R="python scripts/research_ctl.py"
-$R init "UX of EV charging in the EU" --profile deep
+$R init "UX of EV charging in the EU" --profile deep --dir ~/Research/ev-charging-ux
+$R requirements add --text "At least five scenarios including a combination scenario"
 $R status                                   # see gate checklists
-$R search --query "EV charging UX survey" --domains web,academic --limit 10
+$R search --query "EV charging UX survey" --domains web,academic --limit 10 --angle "UX"
+$R searchlog add --query "site:iea.org EV charging" --engine google --hits 40 --kept 4
 $R read --source-id SRC-0003                # fetch + extract + snapshot; returns text
 $R credibility score                         # score all new sources
 $R evidence add --source-id SRC-0003 --quote "..." --locator "p.4"
-$R claims add --text "..." --type statistic --tags pricing,eu
-$R verify --online                           # DOI/URL/title checks + numeric consistency
+$R claims add --text "..." --type statistic --tags pricing,eu        # --kind normative for rules
+$R verify --online                           # DOI/URL/title + numbers + modality checks
 $R contradictions scan
+$R sources review --source-id SRC-0003 --key --method "..." --limitations "..."
+$R findings new --title "..." --claims CL-0004 --kind scenarios
 $R report build                              # refuses to pass hard gates silently
+$R requirements map --requirement RQ-01 --target "Findings"
 $R gate --phase 8                            # machine-checkable completion
 $R learn retrospect                          # phase 9 helper: journal + candidates
 ```
@@ -143,8 +168,11 @@ and costs: `references/integrations/mcp-catalog.md`. Budget policy:
 ## Domain playbooks
 
 `references/methods/`: `academic.md` · `market.md` · `data-analysis.md` ·
-`osint.md` · `due-diligence.md` · `technical-rnd.md`. Read the one matching
-your domain **before phase 2**; each carries its own Gotchas section.
+`osint.md` · `due-diligence.md` · `technical-rnd.md` · `systematic-review.md`
+(PRISMA-lite: search logging, screening reasons, key-study matrix) ·
+`decision-modeling.md` (operational models: variables → thresholds → procedure →
+worked example → baseline comparison → ≥5 scenarios → sensitivity breakpoints).
+Read the matching one **before phase 2**; each carries its own Gotchas section.
 
 ## Coordination with other installed skills
 

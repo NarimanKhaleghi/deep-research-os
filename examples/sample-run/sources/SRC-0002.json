@@ -8,7 +8,7 @@
   ],
   "publisher": "Journal of Tests",
   "published": "2025-02-10",
-  "accessed_at": "2026-10-18T15:59:43Z",
+  "accessed_at": "2026-10-19T13:52:35Z",
   "service": "web",
   "type": "statistics",
   "tier": 1,
@@ -30,25 +30,25 @@
     "dimensions": {
       "authority": 20,
       "review": 18,
-      "recency": 6.81,
+      "recency": 6.8,
       "evidence": 16,
       "coi": 8,
       "integrity": 7
     },
-    "rationale": "statistics via web; official/institutional domain; 615d old vs 540d half-life",
-    "scored_at": "2026-10-18T15:59:43Z",
+    "rationale": "statistics via web; official/institutional domain; 616d old vs 540d half-life",
+    "scored_at": "2026-10-19T13:52:35Z",
     "overrides": []
   },
   "retraction": {
     "status": "unknown",
     "source_flag": null,
-    "checked_at": "2026-10-18T15:59:44Z"
+    "checked_at": "2026-10-19T13:52:35Z"
   },
   "verification": {
     "status": "verified",
     "title_match": null,
     "method": "snapshot-hash",
     "detail": "offline mode: snapshot integrity only",
-    "at": "2026-10-18T15:59:44Z"
+    "at": "2026-10-19T13:52:35Z"
   }
 }

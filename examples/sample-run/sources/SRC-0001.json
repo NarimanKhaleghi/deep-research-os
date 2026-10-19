@@ -8,7 +8,7 @@
   ],
   "publisher": "Journal of Tests",
   "published": "2024-05-01",
-  "accessed_at": "2026-10-18T15:59:43Z",
+  "accessed_at": "2026-10-19T13:52:35Z",
   "service": "pubmed",
   "type": "journal-article",
   "tier": 1,
@@ -30,25 +30,25 @@
     "dimensions": {
       "authority": 16,
       "review": 16,
-      "recency": 8.49,
+      "recency": 8.48,
       "evidence": 14,
       "coi": 8,
       "integrity": 9
     },
-    "rationale": "journal-article via pubmed; DOI present; 900d old vs 1095d half-life",
-    "scored_at": "2026-10-18T15:59:43Z",
+    "rationale": "journal-article via pubmed; DOI present; 901d old vs 1095d half-life",
+    "scored_at": "2026-10-19T13:52:35Z",
     "overrides": []
   },
   "retraction": {
     "status": "unknown",
     "source_flag": null,
-    "checked_at": "2026-10-18T15:59:44Z"
+    "checked_at": "2026-10-19T13:52:35Z"
   },
   "verification": {
     "status": "verified",
     "title_match": null,
     "method": "snapshot-hash",
     "detail": "offline mode: snapshot integrity only",
-    "at": "2026-10-18T15:59:44Z"
+    "at": "2026-10-19T13:52:35Z"
   }
 }

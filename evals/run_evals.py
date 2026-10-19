@@ -211,6 +211,111 @@ def scenario_budget_quick():
     return blocked and excused, {"blocked_before": blocked, "excused_with_reason": excused}
 
 
+def scenario_requirement_coverage():
+    """A strict academic project must not ship while an explicit requirement is
+    unmet; mapping to an anchor that doesn't exist must not count; waiver reasons
+    must surface in Limitations."""
+    from conftest import full_quick_run
+
+    env = _fresh_env()
+    full_quick_run(env)
+    project = next((env["vault"] / "projects").glob("*"))
+    sid_a = "SRC-0001"
+    _cli("brief", "set", "--deliverable-type", "academic-paper", expect=0)
+    _cli("sources", "update", "--source-id", sid_a, "--venue", "Journal of Tests",
+         expect=0)
+    _cli("requirements", "add", "--text", "Sensitivity analysis with breakpoints",
+         expect=0)
+
+    _, build1, _ = _cli("report", "build")
+    blocks = any(c["name"] == "requirements_coverage" and not c["ok"]
+                 for c in build1["checks"]) if build1 else False
+
+    _cli("requirements", "map", "--requirement", "RQ-01",
+         "--target", "Sensitivity analysis", expect=0)
+    _, build2, _ = _cli("report", "build")
+    unmapped_anchor_blocks = any(
+        c["name"] == "requirements_coverage" and not c["ok"]
+        for c in build2["checks"]) if build2 else False
+
+    _cli("requirements", "map", "--requirement", "RQ-01", "--target", "Findings",
+         expect=0)
+    _, build3, _ = _cli("report", "build", expect=0)
+
+    _cli("requirements", "add", "--text", "Provide the paywalled dataset", expect=0)
+    _cli("requirements", "waive", "--requirement", "RQ-02",
+         "--reason", "dataset is paywalled; excerpts quoted instead", expect=0)
+    _, build4, _ = _cli("report", "build", expect=0)
+    report = (project / "report.md").read_text(encoding="utf-8")
+    waiver_visible = "paywalled" in report and "Requirement Coverage" in report
+    return blocks and unmapped_anchor_blocks and build3 is not None \
+        and build4 is not None and waiver_visible, {
+            "unmet_blocks_build": blocks,
+            "missing_anchor_blocks": unmapped_anchor_blocks,
+            "coverage_table_rendered": "Requirement Coverage" in report,
+            "waiver_in_limitations": waiver_visible}
+
+
+def scenario_overclaim_modality():
+    """A claim saying 'not allowed' cannot stand on a quote that only says who is
+    responsible; the modality check must downgrade it, and an official-source
+    quote must clear it."""
+    from conftest import add_source, seed_project
+
+    env = _fresh_env()
+    seed_project(env, question="Can lendtechs assess credit?")
+    project = next((env["vault"] / "projects").glob("*"))
+    news_id, _ = add_source(
+        project,
+        text="The central bank statement said banks bear final responsibility for "
+             "credit decisions; cooperation with lendtechs was described as optional.",
+        title="Central bank briefing coverage", url="https://news.example/cb",
+        service="web", type_="news", published="2025-06-01")
+    _cli("credibility", "score", expect=0)
+    _, ev_news, _ = _cli("evidence", "add", "--source-id", news_id, "--locator", "¶2",
+                         "--angle", "physiology",
+                         "--quote", "banks bear final responsibility for credit "
+                                    "decisions; cooperation with lendtechs was "
+                                    "described as optional", expect=0)
+    _, bad_claim, _ = _cli("claims", "add", "--text",
+                           "Lendtechs are not allowed to assess credit risk",
+                           "--kind", "normative", "--tags", "credit",
+                           "--angles", "physiology",
+                           "--evidence", ev_news["evidence_id"], expect=0)
+    _, verify1, _ = _cli("verify", expect=0)
+    flagged = any(m["claim_id"] == bad_claim["claim_id"]
+                  for m in verify1["modality_mismatches"])
+    official_gap = any(g["claim_id"] == bad_claim["claim_id"]
+                       for g in verify1["primary_source_gaps"])
+    downgraded = (verify1["claims_summary"].get("weakly_supported", 0) >= 1)
+
+    reg_id, _ = add_source(project,
+                           text="Regulation X prohibits non-bank lenders from "
+                                "conducting independent credit assessments.",
+                           title="Regulation X", url="https://regulator.example/x",
+                           service="web", type_="regulation", published="2026-01-15",
+                           doi=None, authors=("Regulator",))
+    _, ev_reg, _ = _cli("evidence", "add", "--source-id", reg_id, "--locator", "Art. 4",
+                        "--angle", "physiology",
+                        "--quote", "Regulation X prohibits non-bank lenders from "
+                                   "conducting independent credit assessments", expect=0)
+    _, good_claim, _ = _cli("claims", "add", "--text",
+                            "Non-bank lenders are prohibited from independent "
+                            "credit assessments", "--kind", "normative",
+                            "--tags", "credit", "--angles", "physiology",
+                            "--evidence", ev_reg["evidence_id"], expect=0)
+    _, verify2, _ = _cli("verify", expect=0)
+    cleared = not any(m["claim_id"] == good_claim["claim_id"]
+                      for m in verify2["modality_mismatches"]) \
+        and not any(g["claim_id"] == good_claim["claim_id"]
+                    for g in verify2["primary_source_gaps"])
+    return flagged and official_gap and downgraded and cleared, {
+        "modality_mismatch_flagged": flagged,
+        "primary_source_gap_flagged": official_gap,
+        "claim_downgraded": downgraded,
+        "official_source_clears": cleared}
+
+
 def scenario_live_search():
     _fresh_env()
     os.environ["RESEARCH_OS_OFFLINE"] = "0"
@@ -234,6 +339,8 @@ SCENARIOS = {
     "echo_chamber": scenario_echo_chamber,
     "multilingual_fa": scenario_multilingual_fa,
     "budget_quick": scenario_budget_quick,
+    "requirement_coverage": scenario_requirement_coverage,
+    "overclaim_modality": scenario_overclaim_modality,
 }
 
 LIVE_SCENARIOS = {"live_search": scenario_live_search}

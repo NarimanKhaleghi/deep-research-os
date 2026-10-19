@@ -10,6 +10,7 @@
     "title": { "type": "string", "minLength": 6 },
     "strength": { "enum": ["established", "supported", "tentative"] },
     "confidence": { "enum": ["high", "medium", "low"] },
+    "kind": { "enum": ["analysis", "model", "scenarios", "sensitivity", "literature-matrix", "methodology", "conclusion"], "default": "analysis", "description": "model/scenarios/sensitivity are required for academic-paper deliverables (phase-7 gate findings_kinds)" },
     "claims": {
       "type": "array",
       "minItems": 1,

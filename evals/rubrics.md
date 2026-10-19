@@ -12,6 +12,8 @@ They are deterministic and offline by default (`python evals/run_evals.py --offl
 | 4 | `echo_chamber` | Two "independent" sources share one `origin_key` backing a **critical** claim | A `corroboration_gaps` entry is recorded and the claim is downgraded from `supported` |
 | 5 | `multilingual_fa` | Persian text with Persian digits and `٪`/`٫` ("۹۶٫۵٪") | Digits normalize, quote matches, verify shows **no** number drift, claim accepted |
 | 6 | `budget_quick` | Quick profile overspends its search ceiling (4 > 3) | `status` reports the exceeded counter; after `budget exception` with a reason, it clears |
+| 7 | `requirement_coverage` | Academic deliverable with an unmet requirement, then a mapping to a non-existent anchor, then a waiver | `report build` fails on `requirements_coverage` while unmet; mapping to an absent anchor still fails; a real anchor passes; waiver reason appears in Limitations |
+| 8 | `overclaim_modality` | "Lendtechs are not allowed to assess credit" supported only by a "banks bear responsibility" quote | `modality_mismatches` + `primary_source_gaps` flag the claim and it downgrades to `weakly_supported`; an official regulation quote with matching prohibition language clears a second claim |
 
 ## Live scenario
 

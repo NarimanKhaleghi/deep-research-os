@@ -49,6 +49,13 @@ Citation precision <strong>{{ citation_precision }}</strong> · {{ sources_count
 {% endfor %}
 </ul>
 
+{% if requirements.total %}
+<h2>Requirement Coverage</h2>
+<table><thead><tr><th>ID</th><th>Requirement</th><th>Status</th><th>Mapped to</th><th>Waiver reason</th></tr></thead><tbody>
+{% for r in requirements.rows %}<tr><td>{{ r.id }}</td><td>{{ r.text }}</td><td>{{ r.status }}</td><td>{{ r.mapped_to or "—" }}</td><td>{{ r.waiver_reason or "—" }}</td></tr>{% endfor %}
+</tbody></table>
+{% endif %}
+
 <h2>Findings</h2>
 {% for f in findings %}
 <h3>{{ f.id }} · {{ f.title }} <span class="badge {{ f.strength }}">{{ f.strength }}</span> <span class="badge {{ f.confidence }}">{{ f.confidence }}</span></h3>
@@ -57,6 +64,13 @@ Citation precision <strong>{{ citation_precision }}</strong> · {{ sources_count
 {% if f.counterpoints %}<details><summary>Counterpoints</summary><ul>{% for c in f.counterpoints %}<li>{{ c }}</li>{% endfor %}</ul></details>{% endif %}
 {% if f.gaps %}<details><summary>Gaps</summary><ul>{% for g in f.gaps %}<li>{{ g }}</li>{% endfor %}</ul></details>{% endif %}
 {% endfor %}
+
+{% if matrix %}
+<h2>Literature Comparison Matrix</h2>
+<table><thead><tr><th>Study</th><th>Problem</th><th>Framework</th><th>Method</th><th>Context</th><th>Findings</th><th>Limitations</th><th>Relevance</th></tr></thead><tbody>
+{% for m in matrix %}<tr><td>{{ m.citation }} <code>{{ m.source_id }}</code></td><td>{{ m.problem }}</td><td>{{ m.framework }}</td><td>{{ m.method }}</td><td>{{ m.context }}</td><td>{{ m.findings }}</td><td>{{ m.limitations }}</td><td>{{ m.relevance }}</td></tr>{% endfor %}
+</tbody></table>
+{% endif %}
 
 <h2>Contradictions &amp; Resolutions</h2>
 {% if contradictions %}
@@ -73,6 +87,19 @@ Citation precision <strong>{{ citation_precision }}</strong> · {{ sources_count
 <table><thead><tr><th>Angle</th><th>Sources</th><th>Evidence</th><th>Claims</th><th>Bands</th></tr></thead><tbody>
 {% for row in coverage %}<tr><td>{{ row.angle }}</td><td>{{ row.sources }}</td><td>{{ row.evidence }}</td><td>{{ row.claims }}</td><td>{{ row.bands }}</td></tr>{% endfor %}
 </tbody></table>
+{% if search_method.entries %}
+<p><strong>Search &amp; screening:</strong> {{ search_method.entries }} logged searches · {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+<table><thead><tr><th>Search log</th><th>Query</th><th>Engine</th><th>Angle</th><th>Hits</th><th>Kept</th><th>At</th></tr></thead><tbody>
+{% for q in search_method.queries %}<tr><td>{{ q.id }}</td><td>{{ q.query }}</td><td>{{ q.engine }}</td><td>{{ q.angle or "—" }}</td><td>{{ q.hits }}</td><td>{{ q.kept }}</td><td>{{ (q.at or "")[:16] }}</td></tr>{% endfor %}
+</tbody></table>
+{% if search_method.excluded %}
+<details><summary>Excluded at screening (with reasons)</summary>
+<table><thead><tr><th>Source</th><th>Title</th><th>Exclusion reason</th></tr></thead><tbody>
+{% for x in search_method.excluded %}<tr><td>{{ x.id }}</td><td>{{ x.title }}</td><td>{{ x.reason }}</td></tr>{% endfor %}
+</tbody></table>
+</details>
+{% endif %}
+{% endif %}
 
 <h2>Limitations</h2>
 <ul>{% for l in limitations %}<li>{{ l }}</li>{% endfor %}</ul>
@@ -80,7 +107,7 @@ Citation precision <strong>{{ citation_precision }}</strong> · {{ sources_count
 <h2>Bibliography</h2>
 <ol>
 {% for b in bibliography %}
-<li>{{ b.authors }} ({{ b.year }}). <em>{{ b.title }}</em>. {{ b.publisher }}.{% if b.doi %} <a href="https://doi.org/{{ b.doi }}">DOI {{ b.doi }}</a>.{% endif %} <a href="{{ b.url }}">link</a> · credibility <strong>{{ b.band }}</strong> ({{ b.score }}) · snapshot <code>{{ b.source_id }}</code></li>
+<li>{{ b.authors }} ({{ b.year }}). <em>{{ b.title }}</em>.{% if b.venue_parts %} {{ b.venue_parts }}{% elif b.publisher %} {{ b.publisher }}{% endif %}{% if b.doi %} <a href="{{ b.doi if b.doi.startswith('http') else 'https://doi.org/' + b.doi }}">{{ b.doi }}</a>{% endif %}{% if b.url %} <a href="{{ b.url }}">link</a>{% endif %}{% if b.version_note %} <span class="badge">⚠ {{ b.version_note }}</span>{% endif %} · credibility <strong>{{ b.band }}</strong> ({{ b.score }}) · snapshot <code>{{ b.source_id }}</code></li>
 {% endfor %}
 </ol>
 

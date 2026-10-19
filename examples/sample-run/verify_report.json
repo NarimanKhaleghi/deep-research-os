@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-18T15:59:44Z",
+  "generated_at": "2026-10-19T13:52:35Z",
   "mode": "offline",
   "per_source": {
     "SRC-0001": {
@@ -8,12 +8,12 @@
         "title_match": null,
         "method": "snapshot-hash",
         "detail": "offline mode: snapshot integrity only",
-        "at": "2026-10-18T15:59:44Z"
+        "at": "2026-10-19T13:52:35Z"
       },
       "retraction": {
         "status": "unknown",
         "source_flag": null,
-        "checked_at": "2026-10-18T15:59:44Z"
+        "checked_at": "2026-10-19T13:52:35Z"
       }
     },
     "SRC-0002": {
@@ -22,12 +22,12 @@
         "title_match": null,
         "method": "snapshot-hash",
         "detail": "offline mode: snapshot integrity only",
-        "at": "2026-10-18T15:59:44Z"
+        "at": "2026-10-19T13:52:35Z"
       },
       "retraction": {
         "status": "unknown",
         "source_flag": null,
-        "checked_at": "2026-10-18T15:59:44Z"
+        "checked_at": "2026-10-19T13:52:35Z"
       }
     }
   },
@@ -36,6 +36,9 @@
   "fabrication_suspected": [],
   "number_mismatches": [],
   "corroboration_gaps": [],
+  "modality_mismatches": [],
+  "primary_source_gaps": [],
+  "staleness_warnings": [],
   "claims_summary": {
     "supported": 2
   },

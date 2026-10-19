@@ -25,6 +25,8 @@ from core import budget as budget_mod  # noqa: E402
 from core import claims as claims_mod  # noqa: E402
 from core import contradictions as contradictions_mod  # noqa: E402
 from core import credibility, extract, gates, report_builder  # noqa: E402
+from core import requirements as requirements_mod  # noqa: E402
+from core import searchlog  # noqa: E402
 from core import snapshot as snapshot_mod  # noqa: E402
 from core import verify_citations  # noqa: E402
 from core.evidence_store import Ledger  # noqa: E402
@@ -41,7 +43,8 @@ RESOLUTIONS = sorted(contradictions_mod.RESOLUTIONS)
 
 BRIEF_KEYS = ["question", "title", "profile", "cutoff", "deliverable", "domain",
               "maintenance", "privacy_mode", "allow_paid", "success_criteria",
-              "angles", "created"]
+              "angles", "created", "deliverable_type", "review_protocol",
+              "key_studies_target", "project_dir"]
 
 
 # ================================================================== output
@@ -160,14 +163,39 @@ def cmd_init(args) -> dict:
     profile = args.profile
     if profile == "max" and args.max_spend is None and not args.declare_uncapped:
         fail("profile 'max' requires declared spend: pass --max-spend N (or --declare-uncapped)")
-    vault = paths.vault_dir(args.vault)
     base_slug = util.slugify(args.title or args.question)
-    slug, n = base_slug, 2
-    while (vault / "projects" / slug).exists():
-        slug, n = f"{base_slug}-{n}", n + 1
-    project = vault / "projects" / slug
+    if args.dir:
+        project = Path(args.dir).expanduser().resolve()
+        if (project / "state.json").exists():
+            fail(f"{project} already contains a research project")
+        if project.exists() and any(project.iterdir()) and not args.force:
+            fail(f"{project} is not empty — pass --force to use it anyway")
+        try:
+            paths.guard_output_location(project)
+        except ValueError as exc:
+            fail(str(exc))
+        slug = project.name or base_slug
+        vault = project.parent
+        vault_base = None
+    else:
+        vault = paths.vault_dir(args.vault)
+        try:
+            paths.guard_output_location(vault)
+        except ValueError:
+            fail("the default vault would land inside the skill/installation directory — "
+                 "research outputs must go in a folder you choose: "
+                 "init \"question\" --dir /path/to/your/folder")
+        slug, n = base_slug, 2
+        while (vault / "projects" / slug).exists():
+            slug, n = f"{base_slug}-{n}", n + 1
+        project = vault / "projects" / slug
+        vault_base = str(vault)
     util.ensure_dir(project / "sources")
     util.ensure_dir(project / "findings")
+
+    deliverable_type = args.deliverable_type
+    review_protocol = args.review_protocol or ("prisma" if deliverable_type == "academic-paper" else "none")
+    key_studies_target = args.key_studies_target or (8 if deliverable_type == "academic-paper" else 0)
 
     now = util.utcnow_iso()
     cutoff = args.cutoff or (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
@@ -177,6 +205,9 @@ def cmd_init(args) -> dict:
     state = {
         "slug": slug, "title": args.title or args.question, "question": args.question,
         "profile": profile, "privacy_mode": bool(args.privacy),
+        "project_dir": str(project), "vault_base": vault_base,
+        "deliverable_type": deliverable_type, "review_protocol": review_protocol,
+        "key_studies_target": key_studies_target,
         "created_at": now, "updated_at": now, "phase_current": 0,
         "counters": {"searches": 0, "sources_read": 0, "evidence": 0, "claims": 0, "verify_passes": 0},
         "phases": {"0": {}}, "gate_waivers": [], "ran": {"steps": [], "last_verify_at": None,
@@ -197,6 +228,8 @@ def cmd_init(args) -> dict:
         cutoff=cutoff, deliverable=args.deliverable, domain=args.domain,
         maintenance=args.maintenance, privacy_mode=bool(args.privacy),
         success_criteria=criteria, angles=angles, created_at=now,
+        deliverable_type=deliverable_type, review_protocol=review_protocol,
+        key_studies_target=key_studies_target, project_dir=str(project),
     )
     util.atomic_write_text(project / "brief.md", brief_md)
     util.atomic_write_text(project / "plan.md",
@@ -204,8 +237,12 @@ def cmd_init(args) -> dict:
                            "> Build this with `research_ctl.py plan set-section` per "
                            "references/phases/01-landscape.md and 02-plan.md.\n")
     util.write_json(paths.state_path(project), state)
-    return {"project": slug, "path": str(project), "profile": profile,
-            "note": "no protocol text is stored in the project — SKILL.md and references/ are the instructions",
+    paths.register_project(project)
+    return {"project": slug, "path": str(project),
+            "deliverable_type": deliverable_type, "review_protocol": review_protocol,
+            "note": "outputs live in the folder above; later commands find the most recent "
+                    "project automatically, or use `--project <path>` / "
+                    "`export RESEARCH_OS_PROJECT=<path>`",
             "next": "brief set … → plan set-section … → gate --phase 0"}
 
 
@@ -278,16 +315,27 @@ def cmd_brief_set(args) -> dict:
         updates["angles"] = [a.strip() for a in args.angles.split(";") if a.strip()]
     if args.success is not None:
         updates["success_criteria"] = [s.strip() for s in args.success.split(";") if s.strip()]
+    if getattr(args, "deliverable_type", None) is not None:
+        updates["deliverable_type"] = args.deliverable_type
+    if getattr(args, "review_protocol", None) is not None:
+        updates["review_protocol"] = args.review_protocol
+    if getattr(args, "key_studies_target", None) is not None:
+        updates["key_studies_target"] = args.key_studies_target
     if not updates:
         fail("nothing to set — pass at least one field flag")
     meta = _write_front_matter(project / "brief.md", updates)
 
     state = _state(project)
-    for k in ("question", "title", "profile"):
+    for k in ("question", "title", "profile", "deliverable_type", "review_protocol",
+              "key_studies_target"):
         if k in updates:
             state[k] = updates[k]
     if "privacy_mode" in updates:
         state["privacy_mode"] = updates["privacy_mode"]
+    if updates.get("deliverable_type") == "academic-paper" and "review_protocol" not in updates \
+            and meta.get("review_protocol") in (None, "none"):
+        meta = _write_front_matter(project / "brief.md", {"review_protocol": "prisma"})
+        state["review_protocol"] = "prisma"
     _save(project, state)
     return {"brief": {k: meta.get(k) for k in BRIEF_KEYS if k in meta}}
 
@@ -364,8 +412,103 @@ def cmd_search(args) -> dict:
             "abstract": util.truncate(r.get("abstract") or "", 300),
             "seen_in": (r.get("extra") or {}).get("seen_in", []),
         })
+    entry = searchlog.append(project, {
+        "query": query, "engine": "connector-route", "manual": False,
+        "domains": domains or ["auto"], "angle": getattr(args, "angle", None),
+        "chosen": result["chosen"],
+        "provenance": result["provenance"],
+        "failures": [f["service"] for f in result["failures"]],
+        "hits": sum(result["provenance"].values()),
+        "kept": len(records),
+        "urls": [r["url"] for r in records if r.get("url")][:60],
+        "notes": getattr(args, "notes", None),
+    })
     return {"query": query, "chosen": result["chosen"], "provenance": result["provenance"],
-            "failures": result["failures"], "count": len(records), "records": records}
+            "failures": result["failures"], "count": len(records), "records": records,
+            "search_log_id": entry["id"]}
+
+
+def cmd_searchlog_add(args) -> dict:
+    project = _project(args)
+    entry = searchlog.append(project, {
+        "query": args.query, "engine": args.engine, "manual": True,
+        "angle": args.angle, "hits": args.hits, "kept": args.kept or 0,
+        "notes": args.notes, "urls": [],
+    })
+    return {"search_log_id": entry["id"], "entry": entry}
+
+
+def cmd_searchlog_list(args) -> dict:
+    project = _project(args)
+    return searchlog.summarize(project)
+
+
+# =========================================================== requirements
+
+def cmd_requirements_add(args) -> dict:
+    project = _project(args)
+    try:
+        rec = requirements_mod.add(project, args.text, origin=args.origin or "user prompt",
+                                   rid=args.id)
+    except ValueError as exc:
+        fail(str(exc))
+    return {"requirement": rec, "total": len(requirements_mod.load(project))}
+
+
+def cmd_requirements_map(args) -> dict:
+    project = _project(args)
+    try:
+        rec = requirements_mod.map_target(project, args.requirement_id, args.target)
+    except KeyError as exc:
+        fail(str(exc))
+    cov = requirements_mod.coverage(project)
+    return {"requirement": rec, "unmet": cov["unmet"]}
+
+
+def cmd_requirements_waive(args) -> dict:
+    project = _project(args)
+    try:
+        rec = requirements_mod.waive(project, args.requirement_id, args.reason)
+    except KeyError as exc:
+        fail(str(exc))
+    return {"requirement": rec}
+
+
+def cmd_requirements_list(args) -> dict:
+    project = _project(args)
+    return requirements_mod.coverage(project)
+
+
+# ================================================================ project
+
+def cmd_project_where(args) -> dict:
+    project = _project(args)
+    return {"path": str(project), "slug": paths.load_state(project).get("slug")}
+
+
+def cmd_project_move(args) -> dict:
+    import shutil
+    project = _project(args)
+    target = Path(args.to).expanduser().resolve()
+    if target.exists() and any(target.iterdir()):
+        fail(f"{target} is not empty — choose an empty or new folder")
+    try:
+        paths.guard_output_location(target)
+    except ValueError as exc:
+        fail(str(exc))
+    old = project
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        target.rmdir()
+    shutil.copytree(old, target)
+    if args.remove_original:
+        shutil.rmtree(old)
+    state = paths.load_state(target)
+    state["project_dir"] = str(target)
+    paths.save_state(target, state)
+    paths.register_project(target)
+    return {"moved_to": str(target), "original_removed": bool(args.remove_original),
+            "note": "use `--project " + str(target) + "` or export RESEARCH_OS_PROJECT"}
 
 
 # =================================================================== read
@@ -446,7 +589,9 @@ def cmd_read(args) -> dict:
         "accessed_at": util.utcnow_iso(), "service": service, "type": stype,
         "tier": args.tier or (existing or {}).get("tier") or _infer_tier(stype, service),
         "origin_key": util.domain_of(url), "angles_covered": angles,
-        "snapshot": snap, "extra": (existing or {}).get("extra") or {},
+        "snapshot": snap,
+        "status": (existing or {}).get("status") or "included",
+        "extra": (existing or {}).get("extra") or {},
     }
     if existing:
         rec = ledger.update_source(sid, **{k: v for k, v in rec.items() if k != "id"})
@@ -475,28 +620,81 @@ def cmd_sources_update(args) -> dict:
     project = _project(args)
     ledger = Ledger(project)
     fields: dict = {}
-    if args.title is not None:
-        fields["title"] = args.title
-    if args.type is not None:
-        fields["type"] = args.type
+    for attr, key in (("title", "title"), ("type", "type"), ("publisher", "publisher"),
+                      ("published", "published"), ("doi", "doi"), ("as_of", "as_of"),
+                      ("venue", "venue"), ("volume", "volume"), ("issue", "issue"),
+                      ("pages", "pages"), ("published_doi", "published_doi"),
+                      ("preprint_doi", "preprint_doi")):
+        val = getattr(args, attr, None)
+        if val is not None:
+            fields[key] = val
     if args.tier is not None:
         fields["tier"] = args.tier
     if args.angles is not None:
         fields["angles_covered"] = [a.strip() for a in args.angles.split(",") if a.strip()]
-    if args.publisher is not None:
-        fields["publisher"] = args.publisher
-    if args.published is not None:
-        fields["published"] = args.published
-    if args.doi is not None:
-        fields["doi"] = args.doi
+    if args.year is not None:
+        fields["year"] = args.year
+    if args.status is not None:
+        if args.status == "excluded" and not args.exclude_reason:
+            fail("status 'excluded' requires --exclude-reason (screening must be auditable)")
+        fields["status"] = args.status
+        if args.exclude_reason:
+            fields["exclusion_reason"] = args.exclude_reason
     if not fields:
         fail("nothing to update")
     rec = ledger.update_source(args.source_id, **fields)
     if any(k in fields for k in ("type", "published", "doi")):
         rec = ledger.update_source(args.source_id, credibility=credibility.score_source(rec))
-    return {"source": {k: rec.get(k) for k in ("id", "title", "type", "tier", "angles_covered", "url", "doi")},
+    return {"source": {k: rec.get(k) for k in ("id", "title", "type", "tier", "angles_covered",
+                                               "url", "doi", "status", "exclusion_reason",
+                                               "venue", "year", "as_of")},
             "credibility": {"band": (rec.get("credibility") or {}).get("band"),
                             "score": (rec.get("credibility") or {}).get("score")}}
+
+
+def cmd_sources_review(args) -> dict:
+    project = _project(args)
+    ledger = Ledger(project)
+    rec = ledger.source(args.source_id)
+    if rec is None:
+        fail(f"source {args.source_id} not found")
+    review = dict(rec.get("review") or {})
+    for attr, key in (("problem", "problem"), ("framework", "framework"), ("method", "method"),
+                      ("context", "context"), ("findings", "findings"),
+                      ("limitations", "limitations"), ("relevance_note", "relevance")):
+        val = getattr(args, attr, None)
+        if val is not None:
+            review[key] = val
+    fields: dict = {"review": review}
+    if args.key:
+        fields["key_study"] = True
+    if args.unkey:
+        fields["key_study"] = False
+    rec = ledger.update_source(args.source_id, **fields)
+    filled = sorted(k for k in ("problem", "framework", "method", "context", "findings",
+                                "limitations", "relevance") if review.get(k))
+    return {"source_id": args.source_id, "key_study": bool(rec.get("key_study")),
+            "review_fields": filled,
+            "missing_fields": [k for k in ("problem", "framework", "method", "context",
+                                           "findings", "limitations", "relevance")
+                               if not review.get(k)]}
+
+
+def cmd_sources_enrich(args) -> dict:
+    project = _project(args)
+    from core import bibmeta
+    ledger = Ledger(project)
+    if args.all:
+        targets = [s["id"] for s in ledger.sources() if s.get("doi")]
+        if not targets:
+            fail("no sources carry a DOI — nothing to enrich")
+    elif args.source_id:
+        targets = [args.source_id]
+    else:
+        fail("pass --source-id or --all")
+    online = not args.offline
+    results = [bibmeta.enrich_source(project, sid, online=online) for sid in targets]
+    return {"enriched": sum(1 for r in results if r["enriched"]), "results": results}
 
 
 # =============================================================== evidence
@@ -554,7 +752,7 @@ def cmd_claims_add(args) -> tuple[dict, int]:
     ledger = Ledger(project)
     try:
         claim = claims_mod.build_claim(
-            args.text, type_=args.type,
+            args.text, type_=args.type, kind=args.kind,
             tags=[t.strip() for t in (args.tags or "").split(",") if t.strip()],
             angles=[a.strip() for a in (args.angles or "").split(",") if a.strip()],
             evidence_ids=[e.strip() for e in (args.evidence or "").split(",") if e.strip()],
@@ -566,7 +764,11 @@ def cmd_claims_add(args) -> tuple[dict, int]:
     _bump(state, "claims")
     _save(project, state)
     warnings = [] if rec["evidence_ids"] else ["claim has no evidence_ids — phase-6 gate requires them"]
+    if rec.get("modality"):
+        warnings.append("normative phrasing detected — supporting quotes must also be normative, "
+                        "and an official/primary source is required for `kind: normative`")
     return {"claim_id": rec["id"], "numbers": rec["numbers"], "status": rec["status"],
+            "kind": rec["kind"], "modality": rec.get("modality", False),
             "warnings": warnings}, 0
 
 
@@ -628,6 +830,9 @@ def cmd_verify(args) -> dict:
             "fabrication_suspected": report["fabrication_suspected"],
             "number_mismatches": report["number_mismatches"],
             "corroboration_gaps": report["corroboration_gaps"],
+            "modality_mismatches": report["modality_mismatches"],
+            "primary_source_gaps": report["primary_source_gaps"],
+            "staleness_warnings": report["staleness_warnings"],
             "claims_summary": report["claims_summary"],
             "open_contradictions": report["open_contradictions"],
             "report_path": str(project / "verify_report.json")}
@@ -696,7 +901,7 @@ def cmd_findings_new(args) -> dict:
     fid = _next_finding_id(project)
     meta = {
         "id": fid, "title": args.title, "strength": args.strength,
-        "confidence": args.confidence, "claims": claim_ids,
+        "confidence": args.confidence, "kind": args.kind, "claims": claim_ids,
         "counterpoints": [c.strip() for c in (args.counterpoints or "").split(";") if c.strip()],
         "gaps": [g.strip() for g in (args.gaps or "").split(";") if g.strip()],
         "angles": [a.strip() for a in (args.angles or "").split(",") if a.strip()],
@@ -1110,6 +1315,17 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--max-spend", type=float, default=None)
     sp.add_argument("--declare-uncapped", action="store_true")
     sp.add_argument("--vault")
+    sp.add_argument("--dir", help="exact project directory (user-chosen folder for the outputs)")
+    sp.add_argument("--force", action="store_true", help="allow --dir into a non-empty folder")
+    sp.add_argument("--deliverable-type",
+                    choices=["report", "academic-paper", "decision-framework", "memo",
+                             "osint-brief", "dataset"],
+                    default="report",
+                    help="academic-paper activates review-protocol + analysis gates")
+    sp.add_argument("--review-protocol", choices=["none", "prisma"], default=None,
+                    help="systematic-review protocol (academic-paper defaults to prisma)")
+    sp.add_argument("--key-studies-target", type=int, default=None,
+                    help="how many key studies must carry comparison-matrix fields")
     sp.add_argument("--human", action="store_true")
     sp.set_defaults(func=cmd_init)
 
@@ -1133,6 +1349,11 @@ def build_parser() -> argparse.ArgumentParser:
     s2.add_argument("--cutoff"); s2.add_argument("--deliverable"); s2.add_argument("--domain")
     s2.add_argument("--maintenance", choices=["ok", "due"])
     s2.add_argument("--privacy"); s2.add_argument("--angles"); s2.add_argument("--success")
+    s2.add_argument("--deliverable-type",
+                    choices=["report", "academic-paper", "decision-framework", "memo",
+                             "osint-brief", "dataset"])
+    s2.add_argument("--review-protocol", choices=["none", "prisma"])
+    s2.add_argument("--key-studies-target", type=int)
     common(s2); s2.set_defaults(func=cmd_brief_set)
     s2 = bsub.add_parser("show"); common(s2); s2.set_defaults(func=cmd_brief_show)
 
@@ -1153,7 +1374,51 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--limit", type=int, default=10)
     sp.add_argument("--source", help="override router with one connector")
     sp.add_argument("--seed", type=int)
+    sp.add_argument("--angle", help="research angle this search serves (logged for PRISMA)")
+    sp.add_argument("--notes", help="free-text note stored in the search log")
     common(sp); sp.set_defaults(func=cmd_search)
+
+    # searchlog
+    sp = sub.add_parser("searchlog", help="reproducible search journal (SCH-####)")
+    lsub = sp.add_subparsers(dest="searchlog_cmd", required=True)
+    s2 = lsub.add_parser("add", help="record a manual/engine search")
+    s2.add_argument("--query", required=True)
+    s2.add_argument("--engine", required=True)
+    s2.add_argument("--hits", type=int, required=True, help="total hits seen")
+    s2.add_argument("--kept", type=int, default=0, help="hits kept after screening")
+    s2.add_argument("--angle")
+    s2.add_argument("--notes")
+    common(s2); s2.set_defaults(func=cmd_searchlog_add)
+    s2 = lsub.add_parser("list", help="summary of all logged searches")
+    common(s2); s2.set_defaults(func=cmd_searchlog_list)
+
+    # requirements
+    sp = sub.add_parser("requirements", help="deliverable requirement coverage (RQ-##)")
+    qsub = sp.add_subparsers(dest="requirements_cmd", required=True)
+    s2 = qsub.add_parser("add")
+    s2.add_argument("--text", required=True)
+    s2.add_argument("--origin", help="where the requirement came from (default: user prompt)")
+    s2.add_argument("--id", help="explicit RQ-## id")
+    common(s2); s2.set_defaults(func=cmd_requirements_add)
+    s2 = qsub.add_parser("map", help="map a requirement to its report section/finding")
+    s2.add_argument("--requirement-id", "--requirement", dest="requirement_id", required=True)
+    s2.add_argument("--target", required=True,
+                    help="report section heading or finding id that fulfils it")
+    common(s2); s2.set_defaults(func=cmd_requirements_map)
+    s2 = qsub.add_parser("waive", help="waive a requirement with a reason (shown in Limitations)")
+    s2.add_argument("--requirement-id", "--requirement", dest="requirement_id", required=True)
+    s2.add_argument("--reason", required=True)
+    common(s2); s2.set_defaults(func=cmd_requirements_waive)
+    s2 = qsub.add_parser("list"); common(s2); s2.set_defaults(func=cmd_requirements_list)
+
+    # project
+    sp = sub.add_parser("project", help="project location helpers")
+    psub = sp.add_subparsers(dest="project_cmd", required=True)
+    s2 = psub.add_parser("where"); common(s2); s2.set_defaults(func=cmd_project_where)
+    s2 = psub.add_parser("move", help="move the project folder (e.g. into ~/Research)")
+    s2.add_argument("--to", required=True)
+    s2.add_argument("--remove-original", action="store_true")
+    common(s2); s2.set_defaults(func=cmd_project_move)
 
     # read
     sp = sub.add_parser("read", help="fetch + extract + snapshot a source")
@@ -1173,7 +1438,30 @@ def build_parser() -> argparse.ArgumentParser:
     s2.add_argument("--title"); s2.add_argument("--type"); s2.add_argument("--tier", type=int)
     s2.add_argument("--angles"); s2.add_argument("--publisher"); s2.add_argument("--published")
     s2.add_argument("--doi")
+    s2.add_argument("--status", choices=["screened", "included", "excluded"],
+                    help="screening decision (excluded requires --exclude-reason)")
+    s2.add_argument("--exclude-reason", dest="exclude_reason",
+                    help="why the source was excluded (required for status excluded)")
+    s2.add_argument("--as-of", dest="as_of",
+                    help="document/effective date for policy sources (YYYY-MM-DD)")
+    s2.add_argument("--venue"); s2.add_argument("--year", type=int)
+    s2.add_argument("--volume"); s2.add_argument("--issue"); s2.add_argument("--pages")
+    s2.add_argument("--published-doi", dest="published_doi")
+    s2.add_argument("--preprint-doi", dest="preprint_doi")
     common(s2); s2.set_defaults(func=cmd_sources_update)
+    s2 = ssub.add_parser("review", help="key-study comparison fields (literature matrix)")
+    s2.add_argument("--source-id", "--source", dest="source_id", required=True)
+    s2.add_argument("--problem"); s2.add_argument("--framework"); s2.add_argument("--method")
+    s2.add_argument("--context"); s2.add_argument("--findings"); s2.add_argument("--limitations")
+    s2.add_argument("--relevance", dest="relevance_note")
+    s2.add_argument("--key", action="store_true", help="mark as key study for the matrix")
+    s2.add_argument("--unkey", action="store_true", help="remove key-study mark")
+    common(s2); s2.set_defaults(func=cmd_sources_review)
+    s2 = ssub.add_parser("enrich", help="fill bibliographic fields from Crossref (needs DOI)")
+    s2.add_argument("--source-id", "--source", dest="source_id")
+    s2.add_argument("--all", action="store_true", help="enrich every source that has a DOI")
+    s2.add_argument("--offline", action="store_true", help="no-op report (never hits network)")
+    common(s2); s2.set_defaults(func=cmd_sources_enrich)
 
     # evidence
     sp = sub.add_parser("evidence", help="evidence ledger")
@@ -1196,6 +1484,9 @@ def build_parser() -> argparse.ArgumentParser:
     s2 = csub.add_parser("add")
     s2.add_argument("--text", required=True)
     s2.add_argument("--type", choices=CLAIM_TYPES, default="statistic")
+    s2.add_argument("--kind", choices=["empirical", "normative", "theoretical"],
+                    default="empirical",
+                    help="normative claims require an official/primary source at verify time")
     s2.add_argument("--tags", default="")
     s2.add_argument("--angles", default="")
     s2.add_argument("--evidence", "--evidence-ids", dest="evidence", default="")
@@ -1239,6 +1530,10 @@ def build_parser() -> argparse.ArgumentParser:
     s2.add_argument("--strength", choices=STRENGTHS, default="supported")
     s2.add_argument("--confidence", choices=CONFIDENCES, default="medium")
     s2.add_argument("--claims", required=True, help="comma-separated CL-#### ids")
+    s2.add_argument("--kind", choices=["analysis", "model", "scenarios", "sensitivity",
+                                       "literature-matrix", "methodology", "conclusion"],
+                    default="analysis",
+                    help="model/scenarios/sensitivity are required for academic-paper deliverables")
     s2.add_argument("--counterpoints", default="", help="';'-separated")
     s2.add_argument("--gaps", default="", help="';'-separated")
     s2.add_argument("--angles", default="")

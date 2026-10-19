@@ -60,6 +60,7 @@ def run(project: Path, online: bool = False) -> dict:
             cx_by_claim.setdefault(cid, []).append(cx)
 
     number_mismatches, corroboration_gaps, summary_counts = [], [], {}
+    modality_mismatches, primary_source_gaps, staleness_warnings = [], [], []
     now = util.utcnow_iso()
 
     for c in ledger.claims():
@@ -69,7 +70,35 @@ def run(project: Path, online: bool = False) -> dict:
         origins = ledger.origin_keys_for_claim(c)
         cxs = cx_by_claim.get(c["id"], [])
 
-        status, reason = _classify(c, srcs, origins, num_problems, cxs)
+        modality_bad = claims_mod.modality_mismatch(c, evs)
+        needs_official = c.get("kind") == "normative" or claims_mod.has_modality(c.get("text", ""))
+        official = claims_mod.official_sources(srcs)
+        primary_gap = needs_official and not official
+        if modality_bad:
+            modality_mismatches.append({
+                "claim_id": c["id"],
+                "num_evidence": len(evs),
+                "reason": "normative claim phrased as prohibition/obligation, "
+                          "but no supporting quote contains normative language",
+            })
+        if primary_gap:
+            primary_source_gaps.append({
+                "claim_id": c["id"],
+                "reason": "normative/regulatory claim has no official/primary source "
+                          f"(have: {sorted({(s.get('type') or '?') for s in srcs}) or 'none'})",
+            })
+        stale = [s for s in (official or srcs)
+                 if (claims_mod.staleness_months(s) or 0) > 18]
+        if needs_official and stale:
+            staleness_warnings.append({
+                "claim_id": c["id"],
+                "sources": [s["id"] for s in stale],
+                "reason": "normative claim relies on a document older than 18 months — "
+                          "re-check for updates before treating it as current",
+            })
+
+        status, reason = _classify(c, srcs, origins, num_problems, cxs,
+                                   modality_bad=modality_bad, primary_gap=primary_gap)
         ledger.update_claim(c["id"], status=status, status_reason=reason,
                             origin_keys=origins, verified_at=now)
         summary_counts[status] = summary_counts.get(status, 0) + 1
@@ -92,6 +121,9 @@ def run(project: Path, online: bool = False) -> dict:
         "fabrication_suspected": fabrication_suspected,
         "number_mismatches": number_mismatches,
         "corroboration_gaps": corroboration_gaps,
+        "modality_mismatches": modality_mismatches,
+        "primary_source_gaps": primary_source_gaps,
+        "staleness_warnings": staleness_warnings,
         "claims_summary": summary_counts,
         "open_contradictions": [cx["id"] for cx in ledger.contradictions() if cx["status"] == "open"],
     }
@@ -164,7 +196,8 @@ def _verify_source(project: Path, s: dict, online: bool) -> tuple[dict, dict]:
 
 
 def _classify(claim: dict, srcs: list[dict], origins: list[str],
-              num_problems: list[dict], cxs: list[dict]) -> tuple[str, str]:
+              num_problems: list[dict], cxs: list[dict],
+              modality_bad: bool = False, primary_gap: bool = False) -> tuple[str, str]:
     if claim.get("status") == "outweighed":
         return "outweighed", claim.get("status_reason") or "adjudicated as outweighed"
 
@@ -179,6 +212,14 @@ def _classify(claim: dict, srcs: list[dict], origins: list[str],
     open_cx = [cx for cx in cxs if cx.get("status") == "open"]
     if open_cx:
         return "contradicted", f"open contradiction {open_cx[0]['id']}"
+
+    if modality_bad:
+        return "weakly_supported", ("normative phrasing (prohibition/obligation) not present "
+                                    "in any supporting quote — wording is stronger than the evidence")
+
+    if primary_gap:
+        return "weakly_supported", ("normative/regulatory claim without an official or primary "
+                                    "source — add the regulation/statistics document itself")
 
     if num_problems:
         raw = ", ".join(n.get("raw", "?") for n in num_problems[:3])

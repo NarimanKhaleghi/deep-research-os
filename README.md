@@ -141,8 +141,8 @@ cd deep-research-os
 # 3. Verify the environment (no keys needed)
 python scripts/research_ctl.py doctor
 
-# 4. First research run
-python scripts/research_ctl.py init "Your research question" --profile deep
+# 4. First research run — outputs go in a folder YOU choose
+python scripts/research_ctl.py init "Your research question" --profile deep --dir ~/Research/your-topic
 python scripts/research_ctl.py status
 ```
 
@@ -151,6 +151,32 @@ the SKILL.md workflow takes over.
 
 **Platform targets:** `./install.sh --platform claude|opencode|codex|cursor|all|generic --dest <path>`
 (symlink mode with `--link` for development).
+
+### New in 1.1 — outputs, requirements, reproducibility
+
+- **Research lives in your folder** — `init --dir` writes exactly where you say;
+  the tool refuses to put projects inside the skill/repo/runtime directories, and
+  `project move --to ~/Research/<topic>` relocates existing runs.
+- **Requirements contract** — every explicit prompt constraint
+  (`requirements add`) must be mapped to a report anchor or waived with a reason;
+  `report build` fails on unmet requirements, and waivers are printed in
+  Limitations. Academic deliverables require recorded requirements.
+- **Reproducible reviews** — every search is journaled (`searches.jsonl`,
+  `SCH-####`, manual searches via `searchlog add`); sources carry screening
+  statuses with exclusion reasons; reports render a PRISMA-lite funnel plus a
+  search-log table.
+- **Normative-claim discipline** — `claims add --kind normative` requires an
+  official/primary source and a quote that actually says what is
+  prohibited/required (EN+FA modality check); official documents >18 months old
+  raise staleness warnings instead of silent overclaims.
+- **APA-7 bibliography** — `sources enrich` pulls canonical metadata from
+  Crossref (authors, venue, year, pages, published DOI) and flags
+  preprint/published DOI spread; academic bibliographies are hard-gated on
+  completeness.
+- **Operational models** — academic deliverables must ship `model`, `scenarios`
+  (≥5 incl. a combination scenario) and `sensitivity` findings, plus a Literature
+  Comparison Matrix built from ≥8 reviewed key studies
+  (`references/methods/decision-modeling.md`).
 
 ---
 

@@ -79,24 +79,117 @@ def project_dir(slug: str, vault: Optional[str] = None) -> Path:
     return projects_dir(vault) / slug
 
 
+def is_inside(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def guard_output_location(path: Path) -> None:
+    """Refuse to create research outputs inside the skill/repo or runtime dirs.
+
+    Research belongs in a user-chosen folder; the skill directory must stay clean
+    (only ``~/.config/deep-research-os/`` may hold persistent learning data).
+    """
+    p = Path(path).expanduser().resolve()
+    if is_inside(p, repo_root()):
+        raise ValueError(
+            f"refusing to put research output inside the skill/repo directory ({repo_root()}). "
+            "Pass an explicit destination: `init \"…\" --dir /path/to/your/folder`"
+        )
+    if is_inside(p, runtime_home()):
+        raise ValueError(
+            f"refusing to put research output inside the runtime home ({runtime_home()}) — "
+            "that folder holds learning data only. Pass `--dir /path/to/your/folder`"
+        )
+
+
+def discover_project(start: Optional[Path] = None) -> Optional[Path]:
+    """Walk up from ``start`` (default cwd) looking for a project (state.json)."""
+    cur = (start or Path.cwd()).resolve()
+    for candidate in (cur, *cur.parents):
+        if (candidate / "state.json").exists() and (candidate / "sources").is_dir():
+            return candidate
+    return None
+
+
+def registry_path() -> Path:
+    return runtime_home() / "projects.json"
+
+
+def load_registry() -> list[dict]:
+    try:
+        data = json.loads(registry_path().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    entries = data.get("projects") if isinstance(data, dict) else data
+    return list(entries or [])
+
+
+def register_project(project: Path) -> None:
+    """Remember a project location so later commands find it without env vars."""
+    p = Path(project).expanduser().resolve()
+    entries = [e for e in load_registry()
+               if Path(str(e.get("path", ""))).expanduser().resolve() != p]
+    entries.append({"slug": p.name, "path": str(p)})
+    entries = entries[-200:]
+    try:
+        runtime_home().mkdir(parents=True, exist_ok=True)
+        registry_path().write_text(
+            json.dumps({"projects": entries}, ensure_ascii=False, indent=1),
+            encoding="utf-8")
+    except OSError:
+        pass  # registry is a convenience, never a failure
+
+
 def resolve_project(slug: Optional[str] = None, vault: Optional[str] = None) -> Path:
-    """Find a project dir: by slug, or the newest one when slug is omitted."""
-    root = projects_dir(vault)
+    """Find a project dir.
+
+    Priority: explicit slug/path -> ``$RESEARCH_OS_PROJECT`` -> vault lookup ->
+    upward discovery from cwd -> registry of ``--dir`` projects.
+    Accepts either a slug under ``<vault>/projects`` or a direct filesystem path
+    to a project directory.
+    """
     if slug:
+        direct = Path(slug).expanduser()
+        if direct.is_dir() and (direct / "state.json").exists():
+            return direct.resolve()
+        root = projects_dir(vault)
         p = root / slug
         if not p.exists():
             raise FileNotFoundError(f"project '{slug}' not found under {root}")
         return p
-    if not root.exists():
-        raise FileNotFoundError(
-            "no projects found — run `research_ctl.py init \"question\"` first"
-        )
-    candidates = [d for d in root.iterdir() if (d / "state.json").exists()]
-    if not candidates:
-        raise FileNotFoundError(f"no initialized projects under {root}")
-    if len(candidates) == 1:
-        return candidates[0]
-    return max(candidates, key=lambda d: (d / "state.json").stat().st_mtime)
+
+    env_project = os.environ.get("RESEARCH_OS_PROJECT")
+    if env_project:
+        ep = Path(env_project).expanduser()
+        if (ep / "state.json").exists():
+            return ep.resolve()
+        raise FileNotFoundError(f"$RESEARCH_OS_PROJECT='{env_project}' has no state.json")
+
+    if not vault:
+        found = discover_project()
+        if found:
+            return found
+
+    root = projects_dir(vault)
+    if root.exists():
+        candidates = [d for d in root.iterdir() if (d / "state.json").exists()]
+        if candidates:
+            if len(candidates) == 1:
+                return candidates[0]
+            return max(candidates, key=lambda d: (d / "state.json").stat().st_mtime)
+
+    for entry in reversed(load_registry()):
+        p = Path(str(entry.get("path", ""))).expanduser()
+        if (p / "state.json").exists():
+            return p.resolve()
+
+    raise FileNotFoundError(
+        "no projects found — run `research_ctl.py init \"question\" --dir <folder>` first "
+        "(or export RESEARCH_OS_PROJECT=<project path>)")
 
 
 def state_path(project: Path) -> Path:

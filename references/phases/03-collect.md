@@ -12,10 +12,18 @@
 1. **Run the matrix.** Use `search` per strategy with `--domains` and record results.
    The router handles source selection (ε-greedy over learned weights — you don't pick
    engines by hand unless overriding with `--source`).
+   - Every connector search is logged automatically to `searches.jsonl` (SCH-####).
+   - Manual searches (Google Scholar, Persian databases, site queries, hand-picked
+     journals) **must** be logged too:
+     `searchlog add --query "…" --engine scholar --hits 120 --kept 9 --angle "…"`.
+   - `--angle` on `search` tags which angle the query served — the report's
+     reproducibility block uses it.
 2. **Triage then read.** Search results are *candidates*, not sources. Promote a
    candidate with `read` only if it plausibly carries evidence for ≥1 angle:
    - primary/official/peer-reviewed first (source map says where truth lives);
    - cherry-pick breadth per tier: don't let Tier-3 reads eat Tier-1 budget.
+   - Exclusions are decisions too: `sources update --source-id SRC-000X --status excluded --exclude-reason "…"`.
+     `status: screened` marks title/abstract-level candidates that were not read.
 3. **`read` does the boring work** — fetch, extract (readability/PDF), snapshot to
    `sources/SRC-####.txt`, hash (SHA-256), metadata record. One `read` = one source.
    - Paywalled/unfetchable? `read --metadata-only` (abstract-level source; credibility
@@ -32,13 +40,18 @@
 
 - `sources/SRC-####.json` + `sources/SRC-####.txt` (or `.html`), schema
   `references/schemas/source.schema.json`.
+- `searches.jsonl` — the append-only search journal, schema
+  `references/schemas/searchlog.schema.json`.
 - `state.json.counters` updated (`searches`, `sources_read`).
 
 ```bash
-$R search --query "…" --domains academic,web --limit 10
+$R search --query "…" --domains academic,web --limit 10 --angle "pricing"
+$R searchlog add --query "site:oecd.org …" --engine google --hits 40 --kept 3 --angle "regulation"
 $R read --url "https://…" --angles "pricing; adoption" --title "…" --published 2026-03-02
 $R read --doi "10.1038/s41586-…" --angles "efficacy"
 $R read --file ~/downloads/report.pdf --angles "cost"
+$R sources update --source-id SRC-0004 --status excluded --exclude-reason "off-topic"
+$R searchlog list
 $R status
 $R gate --phase 3
 ```
@@ -51,6 +64,8 @@ $R gate --phase 3
 - [ ] Coverage: union of `angles_covered` ⊇ all brief angles — *or* a recorded
       `gate_waivers[]` entry naming the uncovered angle and why.
 - [ ] `state.counters.sources_read` ≤ profile ceiling (or `budget_exceptions` recorded).
+- [ ] Academic/PRISMA deliverables: ≥1 search logged (`search_logged`) and every
+      excluded source carries a reason (`screening_reasons`).
 
 ## Failure modes
 

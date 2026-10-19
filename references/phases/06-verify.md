@@ -10,6 +10,10 @@
 
 1. **Draft claims** from evidence (`claims add`) — one statement per claim:
    - `type`: `statistic|causal|forecast|opinion|methodological|definition`;
+   - `kind`: `empirical` (default) | `normative` | `theoretical`. Mark
+     regulatory/legal statements `--kind normative` — they must be backed by an
+     official/primary source and by a quote that actually says what is
+     prohibited/required;
    - `tags` (topic axes — these power contradiction pairing);
    - `evidence_ids` it rests on; numbers auto-parsed from text.
 2. **Run verification** — `verify` executes:
@@ -20,6 +24,15 @@
      you confirm entailment; the machine confirms quote-in-snapshot.
    - **Numeric consistency:** every number in a claim must appear in its quotes
      with equal-or-greater precision (`96.555% ≠ 97%`: silent precision loss fails).
+   - **Modality check:** a claim phrased as prohibition/obligation ("X may not…",
+     "الزام…") must have a supporting quote containing normative language;
+     otherwise `modality_mismatches` → downgraded to weakly_supported.
+   - **Primary-source rule:** normative claims need an official/primary source
+     (regulation, statistics bureau, central bank, filing). Without one:
+     `primary_source_gaps`.
+   - **Staleness:** official documents older than 18 months backing a normative
+     claim produce `staleness_warnings` — re-check for an updated regulation
+     before treating it as current.
    - **Corroboration:** critical claims (statistics, causal) need ≥2 independent
      origins (different registered domain / publisher — syndication doesn't count).
 3. **Scan contradictions** — `contradictions scan` pairs claims by tag overlap and
@@ -35,13 +48,17 @@
 ## Artifacts
 
 - `verify_report.json` — per-source verification results, per-claim checks,
-  metrics: `citation_precision`, `corroboration_gaps`, `number_conflicts`.
+  metrics: `citation_precision`, `corroboration_gaps`, `number_conflicts`,
+  `modality_mismatches`, `primary_source_gaps`, `staleness_warnings`.
 - `claims.jsonl` updated statuses; `contradictions.jsonl` records.
 - Markers `state.ran.last_verify_at`, `state.ran.last_contradictions_scan_at`.
 
 ```bash
 $R claims add --text "EU EV sales grew 36% in 2025" --type statistic \
               --tags "ev,eu,market" --evidence EV-0007,EV-0012 --critical
+$R claims add --text "The central bank requires banks to retain final credit risk" \
+              --kind normative --evidence EV-0021
+$R sources update --source-id SRC-0011 --as-of 1402-10-14
 $R verify --online            # --offline = snapshot-integrity checks only
 $R contradictions scan
 $R contradictions adjudicate CX-0002 --resolution source_a_wins --rationale "…"
@@ -59,6 +76,9 @@ $R gate --phase 6
       claim links ≥1 contradiction record; every contradiction is `adjudicated` or
       `open` with a reason (open ones must appear in the report).
 - [ ] Numeric checks: zero unacknowledged number mismatches.
+- [ ] Normative claims: no unaddressed `modality_mismatches` or
+      `primary_source_gaps`; `staleness_warnings` acknowledged in the claim wording
+      or Limitations.
 
 ## Failure modes
 

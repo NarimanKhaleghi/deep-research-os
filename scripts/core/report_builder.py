@@ -14,6 +14,7 @@ _SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
+from core import bibmeta, requirements as requirements_mod, searchlog  # noqa: E402
 from core.evidence_store import Ledger  # noqa: E402
 from lib import paths, util  # noqa: E402
 
@@ -24,6 +25,17 @@ WEAK_CLAIM_STATUSES = {"weakly_supported", "contradicted", "unverifiable"}
 PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX|lorem ipsum|\[insert|placeholder)\b", re.I)
 ID_RE = re.compile(r"\b(FN-\d{2}|CL-\d{4}|CX-\d{4}|SRC-\d{4}|EV-\d{4})\b")
 REQUIRED_SECTIONS = ["Executive Summary", "Findings", "Methodology", "Limitations", "Bibliography"]
+
+
+def _pkg_version() -> str:
+    """Read the package version from pyproject.toml (fallback constant)."""
+    try:
+        import tomllib
+
+        with open(paths.repo_root() / "pyproject.toml", "rb") as fh:
+            return str(tomllib.load(fh)["project"]["version"])
+    except Exception:  # noqa: BLE001
+        return "1.1.0"
 
 
 # ------------------------------------------------------------------ build
@@ -50,6 +62,9 @@ def build(project: Path, allow_flagged: bool = False) -> dict:
         ctx["limitations"].append(
             "Gate downgrades via --allow-flagged: " + ", ".join(c["name"] for c in downgraded))
     ctx["gates_summary"] = _summary(check_result)
+    ctx["requirements"] = requirements_mod.coverage(
+        project, report_text=_strip_requirements_section(util.load_text(project / "report.md")))
+    ctx["strict"] = _strict_mode(state)
     util.atomic_write_text(project / "report.md", md_env.get_template("report.md.j2").render(**ctx))
     util.atomic_write_text(project / "report.html", html_env.get_template("report.html.j2").render(**ctx))
 
@@ -94,6 +109,7 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
                 "title": str(meta.get("title") or f.stem),
                 "strength": str(meta.get("strength") or "tentative"),
                 "confidence": str(meta.get("confidence") or "low"),
+                "kind": str(meta.get("kind") or "analysis"),
                 "claims": claim_ids,
                 "sources": src_ids,
                 "counterpoints": [str(x) for x in (meta.get("counterpoints") or [])],
@@ -164,19 +180,23 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
         "exceptions": budget.get("exceptions") or [],
     }
 
-    # -------- bibliography
+    # -------- bibliography (APA 7 pieces + audit trail)
     bibliography = []
-    for i, s in enumerate(sorted(sources, key=lambda x: ((x.get("credibility") or {}).get("band", "Z"),
-                                                         str(x.get("published") or ""))), start=1):
+    for i, s in enumerate(sorted(sources, key=lambda x: (bibmeta.authors_apa(x).lower(),
+                                                         bibmeta.source_year(x))), start=1):
         cred = s.get("credibility") or {}
         snap = s.get("snapshot") or {}
+        apa = bibmeta.apa_reference(s)
         bibliography.append({
             "n": i,
-            "authors": _authors(s),
-            "year": str(s.get("published") or "n.d.")[:4] or "n.d.",
-            "title": s.get("title", "Untitled"),
+            "authors": apa["authors"],
+            "year": apa["year"],
+            "title": apa["title"],
+            "venue_parts": apa["venue_parts"],
+            "doi": apa["doi"],
+            "version_note": apa["version_note"],
+            "flags": apa["flags"],
             "publisher": s.get("publisher") or util.domain_of(s.get("url", "")) or "—",
-            "doi": s.get("doi") or "",
             "url": s.get("url") or "",
             "band": cred.get("band", "?"),
             "score": cred.get("score", "?"),
@@ -184,14 +204,62 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
             "sha256": snap.get("sha256") or "",
         })
 
+    # -------- search & screening (reproducibility block)
+    slog = searchlog.summarize(project)
+    status_counts: dict[str, int] = {}
+    for s in sources:
+        status_counts[s.get("status") or "unscreened"] = \
+            status_counts.get(s.get("status") or "unscreened", 0) + 1
+    excluded = [{"id": s["id"], "title": s.get("title", ""),
+                 "reason": s.get("exclusion_reason") or "—"}
+                for s in sources if s.get("status") == "excluded"]
+    search_method = {
+        "entries": slog["entries"],
+        "engines": slog["engines"],
+        "queries": slog["queries"],
+        "first_at": slog["first_at"],
+        "last_at": slog["last_at"],
+        "status_counts": status_counts,
+        "excluded": excluded,
+        "total_sources": len(sources),
+    }
+
+    # -------- literature comparison matrix (key studies)
+    matrix = []
+    for s in sorted(sources, key=lambda x: (not bool(x.get("key_study")),
+                                            bibmeta.authors_apa(x).lower())):
+        review = s.get("review") or {}
+        if not (s.get("key_study") or review):
+            continue
+        matrix.append({
+            "source_id": s["id"],
+            "key": bool(s.get("key_study")),
+            "citation": f"{bibmeta.authors_apa(s)} ({bibmeta.source_year(s)})",
+            "problem": review.get("problem") or "—",
+            "framework": review.get("framework") or "—",
+            "method": review.get("method") or "—",
+            "context": review.get("context") or "—",
+            "findings": review.get("findings") or "—",
+            "limitations": review.get("limitations") or "—",
+            "relevance": review.get("relevance") or "—",
+        })
+
+    # -------- requirement coverage (anchors validated against the report text)
+    report_path = project / "report.md"
+    report_text = util.load_text(report_path) if report_path.exists() else None
+    requirements = requirements_mod.coverage(project, report_text=report_text)
+
     precision = vr.get("citation_precision")
     return {
         "title": brief_meta.get("title") or state.get("title") or "Research Report",
         "question": brief_meta.get("question") or state.get("question") or "",
         "slug": state.get("slug", ""),
         "profile": state.get("profile", "standard"),
+        "deliverable_type": state.get("deliverable_type") or "report",
+        "review_protocol": state.get("review_protocol") or "",
+        "strict": _strict_mode(state),
         "generated_at": util.utcnow_iso(),
-        "version": state.get("schema_version") or "1.0.0",
+        "version": _pkg_version(),
         "citation_precision": f"{precision:.3f}" if isinstance(precision, (int, float)) else "n/a",
         "sources_count": len(sources),
         "evidence_count": len(evidence),
@@ -205,7 +273,21 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
         "budget": budget_ctx,
         "limitations": limitations,
         "bibliography": bibliography,
+        "search_method": search_method,
+        "matrix": matrix,
+        "requirements": requirements,
     }
+
+
+def _strict_mode(state: dict) -> bool:
+    """Academic deliverables follow PRISMA-style reproducibility hard gates."""
+    return (state.get("deliverable_type") == "academic-paper"
+            or state.get("review_protocol") in ("prisma", "systematic-review"))
+
+
+def _strip_requirements_section(text: str) -> str:
+    return re.sub(r"^##\s+Requirement Coverage\s*$.*?(?=^##\s|\Z)", "", text,
+                  flags=re.M | re.S)
 
 
 def _first_sentence(body: str) -> str:
@@ -215,19 +297,14 @@ def _first_sentence(body: str) -> str:
     return text or "—"
 
 
-def _authors(s: dict) -> str:
-    authors = s.get("authors") or []
-    if isinstance(authors, str):
-        return authors
-    if not authors:
-        return s.get("publisher") or util.domain_of(s.get("url", "")) or "Unknown"
-    names = [str(a) for a in authors[:3]]
-    return ", ".join(names) + (" et al." if len(authors) > 3 else "")
-
-
 def _limitations(project: Path, state: dict, sources: list[dict], claims: list[dict],
                  cxs: list[dict], vr: dict) -> list[str]:
     lim: list[str] = []
+    for req in requirements_mod.load(project):
+        w = req.get("waiver") or {}
+        if w.get("reason"):
+            lim.append(f"Waived requirement {req['id']} ({util.truncate(req.get('text', ''), 80)}): "
+                       f"{w['reason']}")
     for ex in (state.get("budget") or {}).get("exceptions") or []:
         lim.append(f"Budget exception: {ex.get('counter')} reached {ex.get('actual')} "
                    f"(ceiling {ex.get('ceiling')}) — {ex.get('reason')}")
@@ -398,6 +475,33 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
     fresh = bool(vr) and vr_time >= newest_claim if newest_claim else bool(vr)
     add("verify_fresh", fresh,
         detail=f"verify_report at {vr_time or 'missing'} vs newest claim {newest_claim or 'n/a'}")
+
+    # gate: requirement coverage (every explicit requirement mapped to an anchor
+    # that appears in the report, or waived with a reason). The Requirement
+    # Coverage section itself is stripped first so a mapping target printed in
+    # that table cannot trivially satisfy its own anchor.
+    strict = _strict_mode(state)
+    cov = requirements_mod.coverage(project, report_text=_strip_requirements_section(report_text))
+    if strict and cov["total"] == 0:
+        add("requirements_coverage", False,
+            detail="academic deliverable with no requirements recorded — "
+                   "run `requirements add` for each explicit prompt constraint")
+    else:
+        detail = "ok" if not cov["unmet"] else \
+            "unmet: " + ", ".join(f"{r['id']} ({util.truncate(r['text'], 60)})"
+                                  for r in cov["rows"] if r["id"] in cov["unmet"])
+        add("requirements_coverage", not cov["unmet"], detail=detail)
+
+    # gate: bibliography completeness (hard for academic deliverables, advisory otherwise)
+    bib_missing = []
+    for sid, s in sorted(sources.items()):
+        if s.get("status") == "excluded":
+            continue
+        miss = bibmeta.missing_bib_fields(s, strict=strict)
+        if miss:
+            bib_missing.append(f"{sid}({','.join(miss)})")
+    add("bibliography_complete", not bib_missing, hard=strict,
+        detail=", ".join(bib_missing) or "ok")
 
     hard_fail = [c for c in checks if c["hard"] and not c["ok"]]
     return {"pass": not hard_fail, "checks": checks, "metrics": mr}
