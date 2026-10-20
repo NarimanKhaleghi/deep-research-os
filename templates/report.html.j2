@@ -1,117 +1,376 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ lang }}" dir="{{ direction }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="generator" content="deep-research-os v{{ version }}">
 <title>{{ title }}</title>
 <style>
-:root{--ink:#1a1d21;--muted:#5c6470;--line:#e3e6ea;--bg:#fbfbfc;--accent:#0b6e4f;--warn:#b7791f;--bad:#c0392b;--chip:#eef2f4}
-@media(prefers-color-scheme:dark){:root{--ink:#e8eaed;--muted:#9aa3ad;--line:#2a2f36;--bg:#14171a;--accent:#4ade80;--chip:#1f242a}}
-*{box-sizing:border-box}
-body{font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Georgia,serif;color:var(--ink);background:var(--bg);margin:0}
-main{max-width:860px;margin:0 auto;padding:48px 24px 80px}
-h1{font-size:2rem;line-height:1.2;margin:0 0 .5rem}
-h2{font-size:1.35rem;margin:2.2rem 0 .8rem;padding-bottom:.3rem;border-bottom:1px solid var(--line)}
-h3{font-size:1.08rem;margin:1.6rem 0 .4rem}
-blockquote.run{background:var(--chip);border-left:4px solid var(--accent);margin:1rem 0;padding:.8rem 1rem;border-radius:6px;color:var(--muted);font-size:.92rem}
-blockquote.run strong{color:var(--ink)}
-.badge{display:inline-block;font-size:.72rem;font-weight:600;padding:.15rem .5rem;border-radius:999px;background:var(--chip);color:var(--muted);margin-left:.3rem;vertical-align:middle}
-.badge.established,.badge.high{background:#dcfce7;color:#166534}
-.badge.supported,.badge.medium{background:#fef3c7;color:#92400e}
-.badge.tentative,.badge.low{background:#fee2e2;color:#991b1b}
-@media(prefers-color-scheme:dark){.badge.established,.badge.high{background:#14351f;color:#7ee2a8}.badge.supported,.badge.medium{background:#3a2c10;color:#f5c66b}.badge.tentative,.badge.low{background:#3a1512;color:#f2a09a}}
-ul{/* RTL-friendly markers */;padding-left:1.2rem}
-li{margin:.35rem 0}
-li.cited{/* every fact line must carry a citation */ }
-code{background:var(--chip);padding:.1rem .35rem;border-radius:4px;font:.85em ui-monospace,Menlo,monospace}
-a{color:var(--accent)}
-table{border-collapse:collapse;width:100%;font-size:.9rem;margin:.6rem 0}
-th,td{border:1px solid var(--line);padding:.45rem .6rem;text-align:left}
-th{background:var(--chip);font-weight:600}
-details{margin:.5rem 0}
-summary{cursor:pointer;color:var(--muted)}
-footer{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+{{ assets_css | safe }}
 </style>
+<script>
+(function(){try{var t=localStorage.getItem("dro.theme");if(t){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();
+</script>
 </head>
 <body>
-<main>
-<h1>{{ title }}</h1>
-<blockquote class="run">
-<strong>Question.</strong> {{ question }}<br>
-Run <code>{{ slug }}</code> · profile <code>{{ profile }}</code> · generated {{ generated_at }} · deep-research-os v{{ version }}<br>
-Citation precision <strong>{{ citation_precision }}</strong> · {{ sources_count }} sources · {{ evidence_count }} evidence records · verify: {{ verify_mode }}
-</blockquote>
+<a class="skip" href="#main">{{ labels["in.skip"] }}</a>
 
-<h2>Executive Summary</h2>
-<ul>
-{% for s in executive_summary %}
-<li><strong>{{ s.title }}</strong> — {{ s.text }} <span class="badge {{ s.confidence }}">{{ s.confidence }}</span>{% for c in s.claims %} <code>{{ c }}</code>{% endfor %}</li>
-{% endfor %}
-</ul>
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="mark" aria-hidden="true">◈</span> deep-research-os</a>
+    <span class="tb-meta" title="{{ title }}">{{ slug }} · {{ labels["doc.run"] }} {{ generated_at[:10] }}</span>
+    <div class="tb-actions">
+      <button id="theme-toggle" class="tbtn" type="button" aria-pressed="false"
+              aria-label="{{ labels['doc.theme'] }}" title="{{ labels['doc.theme'] }}">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button id="print-btn" class="tbtn primary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        {{ labels["doc.print"] }}
+      </button>
+    </div>
+  </div>
+</header>
 
-{% if requirements.total %}
-<h2>Requirement Coverage</h2>
-<table><thead><tr><th>ID</th><th>Requirement</th><th>Status</th><th>Mapped to</th><th>Waiver reason</th></tr></thead><tbody>
-{% for r in requirements.rows %}<tr><td>{{ r.id }}</td><td>{{ r.text }}</td><td>{{ r.status }}</td><td>{{ r.mapped_to or "—" }}</td><td>{{ r.waiver_reason or "—" }}</td></tr>{% endfor %}
-</tbody></table>
-{% endif %}
+{% set toc = [("summary", labels["sec.summary"])] %}
+{% if requirements.total %}{% set _ = toc.append(("requirements", labels["sec.requirements"])) %}{% endif %}
+{% set _ = toc.append(("findings", labels["sec.findings"])) %}
+{% if matrix %}{% set _ = toc.append(("matrix", labels["sec.matrix"])) %}{% endif %}
+{% set _ = toc.append(("contradictions", labels["sec.contradictions"])) %}
+{% set _ = toc.append(("methodology", labels["sec.methodology"])) %}
+{% set _ = toc.append(("limitations", labels["sec.limitations"])) %}
+{% set _ = toc.append(("bibliography", labels["sec.bibliography"])) %}
+{% set _ = toc.append(("claims", labels["sec.claims"])) %}
 
-<h2>Findings</h2>
-{% for f in findings %}
-<h3>{{ f.id }} · {{ f.title }} <span class="badge {{ f.strength }}">{{ f.strength }}</span> <span class="badge {{ f.confidence }}">{{ f.confidence }}</span></h3>
-{{ f.body_html | safe }}
-<p class="cite">Evidence: {% for c in f.claims %}<code>{{ c }}</code> {% endfor %}{% if f.sources %}&nbsp;·&nbsp; Sources: {% for s in f.sources %}<code>{{ s }}</code> {% endfor %}{% endif %}</p>
-{% if f.counterpoints %}<details><summary>Counterpoints</summary><ul>{% for c in f.counterpoints %}<li>{{ c }}</li>{% endfor %}</ul></details>{% endif %}
-{% if f.gaps %}<details><summary>Gaps</summary><ul>{% for g in f.gaps %}<li>{{ g }}</li>{% endfor %}</ul></details>{% endif %}
-{% endfor %}
+<div class="wrap" id="top">
+<div class="layout">
+  <aside class="toc-rail" aria-label="{{ labels['doc.toc'] }}">
+    <p class="toc-title">{{ labels["doc.toc"] }}</p>
+    {% for anchor, label in toc %}
+    <a href="#{{ anchor }}"><span>{{ "%02d"|format(loop.index) }}</span><span>{{ label }}</span></a>
+    {% endfor %}
+  </aside>
 
-{% if matrix %}
-<h2>Literature Comparison Matrix</h2>
-<table><thead><tr><th>Study</th><th>Problem</th><th>Framework</th><th>Method</th><th>Context</th><th>Findings</th><th>Limitations</th><th>Relevance</th></tr></thead><tbody>
-{% for m in matrix %}<tr><td>{{ m.citation }} <code>{{ m.source_id }}</code></td><td>{{ m.problem }}</td><td>{{ m.framework }}</td><td>{{ m.method }}</td><td>{{ m.context }}</td><td>{{ m.findings }}</td><td>{{ m.limitations }}</td><td>{{ m.relevance }}</td></tr>{% endfor %}
-</tbody></table>
-{% endif %}
+  <main id="main">
+    <header class="doc-head">
+      <p class="kicker">{{ deliverable_type }} · {{ profile }}</p>
+      <h1>{{ title }}</h1>
+      <blockquote class="question"><strong>{{ labels["doc.question"] }}</strong> {{ question }}</blockquote>
+      <ul class="doc-meta">
+        <li class="mchip"><b>{{ labels["doc.run"] }}</b> {{ slug }}</li>
+        <li class="mchip"><b>{{ labels["doc.generated"] }}</b> {{ generated_at[:10] }}</li>
+        <li class="mchip"><b>{{ labels["doc.verify"] }}</b> {{ verify_mode }}</li>
+        <li class="mchip"><b>{{ labels["doc.version"] }}</b> v{{ version }}</li>
+        <li class="mchip gates"><b>{{ labels["doc.gates"] }}</b> {{ gates_summary }}</li>
+      </ul>
+      <div class="band">
+        <div class="cell"><b>{{ sources_count }}</b><span>{{ labels["doc.sources"] }}</span></div>
+        <div class="cell"><b>{{ evidence_count }}</b><span>{{ labels["doc.evidence_records"] }}</span></div>
+        <div class="cell"><b>{{ claims_count }}</b><span>{{ labels["th.claims"] }}</span></div>
+        <div class="cell"><b>{{ citation_precision }}</b><span>{{ labels["doc.precision"] }}</span></div>
+      </div>
+    </header>
 
-<h2>Contradictions &amp; Resolutions</h2>
-{% if contradictions %}
-<table><thead><tr><th>ID</th><th>Kind</th><th>Severity</th><th>Conflict</th><th>Status</th><th>Resolution</th></tr></thead><tbody>
-{% for c in contradictions %}<tr><td>{{ c.id }}</td><td>{{ c.kind }}</td><td>{{ c.severity }}</td><td>{{ c.detail }}</td><td>{{ c.status }}</td><td>{{ c.resolution or "open" }}</td></tr>{% endfor %}
-</tbody></table>
-{% else %}<p>No contradictions detected among verified claims.</p>{% endif %}
+    <section id="summary">
+      <span class="sec-num">{{ labels["sec.summary"] }}</span>
+      <h2>{{ labels["sec.summary"] }}</h2>
+      <ul class="brief">
+        {% for s in executive_summary %}
+        <li>
+          <div class="b-title">{{ s.title }}</div>
+          <div class="b-chips">
+            <span class="badge {{ s.confidence }}">{{ labels.get("badge." + s.confidence, s.confidence) }}</span>
+            {% for c in s.claims %}<a class="chip {{ claim_status.get(c, '') }}" href="#claim-{{ c }}">{{ c }}</a>{% endfor %}
+          </div>
+          <p class="b-text">{{ s.text }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
 
-<h2>Methodology</h2>
-<ul>
-<li>Profile <code>{{ profile }}</code> · searches {{ budget.searches }}/{{ budget.ceilings.searches }} · sources {{ budget.sources_read }}/{{ budget.ceilings.sources_read }} · evidence {{ budget.evidence }}/{{ budget.ceilings.evidence }}</li>
-<li>Verification: {{ verify_mode }} · {{ methodology.verified_count }} citations resolved · corroboration gaps: {{ methodology.corroboration_gaps|length }}</li>
-</ul>
-<table><thead><tr><th>Angle</th><th>Sources</th><th>Evidence</th><th>Claims</th><th>Bands</th></tr></thead><tbody>
-{% for row in coverage %}<tr><td>{{ row.angle }}</td><td>{{ row.sources }}</td><td>{{ row.evidence }}</td><td>{{ row.claims }}</td><td>{{ row.bands }}</td></tr>{% endfor %}
-</tbody></table>
-{% if search_method.entries %}
-<p><strong>Search &amp; screening:</strong> {{ search_method.entries }} logged searches · {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
-<table><thead><tr><th>Search log</th><th>Query</th><th>Engine</th><th>Angle</th><th>Hits</th><th>Kept</th><th>At</th></tr></thead><tbody>
-{% for q in search_method.queries %}<tr><td>{{ q.id }}</td><td>{{ q.query }}</td><td>{{ q.engine }}</td><td>{{ q.angle or "—" }}</td><td>{{ q.hits }}</td><td>{{ q.kept }}</td><td>{{ (q.at or "")[:16] }}</td></tr>{% endfor %}
-</tbody></table>
-{% if search_method.excluded %}
-<details><summary>Excluded at screening (with reasons)</summary>
-<table><thead><tr><th>Source</th><th>Title</th><th>Exclusion reason</th></tr></thead><tbody>
-{% for x in search_method.excluded %}<tr><td>{{ x.id }}</td><td>{{ x.title }}</td><td>{{ x.reason }}</td></tr>{% endfor %}
-</tbody></table>
-</details>
-{% endif %}
-{% endif %}
+    {% if requirements.total %}
+    <section id="requirements">
+      <span class="sec-num">{{ labels["sec.requirements"] }}</span>
+      <h2>{{ labels["sec.requirements"] }}</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>{{ labels["th.id"] }}</th><th>{{ labels["th.requirement"] }}</th><th>{{ labels["th.status"] }}</th><th>{{ labels["th.mapped_to"] }}</th><th>{{ labels["th.waiver_reason"] }}</th>
+          </tr></thead>
+          <tbody>
+          {% for r in requirements.rows %}
+            <tr>
+              <td data-label="{{ labels['th.id'] }}"><code>{{ r.id }}</code></td>
+              <td data-label="{{ labels['th.requirement'] }}">{{ r.text }}</td>
+              <td data-label="{{ labels['th.status'] }}"><span class="badge {{ 'high' if r.status == 'mapped' else 'tentative' }}">{{ labels.get("st." + r.status, r.status) }}</span></td>
+              <td data-label="{{ labels['th.mapped_to'] }}">{{ r.mapped_to or "—" }}</td>
+              <td data-label="{{ labels['th.waiver_reason'] }}">{{ r.waiver_reason or "—" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
 
-<h2>Limitations</h2>
-<ul>{% for l in limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+    <section id="findings">
+      <span class="sec-num">{{ labels["sec.findings"] }}</span>
+      <h2>{{ labels["sec.findings"] }}</h2>
+      {% for f in findings %}
+      <article class="finding" id="finding-{{ f.id }}">
+        <div class="f-head">
+          <span class="f-id">{{ f.id }}</span>
+          <h3 class="f-title">{{ f.title }}</h3>
+          <span class="badge {{ f.strength }}">{{ labels.get("badge." + f.strength, f.strength) }}</span>
+          <span class="badge {{ f.confidence }}">{{ labels.get("badge." + f.confidence, f.confidence) }}</span>
+        </div>
+        <div class="f-body">{{ f.body_html | safe }}</div>
+        <div class="f-trail">
+          <span class="lbl">{{ labels["in.evidence"] }}</span>
+          {% for c in f.claims %}<a class="chip {{ claim_status.get(c, '') }}" href="#claim-{{ c }}">{{ c }}</a>{% endfor %}
+          {% if f.sources %}
+          <span class="lbl">{{ labels["in.sources"] }}</span>
+          {% for s in f.sources %}<a class="chip" href="#ref-{{ s }}">{{ s }}</a>{% endfor %}
+          {% endif %}
+        </div>
+        {% if f.counterpoints or f.gaps %}
+        <div class="f-notes">
+          {% if f.counterpoints %}
+          <div class="note">
+            <h4>{{ labels["in.counterpoints"] }}</h4>
+            <ul>{% for c in f.counterpoints %}<li>{{ c }}</li>{% endfor %}</ul>
+          </div>
+          {% endif %}
+          {% if f.gaps %}
+          <div class="note gaps">
+            <h4>{{ labels["in.gaps"] }}</h4>
+            <ul>{% for g in f.gaps %}<li>{{ g }}</li>{% endfor %}</ul>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
 
-<h2>Bibliography</h2>
-<ol>
-{% for b in bibliography %}
-<li>{{ b.authors }} ({{ b.year }}). <em>{{ b.title }}</em>.{% if b.venue_parts %} {{ b.venue_parts }}{% elif b.publisher %} {{ b.publisher }}{% endif %}{% if b.doi %} <a href="{{ b.doi if b.doi.startswith('http') else 'https://doi.org/' + b.doi }}">{{ b.doi }}</a>{% endif %}{% if b.url %} <a href="{{ b.url }}">link</a>{% endif %}{% if b.version_note %} <span class="badge">⚠ {{ b.version_note }}</span>{% endif %} · credibility <strong>{{ b.band }}</strong> ({{ b.score }}) · snapshot <code>{{ b.source_id }}</code></li>
-{% endfor %}
-</ol>
+    {% if matrix %}
+    <section id="matrix">
+      <span class="sec-num">{{ labels["sec.matrix"] }}</span>
+      <h2>{{ labels["sec.matrix"] }}</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>{{ labels["th.study"] }}</th><th>{{ labels["th.problem"] }}</th><th>{{ labels["th.framework"] }}</th><th>{{ labels["th.method"] }}</th><th>{{ labels["th.context"] }}</th><th>{{ labels["th.findings"] }}</th><th>{{ labels["th.limitations"] }}</th><th>{{ labels["th.relevance"] }}</th>
+          </tr></thead>
+          <tbody>
+          {% for m in matrix %}
+            <tr>
+              <td data-label="{{ labels['th.study'] }}">{{ m.citation }} <a class="chip" href="#ref-{{ m.source_id }}">{{ m.source_id }}</a></td>
+              <td data-label="{{ labels['th.problem'] }}">{{ m.problem }}</td>
+              <td data-label="{{ labels['th.framework'] }}">{{ m.framework }}</td>
+              <td data-label="{{ labels['th.method'] }}">{{ m.method }}</td>
+              <td data-label="{{ labels['th.context'] }}">{{ m.context }}</td>
+              <td data-label="{{ labels['th.findings'] }}">{{ m.findings }}</td>
+              <td data-label="{{ labels['th.limitations'] }}">{{ m.limitations }}</td>
+              <td data-label="{{ labels['th.relevance'] }}">{{ m.relevance }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
 
-<footer>Generated by <a href="https://github.com/deep-research-os">deep-research-os</a> — every claim traces to a verbatim quote in a SHA-256-snapshotted source. Gates: {{ gates_summary }}.</footer>
-</main>
+    <section id="contradictions">
+      <span class="sec-num">{{ labels["sec.contradictions"] }}</span>
+      <h2>{{ labels["sec.contradictions"] }}</h2>
+      {% if contradictions %}
+      {% for c in contradictions %}
+      <div class="cx">
+        <div class="cx-head">
+          <span class="f-id">{{ c.id }}</span>
+          <span class="badge">{{ labels.get("kind." + c.kind, c.kind) }}</span>
+          <span class="badge {{ c.severity }}">{{ labels.get("badge." + c.severity, c.severity) }}</span>
+          <span class="badge {{ 'established' if c.status == 'adjudicated' else 'medium' }}">{{ labels.get("st." + c.status, c.status) }}</span>
+        </div>
+        <p>{{ c.detail }}</p>
+        {% if c.resolution %}<p class="rationale"><strong>{{ labels["th.resolution"] }}:</strong> {{ c.resolution }}</p>{% endif %}
+        {% if c.rationale %}<p class="rationale"><strong>{{ labels["in.status_reason"] }}:</strong> {{ c.rationale }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="empty">{{ labels["in.no_contradictions"] }}</p>
+      {% endif %}
+    </section>
+
+    <section id="methodology">
+      <span class="sec-num">{{ labels["sec.methodology"] }}</span>
+      <h2>{{ labels["sec.methodology"] }}</h2>
+      <div class="mgrid">
+        <div class="cell"><b>{{ budget.searches }}/{{ budget.ceilings.get("searches", "—") }}</b><span>{{ labels["me.searches"] }}</span><small>{{ labels["doc.profile"] }}: {{ profile }}</small></div>
+        <div class="cell"><b>{{ budget.sources_read }}/{{ budget.ceilings.get("sources_read", "—") }}</b><span>{{ labels["me.budget_sources"] }}</span></div>
+        <div class="cell"><b>{{ budget.evidence }}/{{ budget.ceilings.get("evidence", "—") }}</b><span>{{ labels["me.budget_evidence"] }}</span></div>
+      </div>
+      <p><strong>{{ labels["me.source_mix"] }}.</strong>
+        {% for tier in methodology.tiers %}<span class="chip">{{ tier.band }}: {{ tier.count }}</span> {% endfor %}
+      </p>
+      <p><strong>{{ labels["me.verification"] }}.</strong>
+        {{ verify_mode }} · {{ methodology.verified_count }} {{ labels["me.resolved"] }} · {{ methodology.corroboration_gaps|length }} {{ labels["me.gaps"] }}
+      </p>
+      <h3>{{ labels["me.coverage"] }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.angle"] }}</th><th>{{ labels["th.sources"] }}</th><th>{{ labels["th.evidence"] }}</th><th>{{ labels["th.claims"] }}</th><th>{{ labels["th.bands"] }}</th></tr></thead>
+          <tbody>
+          {% for row in coverage %}
+            <tr>
+              <td data-label="{{ labels['th.angle'] }}">{{ row.angle }}</td>
+              <td data-label="{{ labels['th.sources'] }}">{{ row.sources }}</td>
+              <td data-label="{{ labels['th.evidence'] }}">{{ row.evidence }}</td>
+              <td data-label="{{ labels['th.claims'] }}">{{ row.claims }}</td>
+              <td data-label="{{ labels['th.bands'] }}">{{ row.bands }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if search_method.entries %}
+      <h3>{{ labels["in.search_screening"] }}</h3>
+      <p class="sec-note">
+        {% if search_method.first_at %}
+        {{ labels["me.logged_between"].format(n=search_method.entries, a=search_method.first_at[:10], b=search_method.last_at[:10]) }}
+        {% else %}
+        {{ labels["me.logged"].format(n=search_method.entries) }}
+        {% endif %}
+        — {{ labels["me.screen_outcomes"] }}:
+        {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}
+      </p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.search"] }}</th><th>{{ labels["th.query"] }}</th><th>{{ labels["th.engine"] }}</th><th>{{ labels["th.angle"] }}</th><th>{{ labels["th.hits"] }}</th><th>{{ labels["th.kept"] }}</th><th>{{ labels["th.at"] }}</th></tr></thead>
+          <tbody>
+          {% for q in search_method.queries %}
+            <tr>
+              <td data-label="{{ labels['th.search'] }}"><code>{{ q.id }}</code></td>
+              <td data-label="{{ labels['th.query'] }}">{{ q.query }}</td>
+              <td data-label="{{ labels['th.engine'] }}">{{ q.engine }}</td>
+              <td data-label="{{ labels['th.angle'] }}">{{ q.angle or "—" }}</td>
+              <td data-label="{{ labels['th.hits'] }}">{{ q.hits }}</td>
+              <td data-label="{{ labels['th.kept'] }}">{{ q.kept }}</td>
+              <td data-label="{{ labels['th.at'] }}">{{ (q.at or "")[:16] }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if search_method.engines %}
+      <ul>
+        {% for e in search_method.engines %}
+        <li class="table-note">{{ labels["me.engine_line"].format(engine=e.engine, queries=e.queries, hits=e.hits, kept=e.kept) }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if search_method.excluded %}
+      <details>
+        <summary>{{ labels["in.excluded"] }}</summary>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>{{ labels["th.source"] }}</th><th>{{ labels["th.title"] }}</th><th>{{ labels["th.exclusion_reason"] }}</th></tr></thead>
+            <tbody>
+            {% for x in search_method.excluded %}
+              <tr>
+                <td data-label="{{ labels['th.source'] }}"><code>{{ x.id }}</code></td>
+                <td data-label="{{ labels['th.title'] }}">{{ x.title }}</td>
+                <td data-label="{{ labels['th.exclusion_reason'] }}">{{ x.reason }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      {% endif %}
+      {% endif %}
+    </section>
+
+    <section id="limitations">
+      <span class="sec-num">{{ labels["sec.limitations"] }}</span>
+      <h2>{{ labels["sec.limitations"] }}</h2>
+      <ul class="lims">
+        {% for l in limitations %}<li>{{ l }}</li>{% endfor %}
+      </ul>
+    </section>
+
+    <section id="bibliography">
+      <span class="sec-num">{{ labels["sec.bibliography"] }}</span>
+      <h2>{{ labels["sec.bibliography"] }}</h2>
+      <ol class="bib">
+        {% for b in bibliography %}
+        <li id="ref-{{ b.source_id }}">
+          {{ b.authors }} ({{ b.year }}). <span class="t">{{ b.title }}</span>.{% if b.venue_parts %} {{ b.venue_parts }}{% elif b.publisher %} {{ b.publisher }}{% endif %}{% if b.doi %} <a href="{{ b.doi if b.doi.startswith('http') else 'https://doi.org/' + b.doi }}">{{ b.doi }}</a>{% endif %}{% if b.url %} <a href="{{ b.url }}">{{ labels["in.link"] }}</a>{% endif %}{% if b.version_note %} <span class="badge medium">⚠ {{ b.version_note }}</span>{% endif %}
+          <span class="audit">{{ b.source_id }} · {{ labels["src_band"] }} {{ b.band }} ({{ b.score }}) · {{ labels["src_snapshot"] }} sha256 {{ b.sha256[:12] }}…</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <section id="claims">
+      <span class="sec-num">{{ labels["sec.claims"] }}</span>
+      <h2>{{ labels["sec.claims"] }}</h2>
+      <p class="sec-note">{{ labels["doc.appendix_note"] }}</p>
+      {% if claim_index %}
+      <div class="claim-cards">
+        {% for c in claim_index %}
+        <article class="claim" id="claim-{{ c.id }}">
+          <div class="claim-head">
+            <span class="claim-id">{{ c.id }}</span>
+            <span class="badge {{ c.status }}">{{ labels.get("status." + c.status, labels.get("st." + c.status, c.status)) }}</span>
+            <span class="chip">{{ labels.get("type." + c.type, c.type) }}</span>
+            {% if c.critical %}<span class="chip">critical</span>{% endif %}
+          </div>
+          <p class="claim-text">{{ c.text }}</p>
+          <div class="claim-meta">
+            {% if c.status_reason %}<span class="mchip"><b>{{ labels["in.status_reason"] }}</b> {{ c.status_reason }}</span>{% endif %}
+            {% if c.updated_at %}<span class="mchip"><b>{{ labels["th.updated"] }}</b> {{ c.updated_at[:10] }}</span>{% endif %}
+            {% if c.angles %}<span class="mchip">{{ c.angles|join(" · ") }}</span>{% endif %}
+          </div>
+          {% if c.findings %}
+          <p class="backrefs">{{ labels["th.referenced_by"] }}:
+            {% for f in c.findings %}<a class="backlink" href="#finding-{{ f }}">{{ f }}</a>{% if not loop.last %} · {% endif %}{% endfor %}
+          </p>
+          {% endif %}
+          {% for e in c.evidence %}
+          <blockquote class="quote">
+            <q>{{ e.quote }}</q>
+            <div class="qc">
+              <a class="chip" href="#ref-{{ e.source_id }}">{{ e.source_id }}</a>
+              <span>{{ e.id }}</span>
+              {% if e.locator %}<span>{{ e.locator }}</span>{% endif %}
+              {% if e.updated %}<span>{{ e.updated[:10] }}</span>{% endif %}
+            </div>
+          </blockquote>
+          {% else %}
+          <p class="table-note">{{ labels["in.no_evidence"] }}</p>
+          {% endfor %}
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">{{ labels["doc.claims_empty"] }}</p>
+      {% endif %}
+    </section>
+
+    <footer>
+      <span>{{ labels["footer.generated_by"] }} <a href="https://github.com/NarimanKhaleghi/deep-research-os">deep-research-os</a> v{{ version }} — {{ labels["footer.trace"] }}</span>
+      <span>{{ labels["footer.gates"] }}: {{ gates_summary }}</span>
+    </footer>
+  </main>
+</div>
+</div>
+
+<script>
+{{ assets_js | safe }}
+</script>
 </body>
 </html>

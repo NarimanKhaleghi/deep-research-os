@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://narimankhaleghi.github.io/deep-research-os/sitemap.xml

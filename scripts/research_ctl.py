@@ -926,10 +926,11 @@ def cmd_findings_list(args) -> dict:
 
 def cmd_report_build(args) -> tuple[dict, int]:
     project = _project(args)
-    res = report_builder.build(project, allow_flagged=args.allow_flagged)
+    res = report_builder.build(project, allow_flagged=args.allow_flagged,
+                               lang=getattr(args, "lang", None))
     check = res["check"]
     return {"report_md": res["report_md"], "report_html": res["report_html"],
-            "pass": check["pass"],
+            "lang": res["lang"], "pass": check["pass"],
             "failures": [c for c in check["checks"] if not c["ok"]],
             "checks": check["checks"],
             "metrics": res["metrics"]}, (0 if check["pass"] else 1)
@@ -1546,8 +1547,10 @@ def build_parser() -> argparse.ArgumentParser:
     # report
     sp = sub.add_parser("report", help="report build/check")
     rsub2 = sp.add_subparsers(dest="report_cmd", required=True)
-    s2 = rsub2.add_parser("build")
+    s2 = rsub2.add_parser("build", help="render report.md/report.html and run report gates")
     s2.add_argument("--allow-flagged", action="store_true")
+    s2.add_argument("--lang", choices=["en", "fa"],
+                    help="report language (default: auto-detect from the brief)")
     common(s2); s2.set_defaults(func=cmd_report_build)
     s2 = rsub2.add_parser("check")
     s2.add_argument("--allow-flagged", action="store_true")

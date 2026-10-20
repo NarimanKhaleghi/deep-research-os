@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<title>404 — deep-research-os</title>
+<meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="https://narimankhaleghi.github.io/deep-research-os/assets/favicon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:swap;src:url("https://narimankhaleghi.github.io/deep-research-os/assets/fonts/instrument-serif.woff2") format("woff2")}
+@font-face{font-family:"Instrument Serif";font-style:italic;font-weight:400;font-display:swap;src:url("https://narimankhaleghi.github.io/deep-research-os/assets/fonts/instrument-serif-italic.woff2") format("woff2")}
+@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("https://narimankhaleghi.github.io/deep-research-os/assets/fonts/inter-var.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:400;font-display:swap;src:url("https://narimankhaleghi.github.io/deep-research-os/assets/fonts/ibm-plex-mono.woff2") format("woff2")}
+:root{--paper:#f4f1e8;--paper2:#fbf9f2;--ink:#171a1a;--muted:#5f655d;--line:rgba(23,26,26,.16);--line2:rgba(23,26,26,.32);--accent:#0c6b50}
+html[data-theme="dark"]{--paper:#101412;--paper2:#171c18;--ink:#ece9dd;--muted:#a0a79b;--line:rgba(236,233,221,.16);--line2:rgba(236,233,221,.32);--accent:#71d8ae}
+@media (prefers-color-scheme:dark){html:not([data-theme]){--paper:#101412;--paper2:#171c18;--ink:#ece9dd;--muted:#a0a79b;--line:rgba(236,233,221,.16);--line2:rgba(236,233,221,.32);--accent:#71d8ae}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;display:grid;place-items:center;background:var(--paper);color:var(--ink);font-family:"Inter",system-ui,sans-serif;padding:28px;
+background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 88px),repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 88px)}
+.card{width:min(620px,100%);background:var(--paper2);border:1px solid var(--line2);padding:clamp(26px,5vw,44px);position:relative;box-shadow:0 30px 70px rgba(20,24,22,.12)}
+.card::after{content:"";position:absolute;inset:6px;border:1px solid var(--line);pointer-events:none;opacity:.55}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(64px,16vw,112px);line-height:.85;letter-spacing:-.03em;margin:0 0 8px}
+h1 em{font-style:italic;color:var(--accent)}
+h2{font-size:1rem;font-weight:600;margin:0 0 8px}
+p{color:var(--muted);font-size:.9rem;line-height:1.7;margin:0 0 22px;max-width:44ch}
+.links{display:flex;flex-wrap:wrap;gap:10px}
+a{display:inline-flex;padding:10px 16px;border:1px solid var(--line2);font-size:.8rem;font-weight:600;color:var(--ink);text-decoration:none}
+a.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+a:hover{border-color:var(--accent);color:var(--accent)}
+a.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);font-family:"IBM Plex Mono",monospace;font-size:.58rem;letter-spacing:.04em;color:var(--muted)}
+</style>
+<script>
+(function(){document.documentElement.classList.add("js");try{var t=localStorage.getItem("dro.theme");if(t){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();
+</script>
+</head>
+<body>
+<main class="card">
+  <p class="kicker">404 / off the ledger</p>
+  <h1>No <em>trace.</em></h1>
+  <h2>This page has no source.</h2>
+  <p>Every claim needs evidence — this URL has none. Head back to the instrument, or read a report that does.</p>
+  <div class="links">
+    <a class="primary" href="https://narimankhaleghi.github.io/deep-research-os/">Home</a>
+    <a href="https://narimankhaleghi.github.io/deep-research-os/#install">Install</a>
+    <a href="https://narimankhaleghi.github.io/deep-research-os/fa/" lang="fa" dir="rtl">نسخهٔ فارسی</a>
+    <a href="https://github.com/NarimanKhaleghi/deep-research-os">GitHub</a>
+  </div>
+  <div class="foot">◈ deep-research-os</div>
+</main>
+</body>
+</html>

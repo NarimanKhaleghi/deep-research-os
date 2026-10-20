@@ -152,6 +152,22 @@ the SKILL.md workflow takes over.
 **Platform targets:** `./install.sh --platform claude|opencode|codex|cursor|all|generic --dest <path>`
 (symlink mode with `--link` for development).
 
+### New in 1.2 — the research instrument
+
+- **Bilingual reports** — `report build` follows the brief/question language
+  (English or Persian), or takes `--lang en|fa`; headings, tables, gates,
+  limitations and the claim appendix are localized, with a true RTL layout.
+- **Self-contained design** — the “research instrument” redesign ships one
+  offline HTML file per report: paper/ink tokens, self-hosted OFL subset fonts,
+  light/dark themes, sticky TOC, and A4 print. No CDN, no JS dependency.
+- **Claim appendix** — every `CL-` claim links both ways to its `SRC-` reference
+  and exhibit (`#claim-CL-…` ↔ `#ref-SRC-…`).
+- **Landing site** — `python scripts/build_site.py` renders the bilingual site
+  into `docs/` for GitHub Pages: `/` + `/fa/`, reciprocal hreflang, per-language
+  OG cards, JSON-LD, sitemap, robots, `llms.txt`, 404 and real sample reports.
+- **Harder QA** — 49 tests, 8 offline evals; Lighthouse mobile: performance
+  96–99, accessibility 100, best practices 100, SEO 100.
+
 ### New in 1.1 — outputs, requirements, reproducibility
 
 - **Research lives in your folder** — `init --dir` writes exactly where you say;
@@ -338,9 +354,10 @@ python evals/run_evals.py --offline   # CI-ready, fixture-driven, network-free
 python evals/run_evals.py --live      # real sources, real queries
 ```
 
-Six scenario suites with **planted traps** — fake DOI citations, planted
+Eight scenario suites with **planted traps** — fake DOI citations, planted
 contradictions, silent number drift, single-origin echo chambers, multilingual
-(Persian) coverage, and a quick-profile budget-discipline test.
+(Persian) coverage, a quick-profile budget-discipline test, requirement
+coverage, and normative-claim overreach.
 Methodology: [`evals/rubrics.md`](evals/rubrics.md).
 
 ---
@@ -365,6 +382,9 @@ deep-research-os/
 │   └── learning-protocol.md    # the governance contract
 ├── learnings/                  # seeded registry, watchlist, capability templates
 ├── templates/                  # report (md/html), brief, digests, cards (jinja2)
+├── assets/fonts/               # self-hosted OFL WOFF2 subsets (reports + site)
+├── site/                       # landing source: content/templates/assets
+├── docs/                       # generated GitHub Pages site (committed)
 ├── evals/                      # scenarios · fixtures · runner · rubrics
 ├── tests/                      # pytest suite
 └── examples/                   # a real, complete sample run
@@ -374,9 +394,9 @@ deep-research-os/
 
 ## 🗺 Roadmap
 
-- [ ] `v1.1` — Semantic Scholar & OpenCitations connectors; connector plugin API
-- [ ] `v1.2` — local embedding backend (optional) for preference similarity
-- [ ] `v1.3` — GitHub App mode for org-wide vaults; per-team learning profiles
+- [ ] Semantic Scholar & OpenCitations connectors; connector plugin API
+- [ ] `v1.3` — local embedding backend (optional) for preference similarity
+- [ ] `v1.4` — GitHub App mode for org-wide vaults; per-team learning profiles
 - [ ] `v2.0` — multimodal evidence (charts/tables extraction with source anchoring)
 
 ---

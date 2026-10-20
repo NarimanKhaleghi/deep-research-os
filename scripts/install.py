@@ -33,7 +33,7 @@ PLATFORMS: dict[str, list[Path]] = {
 
 IGNORE = shutil.ignore_patterns(
     ".git", ".venv", "venv", "__pycache__", "*.pyc", ".pytest_cache",
-    "research-os", "exports", ".DS_Store", "*.egg-info",
+    "research-os", "exports", "docs", "site", ".DS_Store", "*.egg-info",
 )
 
 

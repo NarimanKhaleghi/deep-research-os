@@ -1,124 +1,147 @@
 # {{ title }}
 
-> **Question.** {{ question }}
+> **{{ labels["doc.question"] }}** {{ question }}
 >
-> **Run.** `{{ slug }}` · profile `{{ profile }}` · generated {{ generated_at }} · deep-research-os v{{ version }}
-> **Verification.** citation precision {{ citation_precision }} · {{ sources_count }} sources · {{ evidence_count }} evidence records · verify mode: {{ verify_mode }}{% if spent_usd and spent_usd > 0 %} · paid spend ${{ "%.4f"|format(spent_usd) }}{% endif %}
+> **{{ labels["doc.run"] }}.** `{{ slug }}` · {{ labels["doc.profile"] }} `{{ profile }}` · {{ labels["doc.generated"] }} {{ generated_at }} · deep-research-os v{{ version }}
+> **{{ labels["doc.verify"] }}.** {{ labels["doc.precision"] }} {{ citation_precision }} · {{ sources_count }} {{ labels["doc.sources"] }} · {{ evidence_count }} {{ labels["doc.evidence_records"] }} · {{ labels["doc.verify"] }}: {{ verify_mode }}{% if spent_usd and spent_usd > 0 %} · {{ labels["doc.spend"] }} ${{ "%.4f"|format(spent_usd) }}{% endif %}
 
-## Executive Summary
+## {{ labels["sec.summary"] }}
 
 {% for s in executive_summary %}
-- **{{ s.title }}** — {{ s.text }} _[{{ s.confidence }} confidence]_{% for c in s.claims %} [{{ c }}]{% endfor %}
+- **{{ s.title }}** — {{ s.text }} _[{{ labels.get("badge." + s.confidence, s.confidence) }}]_{% for c in s.claims %} [{{ c }}]{% endfor %}
 {% endfor %}
 
 {% if requirements.total %}
-## Requirement Coverage
+## {{ labels["sec.requirements"] }}
 
-| ID | Requirement | Status | Mapped to | Waiver reason |
+| {{ labels["th.id"] }} | {{ labels["th.requirement"] }} | {{ labels["th.status"] }} | {{ labels["th.mapped_to"] }} | {{ labels["th.waiver_reason"] }} |
 | --- | --- | --- | --- | --- |
 {% for r in requirements.rows %}
-| {{ r.id }} | {{ r.text }} | {{ r.status }} | {{ r.mapped_to or "—" }} | {{ r.waiver_reason or "—" }} |
+| {{ r.id }} | {{ r.text }} | {{ labels.get("st." + r.status, r.status) }} | {{ r.mapped_to or "—" }} | {{ r.waiver_reason or "—" }} |
 {% endfor %}
 
 {% endif %}
-## Findings
+## {{ labels["sec.findings"] }}
 
 {% for f in findings %}
 ### {{ f.id }} · {{ f.title }}
 
 {% if f.strength != "established" or f.confidence != "high" %}
-> `strength: {{ f.strength }} · confidence: {{ f.confidence }}`
+> `{{ labels["in.strength"] }}: {{ labels.get("badge." + f.strength, f.strength) }} · {{ labels["in.confidence"] }}: {{ labels.get("badge." + f.confidence, f.confidence) }}`
 {% endif %}
 
 {{ f.body }}
 
-_Evidence claims: {% for c in f.claims %}[{{ c }}]{% if not loop.last %} {% endif %}{% endfor %}{% if f.sources %} · Sources: {% for s in f.sources %}[{{ s }}]{% if not loop.last %} {% endif %}{% endfor %}{% endif %}_
+_{{ labels["in.evidence"] }}: {% for c in f.claims %}[{{ c }}]{% if not loop.last %} {% endif %}{% endfor %}{% if f.sources %} · {{ labels["in.sources"] }}: {% for s in f.sources %}[{{ s }}]{% if not loop.last %} {% endif %}{% endfor %}{% endif %}_
 
 {% if f.counterpoints %}
-**Counterpoints.** {% for c in f.counterpoints %}{{ c }}; {% endfor %}
+**{{ labels["in.counterpoints"] }}.** {% for c in f.counterpoints %}{{ c }}{% if not loop.last %}; {% endif %}{% endfor %}
 {% endif %}
 
 {% if f.gaps %}
-**Gaps.** {% for g in f.gaps %}{{ g }}; {% endfor %}
+**{{ labels["in.gaps"] }}.** {% for g in f.gaps %}{{ g }}{% if not loop.last %}; {% endif %}{% endfor %}
 {% endif %}
 
 {% endfor %}
 
 {% if matrix %}
-## Literature Comparison Matrix
+## {{ labels["sec.matrix"] }}
 
-Key studies reviewed for positioning and gap analysis ("—" = field not recorded; fill via `sources review`).
-
-| Study | Problem | Framework | Method | Context | Findings | Limitations | Relevance |
+| {{ labels["th.study"] }} | {{ labels["th.problem"] }} | {{ labels["th.framework"] }} | {{ labels["th.method"] }} | {{ labels["th.context"] }} | {{ labels["th.findings"] }} | {{ labels["th.limitations"] }} | {{ labels["th.relevance"] }} |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 {% for m in matrix %}
 | {{ m.citation }} [{{ m.source_id }}] | {{ m.problem }} | {{ m.framework }} | {{ m.method }} | {{ m.context }} | {{ m.findings }} | {{ m.limitations }} | {{ m.relevance }} |
 {% endfor %}
 
 {% endif %}
-## Contradictions & Resolutions
+## {{ labels["sec.contradictions"] }}
 
 {% if contradictions %}
-| ID | Kind | Severity | Conflict | Status | Resolution |
+| {{ labels["th.id"] }} | {{ labels["th.kind"] }} | {{ labels["th.severity"] }} | {{ labels["th.conflict"] }} | {{ labels["th.status"] }} | {{ labels["th.resolution"] }} |
 | --- | --- | --- | --- | --- | --- |
 {% for c in contradictions %}
-| {{ c.id }} | {{ c.kind }} | {{ c.severity }} | {{ c.detail }} | {{ c.status }} | {{ c.resolution or "— open —" }} |
+| {{ c.id }} | {{ labels.get("kind." + c.kind, c.kind) }} | {{ labels.get("badge." + c.severity, c.severity) }} | {{ c.detail }} | {{ labels.get("st." + c.status, c.status) }} | {{ c.resolution or "— " ~ labels["in.open"] ~ " —" }} |
 {% endfor %}
 
 {% for c in contradictions if c.rationale %}
 - **{{ c.id }}**: {{ c.rationale }}
 {% endfor %}
 {% else %}
-No contradictions detected among verified claims.
+{{ labels["in.no_contradictions"] }}
 {% endif %}
 
-## Methodology
+## {{ labels["sec.methodology"] }}
 
-- **Profile & budget:** {{ profile }}; searches {{ budget.searches }}/{{ budget.ceilings.searches }}, sources {{ budget.sources_read }}/{{ budget.ceilings.sources_read }}, evidence {{ budget.evidence }}/{{ budget.ceilings.evidence }}{% if budget.exceptions %}; exceptions: {{ budget.exceptions|length }} (see Limitations){% endif %}.
-- **Source mix:** {% for m in methodology.tiers %}{{ m.band }}: {{ m.count }}{% if not loop.last %} · {% endif %}{% endfor %}.
-- **Verification:** {{ verify_mode }}; {{ methodology.verified_count }} citations resolved; corroboration gaps: {{ methodology.corroboration_gaps|length }}.
-- **Coverage:**
+- **{{ labels["me.profile_budget"] }}:** {{ profile }}; {{ labels["me.searches"] }} {{ budget.searches }}/{{ budget.ceilings.get("searches", "—") }}, {{ labels["me.budget_sources"] }} {{ budget.sources_read }}/{{ budget.ceilings.get("sources_read", "—") }}, {{ labels["me.budget_evidence"] }} {{ budget.evidence }}/{{ budget.ceilings.get("evidence", "—") }}{% if budget.exceptions %}; {{ labels["th.kind"] }}: {{ budget.exceptions|length }} ({{ labels["sec.limitations"] }}){% endif %}.
+- **{{ labels["me.source_mix"] }}:** {% for m in methodology.tiers %}{{ m.band }}: {{ m.count }}{% if not loop.last %} · {% endif %}{% endfor %}.
+- **{{ labels["me.verification"] }}:** {{ verify_mode }}; {{ methodology.verified_count }} {{ labels["me.resolved"] }}; {{ labels["me.gaps"] }}: {{ methodology.corroboration_gaps|length }}.
+- **{{ labels["me.coverage"] }}:**
 
-| Angle | Sources | Evidence | Claims | Bands |
+| {{ labels["th.angle"] }} | {{ labels["th.sources"] }} | {{ labels["th.evidence"] }} | {{ labels["th.claims"] }} | {{ labels["th.bands"] }} |
 | --- | --- | --- | --- | --- |
 {% for row in coverage %}
 | {{ row.angle }} | {{ row.sources }} | {{ row.evidence }} | {{ row.claims }} | {{ row.bands }} |
 {% endfor %}
 
 {% if search_method.entries %}
-- **Search & screening (reproducibility):** {{ search_method.entries }} logged search(es){% if search_method.first_at %} between {{ search_method.first_at[:10] }} and {{ search_method.last_at[:10] }}{% endif %}; screening outcomes: {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}.
+- **{{ labels["in.search_screening"] }}:** {{ labels["me.logged"].format(n=search_method.entries) }}{% if search_method.first_at %} {{ labels["me.between"].format(a=search_method.first_at[:10], b=search_method.last_at[:10]) }}{% endif %}; {{ labels["me.screen_outcomes"] }}: {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}.
 
-| Search log | Query | Engine | Angle | Hits | Kept | At |
+| {{ labels["th.search"] }} | {{ labels["th.query"] }} | {{ labels["th.engine"] }} | {{ labels["th.angle"] }} | {{ labels["th.hits"] }} | {{ labels["th.kept"] }} | {{ labels["th.at"] }} |
 | --- | --- | --- | --- | --- | --- | --- |
 {% for q in search_method.queries %}
 | {{ q.id }} | {{ q.query }} | {{ q.engine }} | {{ q.angle or "—" }} | {{ q.hits }} | {{ q.kept }} | {{ (q.at or "")[:16] }} |
 {% endfor %}
 {% for e in search_method.engines %}
-- Engine `{{ e.engine }}`: {{ e.queries }} queries, {{ e.hits }} hits, {{ e.kept }} kept.
+- {{ labels["me.engine_line"].format(engine=e.engine, queries=e.queries, hits=e.hits, kept=e.kept) }}
 {% endfor %}
 {% if search_method.excluded %}
 
-Excluded at screening (with reasons):
+{{ labels["in.excluded"] }}:
 
-| Source | Title | Exclusion reason |
+| {{ labels["th.source"] }} | {{ labels["th.title"] }} | {{ labels["th.exclusion_reason"] }} |
 | --- | --- | --- |
 {% for x in search_method.excluded %}
 | {{ x.id }} | {{ x.title }} | {{ x.reason }} |
 {% endfor %}
 {% endif %}
 {% endif %}
-## Limitations
+## {{ labels["sec.limitations"] }}
 
 {% for l in limitations %}
 - {{ l }}
 {% endfor %}
 
-## Bibliography
+## {{ labels["sec.bibliography"] }}
 
 {% for b in bibliography %}
-{{ b.n }}. {{ b.authors }} ({{ b.year }}). *{{ b.title }}*.{% if b.venue_parts %} {{ b.venue_parts }}{% elif b.publisher %} {{ b.publisher }}.{% endif %}{% if b.doi %} {{ b.doi if b.doi.startswith("http") else "https://doi.org/" + b.doi }}{% endif %}{% if b.url %} {{ b.url }}{% endif %}{% if b.version_note %} — ⚠ {{ b.version_note }}{% endif %}{% if b.flags %} [{{ b.flags }}]{% endif %} — credibility **{{ b.band }}** ({{ b.score }}). Snapshot: `{{ b.source_id }}` sha256 `{{ b.sha256[:12] }}…` [{{ b.source_id }}]
+{{ b.n }}. {{ b.authors }} ({{ b.year }}). *{{ b.title }}*.{% if b.venue_parts %} {{ b.venue_parts }}{% elif b.publisher %} {{ b.publisher }}.{% endif %}{% if b.doi %} {{ b.doi if b.doi.startswith("http") else "https://doi.org/" + b.doi }}{% endif %}{% if b.url %} {{ b.url }}{% endif %}{% if b.version_note %} — ⚠ {{ b.version_note }}{% endif %}{% if b.flags %} [{{ b.flags }}]{% endif %} — {{ labels["src_band"] }} **{{ b.band }}** ({{ b.score }}). {{ labels["src_snapshot"] }}: `{{ b.source_id }}` sha256 `{{ b.sha256[:12] }}…` [{{ b.source_id }}]
 {% endfor %}
+
+## {{ labels["sec.claims"] }}
+
+{{ labels["doc.appendix_note"] }}
+
+{% if claim_index %}
+{% for c in claim_index %}
+### {{ c.id }} · {{ labels.get("status." + c.status, c.status) }}
+
+{{ c.text }}
+
+{% if c.status_reason %}
+_{{ labels["in.status_reason"] }}: {{ c.status_reason }}_
+{% endif %}
+{% for e in c.evidence %}
+> {{ e.quote }} — [{{ e.source_id }}]{% if e.locator %} ({{ e.locator }}){% endif %}
+{% endfor %}
+{% if c.findings %}
+_{{ labels["th.referenced_by"] }}: {% for f in c.findings %}[{{ f }}]{% if not loop.last %} {% endif %}{% endfor %}_
+{% endif %}
+
+{% endfor %}
+{% else %}
+{{ labels["doc.claims_empty"] }}
+{% endif %}
 
 ---
 
-*Generated by [deep-research-os](https://github.com/deep-research-os) — every claim above traces to a verbatim quote in a SHA-256-snapshotted source. Report gates: {{ gates_summary }}.*
+*{{ labels["footer.generated_by"] }} [deep-research-os](https://github.com/NarimanKhaleghi/deep-research-os) — {{ labels["footer.trace"] }} {{ labels["footer.gates"] }}: {{ gates_summary }}.*

@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: deep-research-os contributors
-  version: "1.1.1"
+  version: "1.2.0"
   homepage: https://github.com/NarimanKhaleghi/deep-research-os
 ---
 
@@ -94,7 +94,7 @@ any time to see where you are and what is missing.
 | 5 | **Assess** | credibility scores per source | Every source scored A–D by rubric; tier + retraction + COI recorded |
 | 6 | **Verify** | `claims.jsonl` + `verify_report.json` + contradictions | Every claim classified (supported/weakly/contradicted); citations verified; modality/official-source checks for normative claims; contradictions adjudicated or logged |
 | 7 | **Synthesize** | `findings/*.md` (tagged with `--kind`) | Findings reference claim IDs; strength labeled; counterpoints attached; gaps logged; academic deliverables include model/scenarios/sensitivity findings + reviewed key studies |
-| 8 | **Report** | `report.md` (+ `report.html`) | `report check` passes: zero uncited claims, requirements covered, APA-7 bibliography complete, numbers consistent |
+| 8 | **Report** | `report.md` (+ self-contained `report.html`, EN/FA) | `report check` passes: zero uncited claims, requirements covered, APA-7 bibliography complete, numbers consistent |
 | 9 | **Retrospect** | `retrospective.json` + feedback journal | What worked/failed journaled; capabilities candidate; preference question asked if triggered |
 
 ### Suggested CLI flow
@@ -115,6 +115,8 @@ $R contradictions scan
 $R sources review --source-id SRC-0003 --key --method "..." --limitations "..."
 $R findings new --title "..." --claims CL-0004 --kind scenarios
 $R report build                              # refuses to pass hard gates silently
+# report language follows the brief/question (en|fa); force with --lang en|fa
+# HTML is self-contained (embedded fonts), print-ready, with a claim appendix
 $R requirements map --requirement RQ-01 --target "Findings"
 $R gate --phase 8                            # machine-checkable completion
 $R learn retrospect                          # phase 9 helper: journal + candidates

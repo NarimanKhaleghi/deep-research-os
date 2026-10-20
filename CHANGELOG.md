@@ -4,6 +4,51 @@ All notable changes to **deep-research-os** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-10-20
+
+The “research instrument” release: reports and the public site become bilingual,
+self-contained, print-ready artifacts.
+
+### Added
+
+- **Bilingual report engine** (`report_i18n.py`): English/Persian detection from
+  the brief/question (`--lang en|fa` to force), localized labels, headings,
+  tables, gates, limitations and footer. `report build` records
+  `state.report_lang`; requirement anchors resolve across language variants.
+- **Claim & evidence appendix** in HTML and Markdown: every `CL-` claim links to
+  its status, finding(s), quote, locator and `#ref-SRC-…` bibliography entry.
+- **Self-hosted OFL fonts** (`assets/fonts/`): subset WOFF2 for Instrument Serif,
+  Source Serif 4, Inter, IBM Plex Mono and Vazirmatn, embedded base64 into each
+  report by `report_assets.py`. Reports stay offline and portable; Persian gets
+  Vazirmatn with full Arabic/Persian shaping.
+- **Direction A redesign** of `report.html.j2` / `report.md.j2`: paper-and-ink
+  tokens, hero verification band, sticky TOC with scrollspy, finding cards,
+  methodology grid, hanging-indent APA bibliography, dark mode, A4 print.
+- **Bilingual landing site** (`site/`, built by `scripts/build_site.py` into
+  `docs/`): `/` and `/fa/`, reciprocal hreflang, canonical URLs, per-language OG
+  cards, JSON-LD (SoftwareApplication + FAQPage + HowTo), sitemap, robots,
+  `llms.txt`, `.nojekyll`, a self-contained 404 and real EN/FA sample reports.
+- **Site QA**: content hashing for CSS/JS cache busting, keyboard-scrollable
+  command blocks, mobile menu, reduced-motion support, axe WCAG AA clean.
+
+### Changed
+
+- `report build` gains `--lang`; `report check` gates accept English and Persian
+  section headings. The version fallback is now `1.2.0`.
+- Test suite is 49 tests; offline evals are 8/8 (requirement coverage and
+  normative overclaim scenarios included).
+- The installer ignores `docs/` and `site/` so skill installs stay lean.
+
+### Fixed
+
+- Persian reports with legacy English requirement anchors no longer fail gate 8.
+- Localized health-limitation lines could raise “multiple values for argument key”.
+- Dark-theme printing produced light ink on white paper; print now forces the
+  light palette.
+- Long bibliography credential badges and long tokens overflowed on phones.
+- The site install-copy buttons leaked Jinja dict methods into `data-*`
+  attributes and rendered empty labels.
+
 ## [1.1.1] — 2026-10-19
 
 Fixes found while validating v1.1.0 on the fintech research re-run:

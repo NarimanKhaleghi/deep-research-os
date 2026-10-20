@@ -14,7 +14,8 @@ _SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
-from core import bibmeta, requirements as requirements_mod, searchlog  # noqa: E402
+from core import (bibmeta, report_assets, report_i18n,  # noqa: E402
+                  requirements as requirements_mod, searchlog)
 from core.evidence_store import Ledger  # noqa: E402
 from lib import paths, util  # noqa: E402
 
@@ -24,7 +25,6 @@ WEAK_CLAIM_STATUSES = {"weakly_supported", "contradicted", "unverifiable"}
 
 PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX|lorem ipsum|\[insert|placeholder)\b", re.I)
 ID_RE = re.compile(r"\b(FN-\d{2}|CL-\d{4}|CX-\d{4}|SRC-\d{4}|EV-\d{4})\b")
-REQUIRED_SECTIONS = ["Executive Summary", "Findings", "Methodology", "Limitations", "Bibliography"]
 
 
 def _pkg_version() -> str:
@@ -35,16 +35,22 @@ def _pkg_version() -> str:
         with open(paths.repo_root() / "pyproject.toml", "rb") as fh:
             return str(tomllib.load(fh)["project"]["version"])
     except Exception:  # noqa: BLE001
-        return "1.1.0"
+        return "1.2.0"
 
 
 # ------------------------------------------------------------------ build
 
-def build(project: Path, allow_flagged: bool = False) -> dict:
+def build(project: Path, allow_flagged: bool = False, lang: str | None = None) -> dict:
     project = Path(project)
     ledger = Ledger(project)
     state = paths.load_state(project)
-    ctx = _context(project, ledger, state)
+    brief_meta, _ = util.parse_front_matter(util.load_text(project / "brief.md"))
+    lang = report_i18n.resolve(
+        lang,
+        str(brief_meta.get("title") or ""), str(brief_meta.get("question") or ""),
+        str(state.get("title") or ""), str(state.get("question") or ""),
+    )
+    ctx = _context(project, ledger, state, lang)
 
     from jinja2 import Environment, FileSystemLoader
 
@@ -52,16 +58,16 @@ def build(project: Path, allow_flagged: bool = False) -> dict:
     md_env = Environment(loader=loader, autoescape=False, trim_blocks=True, lstrip_blocks=True)
     html_env = Environment(loader=loader, autoescape=True, trim_blocks=True, lstrip_blocks=True)
 
-    ctx["gates_summary"] = "pending — see `report check`"
+    ctx["gates_summary"] = report_i18n.t(lang, "gates.pending")
     util.atomic_write_text(project / "report.md", md_env.get_template("report.md.j2").render(**ctx))
     util.atomic_write_text(project / "report.html", html_env.get_template("report.html.j2").render(**ctx))
 
     check_result = _run_check(project, ledger, state, ctx=ctx, allow_flagged=allow_flagged)
     downgraded = [c for c in check_result["checks"] if c.get("downgraded")]
     if downgraded:
-        ctx["limitations"].append(
-            "Gate downgrades via --allow-flagged: " + ", ".join(c["name"] for c in downgraded))
-    ctx["gates_summary"] = _summary(check_result)
+        ctx["limitations"].append(report_i18n.t(
+            lang, "lim.downgraded", names=", ".join(c["name"] for c in downgraded)))
+    ctx["gates_summary"] = _summary(check_result, lang)
     ctx["requirements"] = requirements_mod.coverage(
         project, report_text=_strip_requirements_section(util.load_text(project / "report.md")))
     ctx["strict"] = _strict_mode(state)
@@ -69,18 +75,20 @@ def build(project: Path, allow_flagged: bool = False) -> dict:
     util.atomic_write_text(project / "report.html", html_env.get_template("report.html.j2").render(**ctx))
 
     state.setdefault("ran", {})["last_report_check_at"] = util.utcnow_iso()
+    state["report_lang"] = lang
     steps = state["ran"].setdefault("steps", [])
     if "report" not in steps:
         steps.append("report")
     paths.save_state(project, state)
 
     return {"report_md": str(project / "report.md"), "report_html": str(project / "report.html"),
-            "check": check_result, "metrics": check_result["metrics"]}
+            "check": check_result, "metrics": check_result["metrics"], "lang": lang}
 
 
-def _context(project: Path, ledger: Ledger, state: dict) -> dict:
+def _context(project: Path, ledger: Ledger, state: dict, lang: str = "en") -> dict:
     brief_meta, _ = util.parse_front_matter(util.load_text(project / "brief.md"))
     sources = ledger.sources()
+    source_by_id = {s["id"]: s for s in sources}
     evidence = ledger.evidence()
     claims = ledger.claims()
     cxs = ledger.contradictions()
@@ -92,6 +100,7 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
 
     # -------- findings
     findings = []
+    finding_claims: dict[str, list[str]] = {}
     fdir = project / "findings"
     if fdir.exists():
         for f in sorted(fdir.glob("FN-*.md")):
@@ -118,6 +127,8 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
                 "body": body,
                 "body_html": md_to_html(body),
             })
+            for cid in claim_ids:
+                finding_claims.setdefault(cid, []).append(findings[-1]["id"])
 
     summary_findings = [f for f in findings if f["section"] == "summary"]
     if not summary_findings:
@@ -168,7 +179,7 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
     }
 
     # -------- limitations
-    limitations = _limitations(project, state, sources, claims, cxs, vr)
+    limitations = _limitations(project, state, sources, claims, cxs, vr, lang)
 
     # -------- budget
     budget_ctx = {
@@ -249,6 +260,33 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
     report_text = util.load_text(report_path) if report_path.exists() else None
     requirements = requirements_mod.coverage(project, report_text=report_text)
 
+    # -------- claim & evidence appendix (every claim, with verbatim quotes)
+    claim_index = []
+    for c in sorted(claims, key=lambda x: x["id"]):
+        evs = []
+        for eid in c.get("evidence_ids") or []:
+            e = ev_by_id.get(eid)
+            if not e:
+                continue
+            evs.append({
+                "id": e.get("id", eid), "quote": e.get("quote", ""),
+                "source_id": e.get("source_id", ""),
+                "source_title": (source_by_id.get(e.get("source_id", "")) or {}).get("title", ""),
+                "locator": e.get("locator") or "",
+                "relevance": e.get("relevance") or "",
+            })
+        claim_index.append({
+            "id": c["id"], "text": c.get("text", ""),
+            "status": c.get("status") or "unverified",
+            "type": c.get("type") or "—",
+            "status_reason": c.get("status_reason") or "",
+            "updated_at": c.get("updated_at") or "",
+            "critical": bool(c.get("critical")),
+            "angles": c.get("angles") or [],
+            "evidence": evs,
+            "findings": sorted(finding_claims.get(c["id"], [])),
+        })
+
     precision = vr.get("citation_precision")
     return {
         "title": brief_meta.get("title") or state.get("title") or "Research Report",
@@ -276,6 +314,14 @@ def _context(project: Path, ledger: Ledger, state: dict) -> dict:
         "search_method": search_method,
         "matrix": matrix,
         "requirements": requirements,
+        "lang": lang,
+        "direction": "rtl" if lang == "fa" else "ltr",
+        "labels": report_i18n.labels(lang),
+        "assets_css": report_assets.report_css(lang),
+        "assets_js": report_assets.report_js(),
+        "claims_count": len(claims),
+        "claim_status": {c["id"]: (c.get("status") or "") for c in claims},
+        "claim_index": claim_index,
     }
 
 
@@ -286,8 +332,10 @@ def _strict_mode(state: dict) -> bool:
 
 
 def _strip_requirements_section(text: str) -> str:
-    return re.sub(r"^##\s+Requirement Coverage\s*$.*?(?=^##\s|\Z)", "", text,
-                  flags=re.M | re.S)
+    for heading in report_i18n.heading_variants("requirements"):
+        text = re.sub(rf"^##\s+{re.escape(heading)}\s*$.*?(?=^##\s|\Z)", "", text,
+                      flags=re.M | re.S)
+    return text
 
 
 def _first_sentence(body: str) -> str:
@@ -298,53 +346,58 @@ def _first_sentence(body: str) -> str:
 
 
 def _limitations(project: Path, state: dict, sources: list[dict], claims: list[dict],
-                 cxs: list[dict], vr: dict) -> list[str]:
+                 cxs: list[dict], vr: dict, lang: str = "en") -> list[str]:
+    t = report_i18n.t
     lim: list[str] = []
     for req in requirements_mod.load(project):
         w = req.get("waiver") or {}
         if w.get("reason"):
-            lim.append(f"Waived requirement {req['id']} ({util.truncate(req.get('text', ''), 80)}): "
-                       f"{w['reason']}")
+            lim.append(t(lang, "lim.waived", id=req["id"],
+                         text=util.truncate(req.get("text", ""), 80), reason=w["reason"]))
     for ex in (state.get("budget") or {}).get("exceptions") or []:
-        lim.append(f"Budget exception: {ex.get('counter')} reached {ex.get('actual')} "
-                   f"(ceiling {ex.get('ceiling')}) — {ex.get('reason')}")
+        lim.append(t(lang, "lim.budget", counter=ex.get("counter"), actual=ex.get("actual"),
+                     ceiling=ex.get("ceiling"), reason=ex.get("reason")))
     for w in state.get("gate_waivers") or []:
-        lim.append(f"Gate waiver (phase {w.get('phase')} · {w.get('check')}): {w.get('reason')}")
+        lim.append(t(lang, "lim.gate_waiver", phase=w.get("phase"), check=w.get("check"),
+                     reason=w.get("reason")))
     for key, h in (state.get("source_health") or {}).items():
         if (h.get("failures") or 0) > 0:
-            lim.append(f"Source health: {key} failed {h['failures']}×"
-                       + (f" (last error: {h.get('last_error')})" if h.get("last_error") else ""))
+            if h.get("last_error"):
+                lim.append(t(lang, "lim.health", source=key, n=h["failures"], err=h["last_error"]))
+            else:
+                lim.append(t(lang, "lim.health_plain", source=key, n=h["failures"]))
     retracted = [s["id"] for s in sources if (s.get("retraction") or {}).get("status") == "retracted"]
     if retracted:
-        lim.append(f"Retracted sources excluded from load-bearing claims: {', '.join(retracted)}")
+        lim.append(t(lang, "lim.retracted", ids=", ".join(retracted)))
     open_cx = [c["id"] for c in cxs if c["status"] == "open"]
     if open_cx:
-        lim.append(f"Unresolved contradictions remain visible: {', '.join(open_cx)}")
+        lim.append(t(lang, "lim.open_cx", ids=", ".join(open_cx)))
     gaps = vr.get("corroboration_gaps") or []
     if gaps:
-        lim.append(f"Corroboration gaps: {len(gaps)} critical claim(s) rest on a single origin "
-                   f"({', '.join(g['claim_id'] for g in gaps[:5])}).")
+        lim.append(t(lang, "lim.gaps", n=len(gaps),
+                     ids=", ".join(g["claim_id"] for g in gaps[:5])))
     weak = [c["id"] for c in claims if c.get("status") in WEAK_CLAIM_STATUSES]
     if weak:
-        lim.append(f"Weakly supported / contradicted claims are labeled inline: "
-                   f"{len(weak)} claim(s).")
+        lim.append(t(lang, "lim.weak", n=len(weak)))
     unreachable = [sid for sid, v in (vr.get("per_source") or {}).items()
                    if (v.get("verification") or {}).get("status") in ("unreachable",)]
     if unreachable:
-        lim.append(f"Citations that could not be machine-verified: {', '.join(unreachable)}.")
+        lim.append(t(lang, "lim.unreachable", ids=", ".join(unreachable)))
     if not lim:
-        lim.append("No waivers, budget exceptions, or health failures were recorded for this run.")
+        lim.append(t(lang, "lim.none"))
     return lim
 
 
-def _summary(res: dict) -> str:
+def _summary(res: dict, lang: str = "en") -> str:
     checks = res["checks"]
     passed = sum(1 for c in checks if c["ok"])
     note = ""
     downgraded = [c for c in checks if c.get("downgraded")]
     if downgraded:
-        note = f"; {len(downgraded)} downgraded via --allow-flagged: " + ", ".join(c["name"] for c in downgraded)
-    return f"{passed}/{len(checks)} hard checks passed{note}"
+        note = "; " + report_i18n.t(
+            lang, "gates.downgraded", k=len(downgraded),
+            names=", ".join(c["name"] for c in downgraded))
+    return report_i18n.t(lang, "gates.summary", p=passed, n=len(checks)) + note
 
 
 # ------------------------------------------------------------------ gates
@@ -374,8 +427,9 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
     mr = {"findings": len(findings_meta), "uncited_lines": 0, "unknown_ids": [],
           "broken_refs": 0, "placeholders": 0, "weak_unlabeled": [], "missing_from_bib": []}
 
-    # gate 0: report exists with required sections
-    missing_sections = [s for s in REQUIRED_SECTIONS if f"## {s}" not in report_text]
+    # gate 0: report exists with required sections (english or persian headings)
+    missing_sections = [key for key in report_i18n.REQUIRED_SECTION_KEYS
+                        if not _has_section(report_text, key)]
     add("report_structure", bool(report_text) and not missing_sections,
         detail=("missing sections: " + ", ".join(missing_sections)) if missing_sections else "ok")
 
@@ -391,7 +445,7 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
     add("ids_resolve", not unknown, detail=", ".join(unknown) or "ok")
 
     # gate 2: zero uncited fact-bearing lines in Findings
-    find_sec = _section_text(report_text, "Findings")
+    find_sec = _section_text(report_text, "findings")
     uncited = _uncited_lines(find_sec)
     mr["uncited_lines"] = len(uncited)
     add("findings_cited", not uncited and bool(findings_meta),
@@ -399,7 +453,7 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
         else ("no findings yet" if not findings_meta else "ok"))
 
     # gate 3: bibliography covers every SRC cited anywhere
-    bib_sec = _section_text(report_text, "Bibliography")
+    bib_sec = _section_text(report_text, "bibliography")
     cited_srcs = {i for i in ID_RE.findall(report_text) if i.startswith("SRC-")}
     bib_srcs = set(re.findall(r"\[(SRC-\d{4})\]", bib_sec)) | set(re.findall(r"(SRC-\d{4})", bib_sec))
     missing_bib = sorted(cited_srcs - bib_srcs)
@@ -457,7 +511,7 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
         add("weak_labeled", not weak_unlabeled, detail=", ".join(weak_unlabeled) or "ok")
 
     # gate 8: limitations mention waivers + health failures
-    lim_sec = _section_text(report_text, "Limitations")
+    lim_sec = _section_text(report_text, "limitations")
     miss_lim = []
     for w in state.get("gate_waivers") or []:
         if str(w.get("check")) not in lim_sec and str(w.get("reason", ""))[:20] not in lim_sec:
@@ -516,10 +570,18 @@ def check(project: Path, allow_flagged: bool = False) -> dict:
 
 # ------------------------------------------------------------------ helpers
 
-def _section_text(text: str, heading: str) -> str:
-    m = re.search(rf"^##\s+{re.escape(heading)}\s*$(.*?)(?=^##\s|\Z)",
-                  text, re.M | re.S)
-    return m.group(1) if m else ""
+def _section_text(text: str, key: str) -> str:
+    """Body of a canonical section, accepting its english or persian heading."""
+    for heading in report_i18n.heading_variants(key):
+        m = re.search(rf"^##\s+{re.escape(heading)}\s*$(.*?)(?=^##\s|\Z)",
+                      text, re.M | re.S)
+        if m:
+            return m.group(1)
+    return ""
+
+
+def _has_section(text: str, key: str) -> bool:
+    return any(f"## {h}" in text for h in report_i18n.heading_variants(key))
 
 
 def _uncited_lines(section: str) -> list[str]:

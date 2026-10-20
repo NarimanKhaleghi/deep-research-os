@@ -1,0 +1,328 @@
+{
+  "meta": {
+    "title": "deep-research-os — research that survives scrutiny",
+    "description": "An open-source research operating system for AI agents. Every claim traces to a verbatim quote, every source to a SHA-256 snapshot, every report to hard gates. MIT, zero API keys.",
+    "og_title": "deep-research-os — research that survives scrutiny",
+    "og_description": "Evidence ledger, citation verification, contradiction protocol, requirement coverage and bilingual reports. Open source, MIT, no API keys required."
+  },
+  "brand": "deep-research-os",
+  "nav": {
+    "how": "Method",
+    "evidence": "Evidence",
+    "validation": "Validation",
+    "install": "Install",
+    "github": "GitHub",
+    "menu": "Menu",
+    "language": "فارسی"
+  },
+  "hero": {
+    "eyebrow": "Agent skill · MIT · zero API keys",
+    "h1": "Research that survives <em>scrutiny.</em>",
+    "lede": "A self-improving research operating system for AI agents. Every claim traces to a verbatim quote, every source to a SHA-256 snapshot, every report to hard gates.",
+    "cta_primary": "Install the skill",
+    "cta_secondary": "Read the source",
+    "cta_tertiary": "See a real report",
+    "proof": [
+      "10 phases",
+      "12 keyless APIs",
+      "49 tests",
+      "8/8 offline evals"
+    ],
+    "ledger": {
+      "title": "Evidence ledger",
+      "live": "run 04",
+      "rows": [
+        {
+          "claim": "Staged gates beat single-shot approval when demand is uncertain.",
+          "ids": "FN-12 · CL-0014 · SRC-0031",
+          "verdict": "verified"
+        },
+        {
+          "claim": "RICE ranks bets; it does not price the option to wait.",
+          "ids": "FN-11 · CL-0051 · SRC-0004",
+          "verdict": "verified"
+        },
+        {
+          "claim": "Regulatory ambiguity raises the value of deferral.",
+          "ids": "FN-13 · CL-0045 · SRC-0018",
+          "verdict": "verified"
+        },
+        {
+          "claim": "BNPL trust shocks change channel mix, not gate order.",
+          "ids": "FN-12 · CL-0036 · SRC-0023",
+          "verdict": "verified"
+        }
+      ],
+      "foot_left": "sha256 · e3b0c442…",
+      "foot_right": "4 / 4 verified",
+      "stamp": "VERIFIED · 24/24",
+      "slip": "43 sources · 11 key studies"
+    }
+  },
+  "metrics": [
+    {
+      "value": "10",
+      "label": "research phases"
+    },
+    {
+      "value": "12",
+      "label": "keyless APIs"
+    },
+    {
+      "value": "49",
+      "label": "tests green"
+    },
+    {
+      "value": "8/8",
+      "label": "offline evals"
+    }
+  ],
+  "features": {
+    "kicker": "01 — Method",
+    "title": "Built to be audited, not trusted.",
+    "desc": "The pipeline makes the quiet work visible: search logs, evidence quotes, credibility bands, contradictions, and the gaps you would rather hide.",
+    "items": [
+      {
+        "n": "01",
+        "title": "Evidence ledger",
+        "desc": "Every claim carries a verbatim quote and a locator; every source carries a SHA-256 snapshot of what was actually read."
+      },
+      {
+        "n": "02",
+        "title": "Citation verification",
+        "desc": "DOI and citation resolution, online and offline. Fabricated references and number drift never make it into the report."
+      },
+      {
+        "n": "03",
+        "title": "Contradiction protocol",
+        "desc": "Conflicts are recorded, graded and adjudicated, with severity and resolution kept on the record."
+      },
+      {
+        "n": "04",
+        "title": "Requirement coverage",
+        "desc": "Every prompt requirement is mapped to an anchor that appears in the report, or waived with a stated reason."
+      },
+      {
+        "n": "05",
+        "title": "PRISMA-lite search log",
+        "desc": "Every query is journaled with an ID, engine, hit count and screening outcome. Reproducible by default."
+      },
+      {
+        "n": "06",
+        "title": "Bilingual reports",
+        "desc": "Persian and English reports with real RTL, light and dark themes, embedded fonts, and clean A4 print output."
+      }
+    ]
+  },
+  "pipeline": {
+    "kicker": "02 — Pipeline",
+    "title": "Ten phases. Every exit is a gate.",
+    "desc": "Each phase produces artifacts the next phase can check. Nothing advances on vibes.",
+    "phases": [
+      {
+        "n": "00",
+        "name": "Intake",
+        "desc": "Question, profile, deliverable type and explicit requirements.",
+        "gate": "brief + requirements"
+      },
+      {
+        "n": "01",
+        "name": "Landscape",
+        "desc": "Angles, actors and a source map before any query runs.",
+        "gate": "angles covered"
+      },
+      {
+        "n": "02",
+        "name": "Plan",
+        "desc": "Initial queries, collection matrix and stop rules.",
+        "gate": "query plan"
+      },
+      {
+        "n": "03",
+        "name": "Collect",
+        "desc": "Route queries to free public APIs; snapshot every source.",
+        "gate": "search log"
+      },
+      {
+        "n": "04",
+        "name": "Extract",
+        "desc": "Verbatim quotes with locators, never paraphrase as evidence.",
+        "gate": "quotes validate"
+      },
+      {
+        "n": "05",
+        "name": "Assess",
+        "desc": "Credibility bands, source tiers and screening reasons.",
+        "gate": "credibility scored"
+      },
+      {
+        "n": "06",
+        "name": "Verify",
+        "desc": "Citations, numbers, modality, corroboration and staleness.",
+        "gate": "claims verified"
+      },
+      {
+        "n": "07",
+        "name": "Synthesize",
+        "desc": "Findings, contradictions and explicit gaps.",
+        "gate": "findings cited"
+      },
+      {
+        "n": "08",
+        "name": "Report",
+        "desc": "Markdown and self-contained HTML; hard report gates.",
+        "gate": "12 hard checks"
+      },
+      {
+        "n": "09",
+        "name": "Retrospect",
+        "desc": "What worked, what failed, and reversible learning proposals.",
+        "gate": "governed learning"
+      }
+    ],
+    "gate_label": "Gate"
+  },
+  "preview": {
+    "kicker": "03 — Output",
+    "title": "The report is the proof.",
+    "desc": "A real validation run on fintech portfolio decisions: all 24 prompt requirements mapped, 12 logged searches, 43 screened sources, 11 key studies and 15 findings — in Persian, APA 7, with a claim-and-evidence appendix.",
+    "link": "Open the sample report",
+    "sample_path": "samples/report.html",
+    "sub": "Validation run · Persian · ~11,300 words",
+    "title_short": "Stage-gated fintech portfolio decisions under uncertainty",
+    "meta": [
+      "report.md",
+      "report.html",
+      "gates: 12/12"
+    ],
+    "stats": [
+      {
+        "value": "24/24",
+        "label": "requirements"
+      },
+      {
+        "value": "43",
+        "label": "sources"
+      },
+      {
+        "value": "11",
+        "label": "key studies"
+      },
+      {
+        "value": "15",
+        "label": "findings"
+      }
+    ],
+    "excerpt": "The model separates ranking from pricing: RICE orders the bets, staged gates decide when capital is released, and real options price the value of waiting.",
+    "refs": "References · APA 7",
+    "toc": [
+      "Summary",
+      "Requirements",
+      "Findings",
+      "Matrix",
+      "Contradictions",
+      "Method",
+      "Limitations",
+      "References"
+    ]
+  },
+  "validation": {
+    "kicker": "04 — Validation",
+    "title": "Numbers from a real run.",
+    "desc": "Not a demo dataset. The validation run researched a live decision problem end to end: 52 claims, 60 evidence quotes, 43 sources, 12 logged searches — and every requirement mapped.",
+    "stats": [
+      {
+        "value": "24/24",
+        "label": "prompt requirements mapped"
+      },
+      {
+        "value": "12",
+        "label": "searches logged with IDs"
+      },
+      {
+        "value": "43",
+        "label": "sources screened and scored"
+      },
+      {
+        "value": "0",
+        "label": "fabricated citations"
+      }
+    ],
+    "evals_title": "Eight adversarial offline evals",
+    "evals": [
+      "Fabricated quote is rejected",
+      "Planted contradiction is found and adjudicated",
+      "Number drift downgrades the claim",
+      "Echo chamber raises a corroboration gap",
+      "Persian normalization matches quotes",
+      "Budget ceiling blocks before overspend",
+      "Unmet requirement blocks the report",
+      "Normative overclaim is flagged"
+    ],
+    "note": "Run with RESEARCH_OS_OFFLINE=1. No network, no keys, deterministic."
+  },
+  "install": {
+    "kicker": "05 — Install",
+    "title": "Sixty seconds to a governed run.",
+    "desc": "Python 3.11+. No API keys. The installer creates a venv, links the skill into your agent platform and verifies the environment.",
+    "steps": [
+      {
+        "title": "Clone",
+        "cmd": "git clone https://github.com/NarimanKhaleghi/deep-research-os\ncd deep-research-os"
+      },
+      {
+        "title": "Install the skill",
+        "cmd": "./install.sh"
+      },
+      {
+        "title": "Verify",
+        "cmd": "python scripts/research_ctl.py doctor"
+      },
+      {
+        "title": "Start a run",
+        "cmd": "python scripts/research_ctl.py init \"Your research question\" --profile deep --dir ~/Research/your-topic"
+      }
+    ],
+    "platforms": "Claude Code · OpenCode · Codex · Cursor · generic",
+    "link": "Full setup and CLI reference",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "faq": {
+    "title": "Questions worth asking.",
+    "items": [
+      {
+        "q": "Does it need API keys?",
+        "a": "No. Twelve free public search APIs, web fetch and PDF extraction work without keys. Optional keys only add capacity; the pipeline is designed to run keyless."
+      },
+      {
+        "q": "Which agents does it support?",
+        "a": "Claude Code, OpenCode, Codex, Cursor and any generic skill directory. The installer auto-detects platforms; SKILL.md carries the workflow."
+      },
+      {
+        "q": "What does one run produce?",
+        "a": "A brief and plan, a search journal, source snapshots, an evidence ledger, a verification report, findings, report.md, a self-contained report.html and a retrospective."
+      },
+      {
+        "q": "Is the Persian output real RTL?",
+        "a": "Yes. Reports are rendered in English or Persian (auto-detected or --lang fa), with RTL layout, embedded Vazirmatn, translated labels and APA 7 references."
+      },
+      {
+        "q": "What do the hard gates check?",
+        "a": "IDs resolve, every fact line is cited, numbers match sources, no placeholders, open contradictions stay visible, weak claims are labeled, requirements are covered and bibliography fields are complete."
+      }
+    ]
+  },
+  "footer": {
+    "tagline": "An evidence-first research operating system for AI agents.",
+    "author": "Built by Nariman Khaleghi",
+    "license": "MIT licensed",
+    "docs": "Documentation",
+    "source": "Source",
+    "sample": "Sample report",
+    "rights": "Open source. No telemetry. Your research stays in your folder.",
+    "version_label": "v"
+  },
+  "skip": "Skip to content",
+  "theme": "Toggle theme"
+}

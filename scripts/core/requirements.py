@@ -18,6 +18,7 @@ _SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
+from core import report_i18n  # noqa: E402
 from lib import util  # noqa: E402
 
 FILE = "requirements.json"
@@ -122,7 +123,18 @@ def _anchor_present(anchor: str, report_text: str) -> bool:
     Anchors are human labels like ``Report §11 Sensitivity analysis`` — we strip
     section markers and quoting, normalize, and require every token of length
     >= 4 to be present (case-insensitive, Persian-aware via normalize_text).
+    Anchors written in one language also resolve against the other language's
+    template vocabulary (see ``report_i18n.anchor_aliases``), so a legacy
+    English mapping stays valid in a Persian report and vice versa.
     """
+    candidates = [anchor]
+    alias = report_i18n.anchor_aliases(anchor)
+    if alias and alias != anchor:
+        candidates.append(alias)
+    return any(_tokens_present(c, report_text) for c in candidates)
+
+
+def _tokens_present(anchor: str, report_text: str) -> bool:
     norm_report = util.normalize_text(report_text)
     cleaned = anchor.replace("§", " ").replace("#", " ").replace("«", " ").replace("»", " ")
     tokens = [t for t in util.normalize_text(cleaned).split() if len(t) >= 4]

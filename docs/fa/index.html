@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>deep-research-os — پژوهشی که از بازبینی سربلند بیرون می‌آید</title>
+<meta name="description" content="سیستم‌عامل پژوهش متن‌باز برای ایجنت‌های هوش مصنوعی: دفتر شواهد، راستی‌آزمایی استناد، پروتکل تناقض، پوشش الزامات و گزارش دوزبانه با گیت‌های سخت. مجوز MIT، بدون کلید API.">
+<meta name="author" content="Nariman Khaleghi">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://narimankhaleghi.github.io/deep-research-os/fa/">
+<link rel="alternate" hreflang="en" href="https://narimankhaleghi.github.io/deep-research-os/">
+<link rel="alternate" hreflang="fa" href="https://narimankhaleghi.github.io/deep-research-os/fa/">
+<link rel="alternate" hreflang="x-default" href="https://narimankhaleghi.github.io/deep-research-os/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="deep-research-os">
+<meta property="og:title" content="deep-research-os — پژوهشی که از بازبینی سربلند بیرون می‌آید">
+<meta property="og:description" content="هر ادعا به نقل‌قول واژگانی، هر منبع به اسنپ‌شات SHA-256 و هر گزارش به گیت‌های سخت متصل است. متن‌باز، MIT، بدون نیاز به کلید API.">
+<meta property="og:url" content="https://narimankhaleghi.github.io/deep-research-os/fa/">
+<meta property="og:image" content="https://narimankhaleghi.github.io/deep-research-os/assets/og-fa.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="deep-research-os — پژوهشی که از بازبینی سربلند بیرون می‌آید">
+<meta property="og:locale" content="fa_IR">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="deep-research-os — پژوهشی که از بازبینی سربلند بیرون می‌آید">
+<meta name="twitter:description" content="هر ادعا به نقل‌قول واژگانی، هر منبع به اسنپ‌شات SHA-256 و هر گزارش به گیت‌های سخت متصل است. متن‌باز، MIT، بدون نیاز به کلید API.">
+<meta name="twitter:image" content="https://narimankhaleghi.github.io/deep-research-os/assets/og-fa.png">
+
+<meta name="theme-color" content="#f4f1e8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101412" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="../assets/fonts/vazirmatn-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css?v=f79519493f">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"deep-research-os","description":"سیستم‌عامل پژوهش متن‌باز برای ایجنت‌های هوش مصنوعی: دفتر شواهد، راستی‌آزمایی استناد، پروتکل تناقض، پوشش الزامات و گزارش دوزبانه با گیت‌های سخت. مجوز MIT، بدون کلید API.","url":"https://narimankhaleghi.github.io/deep-research-os/fa/","image":"https://narimankhaleghi.github.io/deep-research-os/assets/og-fa.png","inLanguage":"fa","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","softwareVersion":"1.2.0","codeRepository":"https://github.com/NarimanKhaleghi/deep-research-os","license":"https://opensource.org/license/mit","author":{"@type":"Person","name":"Nariman Khaleghi"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["دفتر شواهد","راستی‌آزمایی استناد","پروتکل تناقض","پوشش الزامات","لاگ جست‌وجوی PRISMA-lite","گزارش دوزبانه"]},{"@type":"FAQPage","inLanguage":"fa","mainEntity":[{"@type":"Question","name":"آیا به کلید API نیاز دارد؟","acceptedAnswer":{"@type":"Answer","text":"نه. دوازده API عمومی رایگان جست‌وجو، واکشی وب و استخراج PDF بدون کلید کار می‌کنند. کلید اختیاری فقط ظرفیت اضافه می‌کند؛ خط لوله برای اجرای بدون کلید طراحی شده است."}},{"@type":"Question","name":"از کدام ایجنت‌ها پشتیبانی می‌کند؟","acceptedAnswer":{"@type":"Answer","text":"Claude Code، OpenCode، Codex، Cursor و هر پوشهٔ اسکیل عمومی. نصب‌کننده پلتفرم‌ها را خودکار تشخیص می‌دهد و گردش‌کار در SKILL.md است."}},{"@type":"Question","name":"یک اجرا چه چیزهایی تولید می‌کند؟","acceptedAnswer":{"@type":"Answer","text":"بریف و برنامه، ژورنال جست‌وجو، اسنپ‌شات منابع، دفتر شواهد، گزارش راستی‌آزمایی، یافته‌ها، report.md، گزارش HTML خودبسنده و بازنگری."}},{"@type":"Question","name":"آیا خروجی فارسی واقعاً RTL است؟","acceptedAnswer":{"@type":"Answer","text":"بله. گزارش‌ها به انگلیسی یا فارسی (تشخیص خودکار یا --lang fa) با چیدمان راست‌به‌چپ، فونت وزیرمتن جاسازی‌شده، برچسب‌های ترجمه‌شده و ارجاع APA 7 رندر می‌شوند."}},{"@type":"Question","name":"گیت‌های سخت چه چیزی را بررسی می‌کنند؟","acceptedAnswer":{"@type":"Answer","text":"حل‌شدن شناسه‌ها، استناد هر سطر واقعی، تطابق اعداد با منابع، نبود جای‌نگهدار، نمایش تناقض‌های باز، برچسب ادعاهای ضعیف، پوشش الزامات و کامل‌بودن فیلدهای کتاب‌شناسی."}}]},{"@type":"HowTo","name":"شصت ثانیه تا یک اجرای تحت حاکمیت.","description":"پایتون ۳٫۱۱ به بالا. بدون کلید API. نصب‌کننده محیط مجازی می‌سازد، اسکیل را به پلتفرم ایجنت شما وصل می‌کند و محیط را بررسی می‌کند.","inLanguage":"fa","url":"https://narimankhaleghi.github.io/deep-research-os/fa/#install","step":[{"@type":"HowToStep","position":1,"name":"کلون","text":"کلون: git clone https://github.com/NarimanKhaleghi/deep-research-os\ncd deep-research-os"},{"@type":"HowToStep","position":2,"name":"نصب اسکیل","text":"نصب اسکیل: ./install.sh"},{"@type":"HowToStep","position":3,"name":"بررسی محیط","text":"بررسی محیط: python scripts/research_ctl.py doctor"},{"@type":"HowToStep","position":4,"name":"شروع یک اجرا","text":"شروع یک اجرا: python scripts/research_ctl.py init \"پرسش پژوهشی شما\" --profile deep --dir ~/Research/your-topic"}]}]}</script>
+<script>
+(function(){document.documentElement.classList.add("js");try{var t=localStorage.getItem("dro.theme");if(t){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();
+</script>
+</head>
+<body>
+<a class="skip" href="#main">پرش به محتوا</a>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="../" aria-label="deep-research-os — home">
+      <span class="mark" aria-hidden="true">◈</span> deep-research-os
+    </a>
+    <nav class="navlinks" id="navlinks" aria-label="Primary">
+      <a href="#how">روش</a>
+      <a href="#evidence">شواهد</a>
+      <a href="#validation">اعتبارسنجی</a>
+      <a href="#install">نصب</a>
+    </nav>
+    <div class="tools">
+      <a class="langbtn" href="../" hreflang="en" lang="en">English</a>
+      <button class="iconbtn" id="theme-toggle" type="button" aria-pressed="false" aria-label="تغییر پوسته" title="تغییر پوسته">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="gh" href="https://github.com/NarimanKhaleghi/deep-research-os">گیت‌هاب <span aria-hidden="true">↗</span></a>
+      <button class="burger" id="menu-toggle" type="button" aria-expanded="false" aria-controls="navlinks" aria-label="منو">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="dot" aria-hidden="true"></span>اسکیل ایجنت · MIT · بدون کلید API</p>
+        <h1>پژوهشی که از <em>بازبینی</em> سربلند بیرون می‌آید.</h1>
+        <p class="lede">سیستم‌عامل پژوهشِ خودبه‌بهبود برای ایجنت‌های هوش مصنوعی؛ هر ادعا به نقل‌قول دقیق، هر منبع به اسنپ‌شات SHA-256 و هر گزارش به گیت‌های سخت متصل است.</p>
+        <div class="cta">
+          <a class="btn primary" href="#install">نصب اسکیل</a>
+          <a class="btn ghost" href="https://github.com/NarimanKhaleghi/deep-research-os">مشاهدهٔ سورس</a>
+          <a class="link-arrow" href="samples/report.html">دیدن یک گزارش واقعی <span aria-hidden="true">↗</span></a>
+        </div>
+        <ul class="proof">
+<li>۱۰ فاز</li><li>۱۲ API بدون کلید</li><li>۴۹ تست</li><li>۸/۸ اِوَل آفلاین</li>        </ul>
+      </div>
+      <div class="hero-art">
+        <div class="slip">۴۳ منبع · ۱۱ مطالعهٔ کلیدی</div>
+        <div class="ledger" aria-label="دفتر شواهد">
+          <div class="lhead"><span class="mono">دفتر شواهد</span><span class="live mono"><i aria-hidden="true"></i>اجرا ۰۴</span></div>
+          <div class="lrow" style="--i:0">
+            <p class="lclaim">گیت‌های مرحله‌ای در شرایط عدم‌قطعیت تقاضا، از تأیید یک‌باره بهتر عمل می‌کنند.</p>
+            <span class="lsrc">FN-12 · CL-0014 · SRC-0031</span>
+            <span class="chip verified">تأییدشده</span>
+          </div>
+          <div class="lrow" style="--i:1">
+            <p class="lclaim">RICE شرط‌ها را رتبه‌بندی می‌کند؛ ارزش صبر را قیمت‌گذاری نمی‌کند.</p>
+            <span class="lsrc">FN-11 · CL-0051 · SRC-0004</span>
+            <span class="chip verified">تأییدشده</span>
+          </div>
+          <div class="lrow" style="--i:2">
+            <p class="lclaim">ابهام مقرراتی ارزش تعویق را بالا می‌برد.</p>
+            <span class="lsrc">FN-13 · CL-0045 · SRC-0018</span>
+            <span class="chip verified">تأییدشده</span>
+          </div>
+          <div class="lrow" style="--i:3">
+            <p class="lclaim">شوک اعتماد BNPL ترکیب کانال را عوض می‌کند، نه ترتیب گیت‌ها را.</p>
+            <span class="lsrc">FN-12 · CL-0036 · SRC-0023</span>
+            <span class="chip verified">تأییدشده</span>
+          </div>
+          <div class="lfoot"><span>هش sha256 · e3b0c442…</span><span>۴ / ۴ تأییدشده</span></div>
+        </div>
+        <div class="stamp">تأییدشده · ۲۴/۲۴</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="metrics" aria-label="Key numbers">
+    <div class="wrap">
+      <div class="band">
+        <div class="metric"><div class="mvalue" data-count="10">10</div><div class="mlabel">فاز پژوهش</div></div>
+        <div class="metric"><div class="mvalue" data-count="12">12</div><div class="mlabel">API بدون کلید</div></div>
+        <div class="metric"><div class="mvalue" data-count="49">49</div><div class="mlabel">تست سبز</div></div>
+        <div class="metric"><div class="mvalue" data-count="8/8">8/8</div><div class="mlabel">اِوَل آفلاین</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="fhead reveal">
+        <div><p class="kicker">۰۱ — روش</p><h2>ساخته‌شده برای بازرسی، نه اعتماد.</h2></div>
+        <p>خط لوله کارِ نامرئی را قابل‌دیدن می‌کند: لاگ جست‌وجو، نقل‌قول‌های شاهد، باندهای اعتبار، تناقض‌ها و شکاف‌هایی که ترجیح می‌دهیم پنهان بمانند.</p>
+      </div>
+      <div class="fgrid">
+        <article class="fitem reveal" style="--i:0">
+          <div class="fnum">۰۱</div>
+          <h3>دفتر شواهد</h3>
+          <p>هر ادعا نقل‌قول واژگانی و نشانی در منبع دارد؛ هر منبع اسنپ‌شات SHA-256 از آنچه واقعاً خوانده شده است.</p>
+        </article>
+        <article class="fitem reveal" style="--i:1">
+          <div class="fnum">۰۲</div>
+          <h3>راستی‌آزمایی استناد</h3>
+          <p>ارجاع‌ها و DOIها آنلاین و آفلاین بررسی می‌شوند؛ ارجاع ساختگی و جابه‌جایی عدد به گزارش نمی‌رسد.</p>
+        </article>
+        <article class="fitem reveal" style="--i:2">
+          <div class="fnum">۰۳</div>
+          <h3>پروتکل تناقض</h3>
+          <p>تناقض‌ها با شدت ثبت، درجه‌بندی و داوری می‌شوند و وضعیت‌شان روی گزارش می‌ماند.</p>
+        </article>
+        <article class="fitem reveal" style="--i:3">
+          <div class="fnum">۰۴</div>
+          <h3>پوشش الزامات</h3>
+          <p>هر الزام پرامپت به لنگرِّی در گزارش نگاشت می‌شود که واقعاً وجود دارد، یا با دلیل واگذار می‌شود.</p>
+        </article>
+        <article class="fitem reveal" style="--i:4">
+          <div class="fnum">۰۵</div>
+          <h3>لاگ جست‌وجوی PRISMA-lite</h3>
+          <p>هر جست‌وجو با شناسه، موتور، تعداد بازیافته و پیامد غربال ثبت می‌شود؛ بازتولیدپذیر به‌صورت پیش‌فرض.</p>
+        </article>
+        <article class="fitem reveal" style="--i:5">
+          <div class="fnum">۰۶</div>
+          <h3>گزارش دوزبانه</h3>
+          <p>گزارش فارسی و انگلیسی با RTL واقعی، پوستهٔ روشن و تاریک، فونت‌های جاسازی‌شده و چاپ تمیز A4.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pipeline">
+    <div class="wrap">
+      <div class="fhead reveal">
+        <div><p class="kicker">۰۲ — خط لوله</p><h2>ده فاز. هر خروجی یک گیت.</h2></div>
+        <p>هر فاز آرتیفکت‌هایی می‌سازد که فاز بعدی می‌تواند بررسی کند. هیچ‌چیز با حدس جلو نمی‌رود.</p>
+      </div>
+      <ol class="phases">
+        <li class="phase reveal" style="--i:0">
+          <span class="pnum">۰۰</span>
+          <div class="pbody">
+            <h3>دریافت</h3>
+            <p>پرسش، پروفایل، نوع خروجی و الزامات صریح.</p>
+            <span class="pgate"><span>گیت</span> بریف + الزامات</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:1">
+          <span class="pnum">۰۱</span>
+          <div class="pbody">
+            <h3>نقشهٔ میدان</h3>
+            <p>زاویه‌ها، بازیگران و نقشهٔ منابع پیش از هر جست‌وجو.</p>
+            <span class="pgate"><span>گیت</span> پوشش زاویه‌ها</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:2">
+          <span class="pnum">۰۲</span>
+          <div class="pbody">
+            <h3>برنامه</h3>
+            <p>جست‌وجوهای اولیه، ماتریس گردآوری و قواعد توقف.</p>
+            <span class="pgate"><span>گیت</span> برنامهٔ جست‌وجو</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:3">
+          <span class="pnum">۰۳</span>
+          <div class="pbody">
+            <h3>گردآوری</h3>
+            <p>مسیریابی جست‌وجو به APIهای عمومی رایگان و اسنپ‌شات هر منبع.</p>
+            <span class="pgate"><span>گیت</span> لاگ جست‌وجو</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:4">
+          <span class="pnum">۰۴</span>
+          <div class="pbody">
+            <h3>استخراج</h3>
+            <p>نقل‌قول واژگانی با نشانی؛ هرگز بازنویسی به‌جای شاهد.</p>
+            <span class="pgate"><span>گیت</span> اعتبارسنجی نقل‌قول</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:5">
+          <span class="pnum">۰۵</span>
+          <div class="pbody">
+            <h3>ارزیابی</h3>
+            <p>باندهای اعتبار، ردهٔ منبع و دلیل غربال.</p>
+            <span class="pgate"><span>گیت</span> امتیاز اعتبار</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:6">
+          <span class="pnum">۰۶</span>
+          <div class="pbody">
+            <h3>راستی‌آزمایی</h3>
+            <p>استناد، عدد، وجهیت، تأیید متقابل و کهنگی.</p>
+            <span class="pgate"><span>گیت</span> ادعاهای تأییدشده</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:7">
+          <span class="pnum">۰۷</span>
+          <div class="pbody">
+            <h3>ترکیب</h3>
+            <p>یافته‌ها، تناقض‌ها و شکاف‌های صریح.</p>
+            <span class="pgate"><span>گیت</span> یافته‌های مستند</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:8">
+          <span class="pnum">۰۸</span>
+          <div class="pbody">
+            <h3>گزارش</h3>
+            <p>مارک‌داون و HTML خودبسنده؛ گیت‌های سخت گزارش.</p>
+            <span class="pgate"><span>گیت</span> ۱۲ بررسی سخت</span>
+          </div>
+        </li>
+        <li class="phase reveal" style="--i:9">
+          <span class="pnum">۰۹</span>
+          <div class="pbody">
+            <h3>بازنگری</h3>
+            <p>چه کار کرد، چه شکست خورد و پیشنهادهای یادگیری بازگشت‌پذیر.</p>
+            <span class="pgate"><span>گیت</span> یادگیری تحت حاکمیت</span>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section preview" id="evidence">
+    <div class="wrap pgrid">
+      <div class="pintro reveal">
+        <p class="kicker">۰۳ — خروجی</p>
+        <h2>گزارش، خودِ اثبات است.</h2>
+        <p>یک اجرای واقعی اعتبارسنجی دربارهٔ تصمیم‌های سبد محصول فینتک: ۲۴ از ۲۴ الزام پرامپت، ۱۲ جست‌وجوی ثبت‌شده، ۴۳ منبع غربال‌شده، ۱۱ مطالعهٔ کلیدی و ۱۵ یافته — به فارسی، APA 7، همراه با پیوست ادعا و شواهد.</p>
+        <a class="plink" href="samples/report.html">گزارش نمونه را ببینید <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="sheet reveal" style="--i:1">
+        <aside class="toc" aria-label="Report contents">
+          <div><span>01</span><span>خلاصه</span></div>
+          <div><span>02</span><span>الزامات</span></div>
+          <div class="on"><span>03</span><span>یافته‌ها</span></div>
+          <div><span>04</span><span>ماتریس</span></div>
+          <div><span>05</span><span>تناقض‌ها</span></div>
+          <div><span>06</span><span>روش</span></div>
+          <div><span>07</span><span>محدودیت‌ها</span></div>
+          <div><span>08</span><span>منابع</span></div>
+        </aside>
+        <article class="doc">
+          <span class="mono dsub">اجرای اعتبارسنجی · فارسی · حدود ۱۱٬۳۰۰ واژه</span>
+          <h3>تصمیم‌های سبد محصول فینتک در شرایط عدم‌قطعیت</h3>
+          <div class="docmeta"><span>report.md</span><span>report.html</span><span>گیت‌ها: ۱۲/۱۲</span></div>
+          <div class="rstats">
+            <div class="rstat"><b>24/24</b><span>الزامات</span></div>
+            <div class="rstat"><b>43</b><span>منبع</span></div>
+            <div class="rstat"><b>11</b><span>مطالعهٔ کلیدی</span></div>
+            <div class="rstat"><b>15</b><span>یافته</span></div>
+          </div>
+          <p class="rtext">مدل، رتبه‌بندی را از قیمت‌گذاری جدا می‌کند: RICE ترتیب شرط‌ها را می‌دهد، گیت‌های مرحله‌ای زمان آزادسازی سرمایه را تعیین می‌کنند و اختیارهای واقعی، ارزش صبر کردن را قیمت‌گذاری می‌کنند.</p>
+          <span class="mono refs">ارجاع‌ها · APA 7</span>
+          <div class="refline w90"></div><div class="refline w65"></div><div class="refline w80"></div><div class="refline w65"></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section validation" id="validation">
+    <div class="wrap">
+      <div class="fhead reveal">
+        <div><p class="kicker">۰۴ — اعتبارسنجی</p><h2>اعداد از یک اجرای واقعی.</h2></div>
+        <p>این یک دیتاست نمایشی نیست. اجرای اعتبارسنجی یک مسئلهٔ واقعی تصمیم را از ابتدا تا انتها پژوهش کرد: ۵۲ ادعا، ۶۰ نقل‌قول شاهد، ۴۳ منبع، ۱۲ جست‌وجوی ثبت‌شده — و همهٔ الزامات نگاشت‌شده.</p>
+      </div>
+      <div class="vstats reveal">
+        <div class="vstat"><b data-count="24/24">24/24</b><span>الزام پرامپت نگاشت‌شده</span></div>
+        <div class="vstat"><b data-count="12">12</b><span>جست‌وجوی ثبت‌شده با شناسه</span></div>
+        <div class="vstat"><b data-count="43">43</b><span>منبع غربال‌شده و امتیازگرفته</span></div>
+        <div class="vstat"><b data-count="0">0</b><span>ارجاع ساختگی</span></div>
+      </div>
+      <div class="evals reveal">
+        <div class="evals-head">
+          <h3>هشت اِوَل آفلاین خصمانه</h3>
+          <p class="mono">با RESEARCH_OS_OFFLINE=1 اجرا می‌شود: بدون شبکه، بدون کلید، قطعی.</p>
+        </div>
+        <ol class="evals-grid">
+<li>نقل‌قول ساختگی رد می‌شود</li><li>تناقض کاشته‌شده پیدا و داوری می‌شود</li><li>جابه‌جایی عدد، ادعا را تنزل می‌دهد</li><li>اتاق پژواک شکاف تأیید متقابل می‌سازد</li><li>نرمال‌سازی فارسی نقل‌قول‌ها را تطبیق می‌دهد</li><li>سقف بودجه پیش از اضافه‌خرج جلوی اجرا را می‌گیرد</li><li>الزام پوشش‌داده‌نشده گزارش را متوقف می‌کند</li><li>ادعای هنجاری بدون منبع رسمی علامت می‌خورد</li>        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section install" id="install">
+    <div class="wrap install-grid">
+      <div class="pintro reveal">
+        <p class="kicker">۰۵ — نصب</p>
+        <h2>شصت ثانیه تا یک اجرای تحت حاکمیت.</h2>
+        <p>پایتون ۳٫۱۱ به بالا. بدون کلید API. نصب‌کننده محیط مجازی می‌سازد، اسکیل را به پلتفرم ایجنت شما وصل می‌کند و محیط را بررسی می‌کند.</p>
+        <p class="platforms">Claude Code · OpenCode · Codex · Cursor · عمومی</p>
+        <a class="plink" href="https://github.com/NarimanKhaleghi/deep-research-os#readme">راهنمای کامل نصب و مرجع CLI <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="steps">
+        <div class="step reveal" style="--i:0">
+          <div class="step-head">
+            <span class="step-n">01</span>
+            <h3>کلون</h3>
+            <button class="copy" type="button" data-copy="کپی" data-copied="کپی شد">کپی</button>
+          </div>
+          <pre tabindex="0" aria-label="کلون"><code>git clone https://github.com/NarimanKhaleghi/deep-research-os
+cd deep-research-os</code></pre>
+        </div>
+        <div class="step reveal" style="--i:1">
+          <div class="step-head">
+            <span class="step-n">02</span>
+            <h3>نصب اسکیل</h3>
+            <button class="copy" type="button" data-copy="کپی" data-copied="کپی شد">کپی</button>
+          </div>
+          <pre tabindex="0" aria-label="نصب اسکیل"><code>./install.sh</code></pre>
+        </div>
+        <div class="step reveal" style="--i:2">
+          <div class="step-head">
+            <span class="step-n">03</span>
+            <h3>بررسی محیط</h3>
+            <button class="copy" type="button" data-copy="کپی" data-copied="کپی شد">کپی</button>
+          </div>
+          <pre tabindex="0" aria-label="بررسی محیط"><code>python scripts/research_ctl.py doctor</code></pre>
+        </div>
+        <div class="step reveal" style="--i:3">
+          <div class="step-head">
+            <span class="step-n">04</span>
+            <h3>شروع یک اجرا</h3>
+            <button class="copy" type="button" data-copy="کپی" data-copied="کپی شد">کپی</button>
+          </div>
+          <pre tabindex="0" aria-label="شروع یک اجرا"><code>python scripts/research_ctl.py init "پرسش پژوهشی شما" --profile deep --dir ~/Research/your-topic</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section faq" id="faq">
+    <div class="wrap">
+      <div class="fhead reveal">
+        <div><p class="kicker">06 — FAQ</p><h2>پرسش‌هایی که ارزش پرسیدن دارند.</h2></div>
+      </div>
+      <div class="faq-list reveal">
+        <details>
+          <summary>آیا به کلید API نیاز دارد؟</summary>
+          <p>نه. دوازده API عمومی رایگان جست‌وجو، واکشی وب و استخراج PDF بدون کلید کار می‌کنند. کلید اختیاری فقط ظرفیت اضافه می‌کند؛ خط لوله برای اجرای بدون کلید طراحی شده است.</p>
+        </details>
+        <details>
+          <summary>از کدام ایجنت‌ها پشتیبانی می‌کند؟</summary>
+          <p>Claude Code، OpenCode، Codex، Cursor و هر پوشهٔ اسکیل عمومی. نصب‌کننده پلتفرم‌ها را خودکار تشخیص می‌دهد و گردش‌کار در SKILL.md است.</p>
+        </details>
+        <details>
+          <summary>یک اجرا چه چیزهایی تولید می‌کند؟</summary>
+          <p>بریف و برنامه، ژورنال جست‌وجو، اسنپ‌شات منابع، دفتر شواهد، گزارش راستی‌آزمایی، یافته‌ها، report.md، گزارش HTML خودبسنده و بازنگری.</p>
+        </details>
+        <details>
+          <summary>آیا خروجی فارسی واقعاً RTL است؟</summary>
+          <p>بله. گزارش‌ها به انگلیسی یا فارسی (تشخیص خودکار یا --lang fa) با چیدمان راست‌به‌چپ، فونت وزیرمتن جاسازی‌شده، برچسب‌های ترجمه‌شده و ارجاع APA 7 رندر می‌شوند.</p>
+        </details>
+        <details>
+          <summary>گیت‌های سخت چه چیزی را بررسی می‌کنند؟</summary>
+          <p>حل‌شدن شناسه‌ها، استناد هر سطر واقعی، تطابق اعداد با منابع، نبود جای‌نگهدار، نمایش تناقض‌های باز، برچسب ادعاهای ضعیف، پوشش الزامات و کامل‌بودن فیلدهای کتاب‌شناسی.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="foot-main">
+      <div class="foot-brand"><span class="mark" aria-hidden="true">◈</span> deep-research-os</div>
+      <p class="foot-tag">سیستم‌عامل پژوهش مبتنی بر شواهد برای ایجنت‌های هوش مصنوعی.</p>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/NarimanKhaleghi/deep-research-os#readme">مستندات</a>
+      <a href="https://github.com/NarimanKhaleghi/deep-research-os">سورس</a>
+      <a href="samples/report.html">گزارش نمونه</a>
+    </div>
+    <div class="foot-legal">
+      <span>ساختهٔ نریمان خالقی · مجوز MIT · نسخهٔ v1.2.0</span>
+      <span>متن‌باز. بدون تلمتری. پژوهش شما در پوشهٔ خودتان می‌ماند.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/site.js?v=f79519493f" defer></script>
+</body>
+</html>

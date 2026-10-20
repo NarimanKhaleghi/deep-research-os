@@ -1,0 +1,30 @@
+{
+  "site_name": "deep-research-os",
+  "base_url": "https://narimankhaleghi.github.io/deep-research-os/",
+  "repo_url": "https://github.com/NarimanKhaleghi/deep-research-os",
+  "docs_url": "https://github.com/NarimanKhaleghi/deep-research-os#readme",
+  "author": "Nariman Khaleghi",
+  "license": "MIT",
+  "langs": {
+    "en": {
+      "path": "",
+      "html_lang": "en",
+      "dir": "ltr",
+      "og_locale": "en_US",
+      "alternate_locale": "fa_IR",
+      "switch_label": "فارسی",
+      "switch_path": "fa/",
+      "og_image": "assets/og.png"
+    },
+    "fa": {
+      "path": "fa/",
+      "html_lang": "fa",
+      "dir": "rtl",
+      "og_locale": "fa_IR",
+      "alternate_locale": "en_US",
+      "switch_label": "English",
+      "switch_path": "../",
+      "og_image": "assets/og-fa.png"
+    }
+  }
+}

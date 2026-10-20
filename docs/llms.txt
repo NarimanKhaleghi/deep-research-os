@@ -1,0 +1,34 @@
+# deep-research-os
+
+> An open-source research operating system for AI agents. Every claim traces to a verbatim quote, every source to a SHA-256 snapshot, every report to hard gates. MIT, zero API keys.
+
+Version 1.2.0 · MIT · Nariman Khaleghi
+
+## Pages
+
+- English: https://narimankhaleghi.github.io/deep-research-os/
+- فارسی: https://narimankhaleghi.github.io/deep-research-os/fa/
+- Sample report (EN): https://narimankhaleghi.github.io/deep-research-os/samples/report.html
+- Sample report (FA): https://narimankhaleghi.github.io/deep-research-os/fa/samples/report.html
+- Source: https://github.com/NarimanKhaleghi/deep-research-os
+- Docs: https://github.com/NarimanKhaleghi/deep-research-os#readme
+
+## What it does
+
+- Evidence ledger: Every claim carries a verbatim quote and a locator; every source carries a SHA-256 snapshot of what was actually read.
+- Citation verification: DOI and citation resolution, online and offline. Fabricated references and number drift never make it into the report.
+- Contradiction protocol: Conflicts are recorded, graded and adjudicated, with severity and resolution kept on the record.
+- Requirement coverage: Every prompt requirement is mapped to an anchor that appears in the report, or waived with a stated reason.
+- PRISMA-lite search log: Every query is journaled with an ID, engine, hit count and screening outcome. Reproducible by default.
+- Bilingual reports: Persian and English reports with real RTL, light and dark themes, embedded fonts, and clean A4 print output.
+
+## Install
+
+1. Clone: `git clone https://github.com/NarimanKhaleghi/deep-research-os`
+2. Install the skill: `./install.sh`
+3. Verify: `python scripts/research_ctl.py doctor`
+4. Start a run: `python scripts/research_ctl.py init "Your research question" --profile deep --dir ~/Research/your-topic`
+
+## In Persian
+
+سیستم‌عامل پژوهش متن‌باز برای ایجنت‌های هوش مصنوعی: دفتر شواهد، راستی‌آزمایی استناد، پروتکل تناقض، پوشش الزامات و گزارش دوزبانه با گیت‌های سخت. مجوز MIT، بدون کلید API.
