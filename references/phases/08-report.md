@@ -13,8 +13,9 @@
    from the ledger: summary from the strongest findings, findings with claim/source
    annotations, contradiction table, methodology & coverage table, limitations,
    APA-7 bibliography (tied to `SRC-*`; includes snapshot hash), plus (when present)
-   the Requirement Coverage table, the search & screening (PRISMA-lite) block, and
-   the Literature Comparison Matrix.
+   the Requirement Coverage table, the search & screening (PRISMA-lite) block, the
+   evidence-depth/provenance block, the optional Model & Reproducibility section,
+   and the Literature Comparison Matrix.
 2. **Satisfy the requirements contract** — `report build` refuses to pass while any
    RQ-## is unmet: map each requirement to a report section or finding id
    (`requirements map --requirement RQ-01 --target "Sensitivity analysis"`) whose
@@ -41,6 +42,7 @@
 - `state.ran.last_report_check_at` + recorded check results.
 
 ```bash
+$R model check
 $R report build
 $R report check                 # exit 1 if hard gate fails
 $R report check --allow-flagged # downgrades named checks to warnings (recorded)
@@ -67,6 +69,9 @@ $R gate --phase 8
 - [ ] `bibliography_complete`: title + authors/publisher + venue/url for every
       non-excluded source (hard for academic: year, DOI, journal venue too).
 - [ ] `report check` metrics recorded: `citation_precision`, `uncited_count=0`.
+- [ ] Academic/decision-framework: `evidence_depth`, `numeric_provenance` and
+      (when a model is present/required) `model_artifact` + `model_scope_disclosed`
+      pass; numeric table rows carry IDs or explicit assumption/derived markers.
 
 ## Failure modes
 

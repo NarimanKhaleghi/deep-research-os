@@ -4,6 +4,51 @@ All notable changes to **deep-research-os** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — 2026-10-20
+
+The “rigor pack” release: computational models become reproducible artifacts,
+comparators are audited for fidelity, and provenance is enforced at the claim
+level.
+
+### Added
+
+- **Model cards** (`scripts/core/model_spec.py`, `references/schemas/model.schema.json`):
+  project `model.json` with declared scope, variables, safe arithmetic
+  equations, complete case inputs, exact outputs, baseline, comparators and
+  sensitivity breakpoints. `model check` validates the card; reports fail on
+  arithmetic drift, hidden inputs, unknown sources or missing comparator
+  dimensions.
+- **`model check` CLI** and report gates `model_artifact`,
+  `model_scope_disclosed`; model sections in Markdown and HTML with variables,
+  equations, cases, comparator fidelity, sensitivity and reproduction command.
+- **Evidence depth** (`read_depth`, `read_at`): key studies require full-text
+  reading in academic/decision-framework runs; `sources update --depth` records
+  it, and the `evidence_depth` gate blocks abstract-only critical claims.
+- **Numeric provenance**: `numeric_provenance` requires a dated source and
+  locator for every numeric claim, plus a document/effective date for official
+  normative sources; the report renders a provenance table.
+- **Table citation audit**: numeric Findings tables must carry claim/source IDs
+  or explicit assumption/derived markers.
+- **Comparator fidelity**: every comparator is scored on cost of delay, staging
+  and learning, with notes for missing capabilities and a required
+  `where_it_differs` statement.
+- **Automatic scope limitations** for single-stage, no-learning, heuristic and
+  partially implemented-stage models.
+
+### Changed
+
+- `report_i18n.t()` accepts `default=`; EN/FA labels added for model scope,
+  variables, equations, cases, provenance and evidence depth.
+- Report order now includes Methodology evidence depth/provenance and an
+  optional Model & Reproducibility section before Limitations.
+- Version bumped to `1.3.0`; test suite is 53 tests, offline evals 8/8.
+
+### Fixed
+
+- Provenance gaps now apply the date check to non-numeric normative claims too.
+- Model report-gate language resolution is independent of legacy `report_lang`
+  state.
+
 ## [1.2.0] — 2026-10-20
 
 The “research instrument” release: reports and the public site become bilingual,

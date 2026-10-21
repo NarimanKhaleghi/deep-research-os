@@ -152,6 +152,28 @@ the SKILL.md workflow takes over.
 **Platform targets:** `./install.sh --platform claude|opencode|codex|cursor|all|generic --dest <path>`
 (symlink mode with `--link` for development).
 
+### New in 1.3 — the rigor pack
+
+- **Reproducible model cards** — decision models ship `model.json`: sourced or
+  labelled assumptions, safe arithmetic equations, complete case inputs, exact
+  recomputation, baseline, comparator dimensions and sensitivity breakpoints.
+  `report build` fails on missing cards, hidden inputs, or arithmetic drift.
+- **Honest model scope** — `structure`, `implemented_stages`, `learning` and
+  `selection` are declared; single-stage, no-learning and heuristic models get
+  automatic Limitations instead of being described as staged portfolio
+  optimization.
+- **Full-text evidence depth** — sources record `read_depth`; key studies must
+  be `full-text` for academic and decision-framework reports, and critical claims
+  cannot rest only on abstracts.
+- **Numeric provenance** — every numeric claim needs a dated source and locator;
+  regulatory claims need a document/effective date. The report renders a
+  provenance table, and numeric table rows cannot bypass citation checks.
+- **Fair comparator audit** — comparators are scored on cost of delay, staging
+  and learning, with a note explaining every missing capability and a required
+  statement of where the model actually differs (no WSJF strawman).
+- **Harder QA** — 53 tests, 8 offline evals; Lighthouse mobile: performance
+  96–99, accessibility 100, best practices 100, SEO 100.
+
 ### New in 1.2 — the research instrument
 
 - **Bilingual reports** — `report build` follows the brief/question language
@@ -190,9 +212,9 @@ the SKILL.md workflow takes over.
   preprint/published DOI spread; academic bibliographies are hard-gated on
   completeness.
 - **Operational models** — academic deliverables must ship `model`, `scenarios`
-  (≥5 incl. a combination scenario) and `sensitivity` findings, plus a Literature
-  Comparison Matrix built from ≥8 reviewed key studies
-  (`references/methods/decision-modeling.md`).
+  (≥5 incl. a combination scenario) and `sensitivity` findings plus a validated
+  `model.json`, and a Literature Comparison Matrix built from ≥8 reviewed key
+  studies (`references/methods/decision-modeling.md`).
 
 ---
 

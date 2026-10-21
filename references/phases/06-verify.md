@@ -32,7 +32,10 @@
      `primary_source_gaps`.
    - **Staleness:** official documents older than 18 months backing a normative
      claim produce `staleness_warnings` — re-check for an updated regulation
-     before treating it as current.
+     before treating it as current. Record the document/effective date with
+     `sources update --as-of YYYY-MM-DD`; numeric provenance uses `as_of` or
+     `published`, and official normative claims without either fail the
+     academic/decision-framework report gate.
    - **Corroboration:** critical claims (statistics, causal) need ≥2 independent
      origins (different registered domain / publisher — syndication doesn't count).
 3. **Scan contradictions** — `contradictions scan` pairs claims by tag overlap and

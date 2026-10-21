@@ -2,7 +2,7 @@
 
 > An open-source research operating system for AI agents. Every claim traces to a verbatim quote, every source to a SHA-256 snapshot, every report to hard gates. MIT, zero API keys.
 
-Version 1.2.0 · MIT · Nariman Khaleghi
+Version 1.3.0 · MIT · Nariman Khaleghi
 
 ## Pages
 
@@ -18,7 +18,7 @@ Version 1.2.0 · MIT · Nariman Khaleghi
 - Evidence ledger: Every claim carries a verbatim quote and a locator; every source carries a SHA-256 snapshot of what was actually read.
 - Citation verification: DOI and citation resolution, online and offline. Fabricated references and number drift never make it into the report.
 - Contradiction protocol: Conflicts are recorded, graded and adjudicated, with severity and resolution kept on the record.
-- Requirement coverage: Every prompt requirement is mapped to an anchor that appears in the report, or waived with a stated reason.
+- Rigor gates: Requirements, full-text evidence depth, numeric provenance and reproducible model cards are hard gates; every waiver lands in Limitations.
 - PRISMA-lite search log: Every query is journaled with an ID, engine, hit count and screening outcome. Reproducible by default.
 - Bilingual reports: Persian and English reports with real RTL, light and dark themes, embedded fonts, and clean A4 print output.
 

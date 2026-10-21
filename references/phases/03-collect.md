@@ -26,6 +26,9 @@
      `status: screened` marks title/abstract-level candidates that were not read.
 3. **`read` does the boring work** — fetch, extract (readability/PDF), snapshot to
    `sources/SRC-####.txt`, hash (SHA-256), metadata record. One `read` = one source.
+   - Record how much you actually read: `sources update --source-id SRC-#### --depth
+     abstract|partial|full-text`. Key studies need `full-text` in academic and
+     decision-framework runs; `--metadata-only` sources stay `abstract`.
    - Paywalled/unfetchable? `read --metadata-only` (abstract-level source; credibility
      will cap accordingly) — never fake a snapshot.
 4. **Tag angles** at read time: `--angles "a;b"`. Coverage is checked here, and later
@@ -50,6 +53,7 @@ $R searchlog add --query "site:oecd.org …" --engine google --hits 40 --kept 3 
 $R read --url "https://…" --angles "pricing; adoption" --title "…" --published 2026-03-02
 $R read --doi "10.1038/s41586-…" --angles "efficacy"
 $R read --file ~/downloads/report.pdf --angles "cost"
+$R sources update --source-id SRC-0003 --depth full-text
 $R sources update --source-id SRC-0004 --status excluded --exclude-reason "off-topic"
 $R searchlog list
 $R status

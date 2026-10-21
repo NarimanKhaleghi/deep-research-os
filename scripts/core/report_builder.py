@@ -14,7 +14,7 @@ _SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 
-from core import (bibmeta, report_assets, report_i18n,  # noqa: E402
+from core import (bibmeta, model_spec, report_assets, report_i18n,  # noqa: E402
                   requirements as requirements_mod, searchlog)
 from core.evidence_store import Ledger  # noqa: E402
 from lib import paths, util  # noqa: E402
@@ -35,7 +35,7 @@ def _pkg_version() -> str:
         with open(paths.repo_root() / "pyproject.toml", "rb") as fh:
             return str(tomllib.load(fh)["project"]["version"])
     except Exception:  # noqa: BLE001
-        return "1.2.0"
+        return "1.3.0"
 
 
 # ------------------------------------------------------------------ build
@@ -178,8 +178,17 @@ def _context(project: Path, ledger: Ledger, state: dict, lang: str = "en") -> di
         "corroboration_gaps": vr.get("corroboration_gaps") or [],
     }
 
+    # -------- model card, evidence depth, numeric provenance
+    model = model_spec.context(project, lang)
+    model_required, model_reason = model_spec.is_required(state, findings)
+    if model_required and not model["present"]:
+        model["limitations"] = [report_i18n.t(lang, "lim.model.missing")]
+    depth = _evidence_depth(sources, claims, evidence)
+    provenance = _provenance_rows(claims, evidence, sources, lang)
+
     # -------- limitations
-    limitations = _limitations(project, state, sources, claims, cxs, vr, lang)
+    limitations = _limitations(project, state, sources, claims, cxs, vr, lang,
+                               extra=model["limitations"])
 
     # -------- budget
     budget_ctx = {
@@ -308,6 +317,11 @@ def _context(project: Path, ledger: Ledger, state: dict, lang: str = "en") -> di
         "contradictions": contras,
         "coverage": coverage,
         "methodology": methodology,
+        "model": model,
+        "model_required": model_required,
+        "model_reason": model_reason,
+        "evidence_depth": depth,
+        "provenance": provenance,
         "budget": budget_ctx,
         "limitations": limitations,
         "bibliography": bibliography,
@@ -346,7 +360,8 @@ def _first_sentence(body: str) -> str:
 
 
 def _limitations(project: Path, state: dict, sources: list[dict], claims: list[dict],
-                 cxs: list[dict], vr: dict, lang: str = "en") -> list[str]:
+                 cxs: list[dict], vr: dict, lang: str = "en",
+                 extra: list[str] | None = None) -> list[str]:
     t = report_i18n.t
     lim: list[str] = []
     for req in requirements_mod.load(project):
@@ -383,9 +398,109 @@ def _limitations(project: Path, state: dict, sources: list[dict], claims: list[d
                    if (v.get("verification") or {}).get("status") in ("unreachable",)]
     if unreachable:
         lim.append(t(lang, "lim.unreachable", ids=", ".join(unreachable)))
+    for item in extra or []:
+        if item and item not in lim:
+            lim.append(item)
     if not lim:
         lim.append(t(lang, "lim.none"))
     return lim
+
+
+def _evidence_depth(sources: list[dict], claims: list[dict],
+                    evidence: list[dict]) -> dict:
+    counts = {"full": 0, "partial": 0, "abstract": 0, "unknown": 0}
+    for source in sources:
+        depth = str(source.get("read_depth") or "unknown")
+        key = {"full-text": "full", "partial": "partial",
+               "abstract": "abstract"}.get(depth, "unknown")
+        counts[key] += 1
+    by_id = {e.get("id"): e for e in evidence}
+    source_by_id = {s.get("id"): s for s in sources}
+    key_gaps = [s["id"] for s in sources
+                if s.get("key_study") and str(s.get("read_depth") or "") != "full-text"]
+    critical_abstract = []
+    for claim in claims:
+        if not claim.get("critical"):
+            continue
+        used = [source_by_id.get((by_id.get(eid) or {}).get("source_id"))
+                for eid in claim.get("evidence_ids") or []]
+        used = [s for s in used if s]
+        if used and all(str(s.get("read_depth") or "unknown")
+                        in {"abstract", "unknown"} for s in used):
+            critical_abstract.append(claim.get("id"))
+    return {"counts": counts, "key_gaps": key_gaps,
+            "critical_abstract": critical_abstract,
+            "total": len(sources)}
+
+
+def _format_number(number: dict) -> str:
+    raw_value = number.get("raw")
+    if raw_value is None:
+        raw_value = number.get("value", "")
+    raw = str(raw_value)
+    unit = str(number.get("unit") or "")
+    if unit and not raw.endswith(unit):
+        return f"{raw} {unit}"
+    return raw
+
+
+def _provenance_rows(claims: list[dict], evidence: list[dict],
+                     sources: list[dict], lang: str) -> list[dict]:
+    by_id = {e.get("id"): e for e in evidence}
+    source_by_id = {s.get("id"): s for s in sources}
+    rows = []
+    for claim in sorted(claims, key=lambda c: c.get("id", "")):
+        if not claim.get("numbers"):
+            continue
+        values = ", ".join(_format_number(n) for n in claim.get("numbers") or [])
+        linked = [by_id.get(eid) for eid in claim.get("evidence_ids") or []]
+        linked = [e for e in linked if e]
+        if not linked:
+            rows.append({
+                "claim_id": claim.get("id"), "text": util.truncate(claim.get("text", ""), 110),
+                "values": values, "source": "—", "date": "—", "locator": "—",
+                "depth": report_i18n.t(lang, "depth.unknown"),
+            })
+            continue
+        for ev in linked:
+            src = source_by_id.get(ev.get("source_id")) or {}
+            depth = str(src.get("read_depth") or "unknown")
+            rows.append({
+                "claim_id": claim.get("id"),
+                "text": util.truncate(claim.get("text", ""), 110),
+                "values": values,
+                "source": f"[{src.get('id', ev.get('source_id'))}] "
+                          f"{util.truncate(src.get('title', ''), 60)}",
+                "date": str(src.get("as_of") or src.get("published") or "—"),
+                "locator": ev.get("locator") or "—",
+                "depth": report_i18n.t(lang, f"depth.{depth}", default=depth),
+            })
+    return rows
+
+
+def _provenance_gaps(claims: list[dict], evidence: list[dict],
+                     sources: list[dict]) -> list[str]:
+    by_id = {e.get("id"): e for e in evidence}
+    source_by_id = {s.get("id"): s for s in sources}
+    gaps = []
+    for claim in claims:
+        linked = [by_id.get(eid) for eid in claim.get("evidence_ids") or []]
+        linked = [e for e in linked if e]
+        if claim.get("numbers"):
+            if not linked:
+                gaps.append(f"{claim.get('id')}:no-evidence")
+            for ev in linked:
+                src = source_by_id.get(ev.get("source_id")) or {}
+                if not (src.get("as_of") or src.get("published")):
+                    gaps.append(f"{claim.get('id')}:{src.get('id', '?')}:undated")
+        if claim.get("kind") == "normative":
+            for ev in linked:
+                src = source_by_id.get(ev.get("source_id")) or {}
+                if str(src.get("type") or "") in {
+                        "regulation", "law", "official", "central-bank", "regulator",
+                        "government-report"} and not (src.get("as_of") or src.get("published")):
+                    gaps.append(f"{claim.get('id')}:{src.get('id')}:no-as-of")
+    return sorted(set(gaps))
 
 
 def _summary(res: dict, lang: str = "en") -> str:
@@ -410,7 +525,8 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
     fdir = project / "findings"
     if fdir.exists():
         for f in sorted(fdir.glob("FN-*.md")):
-            meta, _ = util.parse_front_matter(util.load_text(f))
+            meta, body = util.parse_front_matter(util.load_text(f))
+            meta["_body"] = body
             findings_meta.append(meta)
 
     sources = {s["id"]: s for s in ledger.sources()}
@@ -535,6 +651,38 @@ def _run_check(project: Path, ledger: Ledger, state: dict, ctx: dict,
     # Coverage section itself is stripped first so a mapping target printed in
     # that table cannot trivially satisfy its own anchor.
     strict = _strict_mode(state)
+    model_required, model_reason = model_spec.is_required(state, findings_meta)
+    model_check = model_spec.validate(
+        project, source_ids=set(sources), strict_contract=model_required)
+    if model_required and not model_check["present"]:
+        add("model_artifact", False,
+            detail=f"required by {model_reason}: model.json is missing")
+    elif model_check["present"]:
+        detail = "ok" if model_check["valid"] else "; ".join(model_check["errors"][:4])
+        add("model_artifact", model_check["valid"], detail=detail)
+    else:
+        add("model_artifact", True, detail="not required")
+
+    model_ctx = model_spec.context(
+        project, ctx.get("lang") or state.get("report_lang") or "en")
+    if model_ctx.get("present"):
+        disclosed = [x for x in model_ctx.get("limitations") or []
+                     if str(x)[:24] not in lim_sec]
+        add("model_scope_disclosed", not disclosed,
+            detail=("missing from Limitations: " + "; ".join(disclosed[:2])
+                    if disclosed else "ok"))
+
+    if strict or model_required:
+        depth = _evidence_depth(ledger.sources(), claims, ledger.evidence())
+        depth_gaps = [f"key study {sid} is not full-text" for sid in depth["key_gaps"]]
+        depth_gaps += [f"critical claim {cid} rests only on abstract/unrecorded reading"
+                       for cid in depth["critical_abstract"]]
+        add("evidence_depth", not depth_gaps,
+            detail="; ".join(depth_gaps[:4]) or "ok")
+        provenance_gaps = _provenance_gaps(claims, ledger.evidence(), ledger.sources())
+        add("numeric_provenance", not provenance_gaps,
+            detail="; ".join(provenance_gaps[:4]) or "ok")
+
     cov = requirements_mod.coverage(project, report_text=_strip_requirements_section(report_text))
     if strict and cov["total"] == 0:
         add("requirements_coverage", False,
@@ -585,7 +733,7 @@ def _has_section(text: str, key: str) -> bool:
 
 
 def _uncited_lines(section: str) -> list[str]:
-    out = []
+    out = _uncited_table_rows(section)
     for raw in section.splitlines():
         line = raw.strip()
         if not line or len(line) < 25:
@@ -602,6 +750,40 @@ def _uncited_lines(section: str) -> list[str]:
             continue
         out.append(util.truncate(line, 90))
     return out
+
+
+def _uncited_table_rows(section: str) -> list[str]:
+    out: list[str] = []
+    block: list[str] = []
+
+    def flush() -> None:
+        rows = [row for row in block if row.strip().startswith("|")]
+        if len(rows) < 3:
+            return
+        body_rows = rows[1:]
+        if body_rows and _is_table_separator(body_rows[0]):
+            body_rows = body_rows[1:]
+        for row in body_rows:
+            if not re.search(r"\d", row):
+                continue
+            if ID_RE.search(row) or re.search(r"\b(assumption|derived|input|output)\b",
+                                                row, re.I):
+                continue
+            out.append("table row: " + util.truncate(row.strip(), 110))
+
+    for raw in section.splitlines():
+        if raw.strip().startswith("|"):
+            block.append(raw)
+        else:
+            flush()
+            block = []
+    flush()
+    return out
+
+
+def _is_table_separator(row: str) -> bool:
+    cells = [c.strip() for c in row.strip().strip("|").split("|")]
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", c) for c in cells)
 
 
 def md_to_html(body: str) -> str:

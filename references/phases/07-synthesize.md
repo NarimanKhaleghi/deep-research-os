@@ -24,6 +24,10 @@
      early-warning indicator.
    - `sensitivity`: one-at-a-time variation of the top 3–5 variables with numeric
      breakpoints and a dominance ranking — not prose.
+   - Any `decision-framework` or finding with equations also needs a validated
+     `model.json` (`model check`): declared scope, sourced/assumption variables,
+     equations, complete case inputs/outputs, baseline, comparators and
+     sensitivity cases. See `references/methods/decision-modeling.md`.
 4. **Key-study matrix** (academic deliverables): mark ≥ `key_studies_target` sources
    with `sources review --key` and fill all seven comparison fields — these render as
    the report's Literature Comparison Matrix and are the evidence for the gap claim.
@@ -56,6 +60,7 @@ $R findings new --title "EU charging UX: queue pain dominates" \
                 --kind analysis --counterpoints "CX-0002 narrowed to urban networks"
 $R findings new --title "Staged option value under five scenarios" \
                 --claims CL-0012,CL-0015 --kind scenarios
+$R model check
 $R sources review --source-id SRC-0003 --key --problem "…" --framework "…" \
                   --method "…" --context "…" --findings "…" --limitations "…" \
                   --relevance "…"
@@ -75,7 +80,9 @@ $R gate --phase 7
       (`contradicted` without resolution).
 - [ ] Academic/PRISMA deliverables: `model`, `scenarios`, `sensitivity` findings
       exist (`findings_kinds`); ≥ `key_studies_target` key studies with complete
-      review fields (`key_studies_reviewed`).
+      review fields (`key_studies_reviewed`) and `read_depth: full-text`.
+- [ ] Decision-framework/computational findings: `model check` passes with zero
+      errors (scope, sources, comparator notes, complete inputs, exact outputs).
 
 ## Failure modes
 

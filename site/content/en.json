@@ -25,7 +25,7 @@
     "proof": [
       "10 phases",
       "12 keyless APIs",
-      "49 tests",
+      "53 tests",
       "8/8 offline evals"
     ],
     "ledger": {
@@ -69,7 +69,7 @@
       "label": "keyless APIs"
     },
     {
-      "value": "49",
+      "value": "53",
       "label": "tests green"
     },
     {
@@ -99,8 +99,8 @@
       },
       {
         "n": "04",
-        "title": "Requirement coverage",
-        "desc": "Every prompt requirement is mapped to an anchor that appears in the report, or waived with a stated reason."
+        "title": "Rigor gates",
+        "desc": "Requirements, full-text evidence depth, numeric provenance and reproducible model cards are hard gates; every waiver lands in Limitations."
       },
       {
         "n": "05",
@@ -171,7 +171,7 @@
         "n": "08",
         "name": "Report",
         "desc": "Markdown and self-contained HTML; hard report gates.",
-        "gate": "12 hard checks"
+        "gate": "hard report gates"
       },
       {
         "n": "09",
@@ -309,7 +309,7 @@
       },
       {
         "q": "What do the hard gates check?",
-        "a": "IDs resolve, every fact line is cited, numbers match sources, no placeholders, open contradictions stay visible, weak claims are labeled, requirements are covered and bibliography fields are complete."
+        "a": "IDs resolve, every fact line is cited, numbers and their source dates match, no placeholders, open contradictions stay visible, weak claims are labeled, requirements are covered, bibliography fields are complete, and computational claims ship a reproducible model check."
       }
     ]
   },

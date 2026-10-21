@@ -13,7 +13,7 @@ LANGS = ("en", "fa")
 
 # canonical section keys — order matters for REQUIRED_SECTIONS and the md/HTML TOC
 SECTION_KEYS = ("summary", "requirements", "findings", "matrix", "contradictions",
-                "methodology", "limitations", "bibliography", "claims")
+                "methodology", "model", "limitations", "bibliography", "claims")
 
 REQUIRED_SECTION_KEYS = ("summary", "findings", "methodology", "limitations", "bibliography")
 
@@ -51,6 +51,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "sec.limitations": "Limitations",
         "sec.bibliography": "Bibliography",
         "sec.claims": "Claim & Evidence Index",
+        "sec.model": "Model & Reproducibility",
         # tables
         "th.id": "ID", "th.requirement": "Requirement", "th.status": "Status",
         "th.mapped_to": "Mapped to", "th.waiver_reason": "Waiver reason",
@@ -67,6 +68,17 @@ _STRINGS: dict[str, dict[str, str]] = {
         "th.claim": "Claim", "th.type": "Type", "th.updated": "Last updated",
         "th.referenced_by": "Referenced by", "th.quotes": "Evidence quotes",
         "th.locator": "Locator",
+        "th.symbol": "Symbol", "th.variable": "Variable", "th.role": "Role",
+        "th.unit": "Unit", "th.baseline": "Baseline", "th.range": "Range",
+        "th.grounding": "Grounding", "th.equation": "Equation",
+        "th.expression": "Expression", "th.output": "Output", "th.case": "Case", "th.decision": "Decision",
+        "th.early_warning": "Early warning", "th.parameter": "Parameter",
+        "th.values": "Values", "th.breakpoint": "Breakpoint",
+        "th.comparator": "Comparator", "th.cost_of_delay": "Cost of delay",
+        "th.staging": "Staging", "th.learning": "Learning",
+        "th.where_differs": "Where it differs", "th.as_of": "As of",
+        "th.depth": "Read depth", "th.numeric_claim": "Numeric claim",
+        "th.value": "Value",
         # inline bits
         "in.evidence": "Evidence",
         "in.sources": "Sources",
@@ -104,6 +116,11 @@ _STRINGS: dict[str, dict[str, str]] = {
         "me.between": "between {a} and {b}",
         "me.logged": "{n} logged search(es)",
         "me.logged_between": "{n} logged search(es) between {a} and {b}",
+        "me.evidence_depth": "Evidence depth",
+        "me.depth_summary": "full-text: {full} · partial: {partial} · abstract-only: {abstract} · unrecorded: {unknown}",
+        "me.provenance": "Numeric provenance",
+        "me.provenance_note": "Every numeric claim is listed with its source date and locator; academic and decision-framework reports fail on undated numeric evidence.",
+        "me.provenance_empty": "No numeric claims recorded.",
         # limitations
         "lim.waived": "Waived requirement {id} ({text}): {reason}",
         "lim.budget": "Budget exception: {counter} reached {actual} (ceiling {ceiling}) — {reason}",
@@ -117,6 +134,36 @@ _STRINGS: dict[str, dict[str, str]] = {
         "lim.unreachable": "Citations that could not be machine-verified: {ids}.",
         "lim.none": "No waivers, budget exceptions, or health failures were recorded for this run.",
         "lim.downgraded": "Gate downgrades via --allow-flagged: {names}",
+        "lim.model.single_stage": "Model scope: the valuation is single-stage; it does not price staged learning, Bayesian updating, or value of information.",
+        "lim.model.partial_stages": "Model scope: only {implemented} of {total} declared stages are implemented; later stage-gate learning is outside the model.",
+        "lim.model.no_learning": "Model scope: no probability updating or value-of-information step is implemented.",
+        "lim.model.heuristic": "Model scope: allocation uses {method} ranking, not constrained portfolio optimization; dependencies and indivisibilities are not priced.",
+        "lim.model.missing": "No validated model card was supplied for a computational or decision-framework deliverable.",
+        "model.scope": "Scope", "model.learning": "Learning", "model.selection": "Selection",
+        "model.yes": "yes", "model.no": "no", "model.assumption": "assumption",
+        "model.baseline": "Baseline comparator", "model.cases": "Reproducible cases",
+        "model.variables": "Variables", "model.equations": "Equations",
+        "model.comparators": "Comparator fidelity", "model.sensitivity": "Sensitivity",
+        "model.reproduction": "Reproduce with",
+        "model.note": "Every scenario input is printed in full and re-evaluated by `model check`.",
+        "model.scope_note": "Scope disclosure",
+        "model.implemented_stages": "Implemented stages",
+        "model.case.baseline": "baseline", "model.case.scenario": "scenario",
+        "model.case.sensitivity": "sensitivity",
+        "model.role.input": "input", "model.role.parameter": "parameter",
+        "model.role.probability": "probability", "model.role.state": "state",
+        "model.role.constant": "constant",
+        "model.structure.single-stage": "single-stage",
+        "model.structure.multi-stage": "multi-stage",
+        "model.structure.unspecified": "unspecified",
+        "model.selection.none": "none", "model.selection.greedy": "greedy",
+        "model.selection.ranking": "ranking", "model.selection.heuristic": "heuristic",
+        "model.selection.optimization": "optimization", "model.selection.exact": "exact",
+        "model.selection.unspecified": "unspecified",
+        "model.dim.yes": "full", "model.dim.partial": "partial",
+        "model.dim.no": "none", "model.dim.na": "n/a",
+        "depth.full-text": "full text", "depth.partial": "partial",
+        "depth.abstract": "abstract", "depth.unknown": "unrecorded",
         # footer
         "footer.generated_by": "Generated by",
         "footer.trace": "every claim above traces to a verbatim quote in a SHA-256-snapshotted "
@@ -172,6 +219,7 @@ _STRINGS: dict[str, dict[str, str]] = {
         "sec.limitations": "محدودیت‌ها",
         "sec.bibliography": "منابع",
         "sec.claims": "نمایهٔ ادعاها و شواهد",
+        "sec.model": "مدل و بازتولیدپذیری",
         "th.id": "شناسه", "th.requirement": "الزام", "th.status": "وضعیت",
         "th.mapped_to": "اتصال", "th.waiver_reason": "دلیل واگذاری",
         "th.study": "پژوهش", "th.problem": "مسئله", "th.framework": "چارچوب",
@@ -187,6 +235,17 @@ _STRINGS: dict[str, dict[str, str]] = {
         "th.claim": "ادعا", "th.type": "نوع", "th.updated": "آخرین به‌روزرسانی",
         "th.referenced_by": "ارجاع‌داده‌شده از", "th.quotes": "نقل‌قول‌های شاهد",
         "th.locator": "نشانی در منبع",
+        "th.symbol": "نماد", "th.variable": "متغیر", "th.role": "نقش",
+        "th.unit": "واحد", "th.baseline": "مقدار پایه", "th.range": "دامنه",
+        "th.grounding": "پشتوانه", "th.equation": "معادله",
+        "th.expression": "عبارت", "th.output": "خروجی", "th.case": "حالت", "th.decision": "تصمیم",
+        "th.early_warning": "هشدار پیش‌هنگام", "th.parameter": "پارامتر",
+        "th.values": "مقادیر", "th.breakpoint": "نقطهٔ شکست",
+        "th.comparator": "روش مقایسه", "th.cost_of_delay": "هزینهٔ تأخیر",
+        "th.staging": "مرحله‌بندی", "th.learning": "یادگیری",
+        "th.where_differs": "تفاوت اصلی", "th.as_of": "تا تاریخ",
+        "th.depth": "عمق مطالعه", "th.numeric_claim": "ادعای عددی",
+        "th.value": "مقدار",
         "in.evidence": "شواهد",
         "in.sources": "منابع",
         "in.counterpoints": "نکات مقابل",
@@ -222,6 +281,11 @@ _STRINGS: dict[str, dict[str, str]] = {
         "me.between": "میان {a} و {b}",
         "me.logged": "{n} جست‌وجوی ثبت‌شده",
         "me.logged_between": "{n} جست‌وجوی ثبت‌شده میان {a} و {b}",
+        "me.evidence_depth": "عمق شواهد",
+        "me.depth_summary": "متن کامل: {full} · بخشی: {partial} · فقط چکیده: {abstract} · ثبت‌نشده: {unknown}",
+        "me.provenance": "پشتوانهٔ عددی",
+        "me.provenance_note": "هر ادعای عددی همراه با تاریخ منبع و نشانی در منبع فهرست می‌شود؛ گزارش‌های دانشگاهی و چارچوب تصمیم در صورت نبود تاریخ شاهد عددی رد می‌شوند.",
+        "me.provenance_empty": "هیچ ادعای عددی ثبت نشده است.",
         "lim.waived": "الزام {id} ({text}) واگذار شد: {reason}",
         "lim.budget": "استثنای بودجه: {counter} به {actual} رسید (سقف {ceiling}) — {reason}",
         "lim.gate_waiver": "واگذاری گیت (فاز {phase} · {check}): {reason}",
@@ -234,6 +298,36 @@ _STRINGS: dict[str, dict[str, str]] = {
         "lim.unreachable": "استنادهایی که راستی‌آزمایی ماشینی نشدند: {ids}.",
         "lim.none": "برای این اجرا هیچ واگذاری، استثنای بودجه یا خطای سلامتی ثبت نشده است.",
         "lim.downgraded": "تنزل گیت‌ها با --allow-flagged: {names}",
+        "lim.model.single_stage": "دامنهٔ مدل: ارزش‌گذاری تک‌مرحله‌ای است و یادگیری مرحله‌ای، به‌روزرسانی بیزی یا ارزش اطلاعات را قیمت‌گذاری نمی‌کند.",
+        "lim.model.partial_stages": "دامنهٔ مدل: فقط {implemented} از {total} مرحلهٔ اعلام‌شده پیاده‌سازی شده است؛ یادگیری مرحله‌های بعدی خارج از مدل است.",
+        "lim.model.no_learning": "دامنهٔ مدل: هیچ گام به‌روزرسانی احتمال یا ارزش اطلاعات پیاده‌سازی نشده است.",
+        "lim.model.heuristic": "دامنهٔ مدل: تخصیص منابع با رتبه‌بندی {method} انجام می‌شود، نه بهینه‌سازی سبدِ مقید؛ وابستگی‌ها و تفکیک‌ناپذیری قیمت‌گذاری نشده‌اند.",
+        "lim.model.missing": "برای یک خروجی محاسباتی یا چارچوب تصمیم، کارت مدلِ معتبر ارائه نشده است.",
+        "model.scope": "دامنه", "model.learning": "یادگیری", "model.selection": "انتخاب",
+        "model.yes": "بله", "model.no": "خیر", "model.assumption": "فرض",
+        "model.baseline": "مقایسهٔ پایه", "model.cases": "حالت‌های بازتولیدپذیر",
+        "model.variables": "متغیرها", "model.equations": "معادلات",
+        "model.comparators": "وفاداری مقایسه", "model.sensitivity": "حساسیت",
+        "model.reproduction": "بازتولید با",
+        "model.note": "همهٔ ورودی‌های سناریو کامل چاپ و با `model check` دوباره محاسبه می‌شوند.",
+        "model.scope_note": "افشای دامنه",
+        "model.implemented_stages": "مراحل پیاده‌سازی‌شده",
+        "model.case.baseline": "پایه", "model.case.scenario": "سناریو",
+        "model.case.sensitivity": "حساسیت",
+        "model.role.input": "ورودی", "model.role.parameter": "پارامتر",
+        "model.role.probability": "احتمال", "model.role.state": "وضعیت",
+        "model.role.constant": "ثابت",
+        "model.structure.single-stage": "تک‌مرحله‌ای",
+        "model.structure.multi-stage": "چندمرحله‌ای",
+        "model.structure.unspecified": "نامشخص",
+        "model.selection.none": "بدون", "model.selection.greedy": "حریصانه",
+        "model.selection.ranking": "رتبه‌بندی", "model.selection.heuristic": "ابتکاری",
+        "model.selection.optimization": "بهینه‌سازی", "model.selection.exact": "بهینهٔ دقیق",
+        "model.selection.unspecified": "نامشخص",
+        "model.dim.yes": "کامل", "model.dim.partial": "جزئی",
+        "model.dim.no": "ندارد", "model.dim.na": "بی‌ربط",
+        "depth.full-text": "متن کامل", "depth.partial": "بخشی",
+        "depth.abstract": "چکیده", "depth.unknown": "ثبت‌نشده",
         "footer.generated_by": "تولیدشده با",
         "footer.trace": "هر ادعا به نقل‌قول واژگانی از منبعی با هش SHA-256 متصل است.",
         "footer.gates": "گیت‌های گزارش",
@@ -289,10 +383,12 @@ def resolve(explicit: str | None, *samples: str | None) -> str:
     return detect(" ".join(s for s in samples if s))
 
 
-def t(lang: str, key: str, **fmt) -> str:
+def t(lang: str, key: str, default: str | None = None, **fmt) -> str:
     """Translate a key (English fallback) with optional format args."""
     table = _STRINGS.get(lang) or _STRINGS["en"]
-    text = table.get(key) or _STRINGS["en"].get(key) or key
+    text = table.get(key) or _STRINGS["en"].get(key)
+    if text is None:
+        text = default if default is not None else key
     if fmt:
         try:
             return text.format(**fmt)

@@ -40,6 +40,7 @@
 {% if matrix %}{% set _ = toc.append(("matrix", labels["sec.matrix"])) %}{% endif %}
 {% set _ = toc.append(("contradictions", labels["sec.contradictions"])) %}
 {% set _ = toc.append(("methodology", labels["sec.methodology"])) %}
+{% if model.present %}{% set _ = toc.append(("model", labels["sec.model"])) %}{% endif %}
 {% set _ = toc.append(("limitations", labels["sec.limitations"])) %}
 {% set _ = toc.append(("bibliography", labels["sec.bibliography"])) %}
 {% set _ = toc.append(("claims", labels["sec.claims"])) %}
@@ -236,6 +237,32 @@
           </tbody>
         </table>
       </div>
+
+      <h3>{{ labels["me.evidence_depth"] }}</h3>
+      <p class="sec-note">{{ labels["me.depth_summary"].format(full=evidence_depth.counts.full, partial=evidence_depth.counts.partial, abstract=evidence_depth.counts.abstract, unknown=evidence_depth.counts.unknown) }}{% if evidence_depth.key_gaps %} · {{ labels["in.gaps"] }}: {{ evidence_depth.key_gaps|join(", ") }}{% endif %}</p>
+      <h3>{{ labels["me.provenance"] }}</h3>
+      <p class="sec-note">{{ labels["me.provenance_note"] }}</p>
+      {% if provenance %}
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.numeric_claim"] }}</th><th>{{ labels["th.value"] }}</th><th>{{ labels["th.source"] }}</th><th>{{ labels["th.as_of"] }}</th><th>{{ labels["th.locator"] }}</th><th>{{ labels["th.depth"] }}</th></tr></thead>
+          <tbody>
+          {% for p in provenance %}
+            <tr>
+              <td data-label="{{ labels['th.numeric_claim'] }}"><code>{{ p.claim_id }}</code> · {{ p.text }}</td>
+              <td data-label="{{ labels['th.value'] }}">{{ p["values"] }}</td>
+              <td data-label="{{ labels['th.source'] }}">{{ p.source }}</td>
+              <td data-label="{{ labels['th.as_of'] }}">{{ p.date }}</td>
+              <td data-label="{{ labels['th.locator'] }}">{{ p.locator }}</td>
+              <td data-label="{{ labels['th.depth'] }}">{{ p.depth }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="empty">{{ labels["me.provenance_empty"] }}</p>
+      {% endif %}
       {% if search_method.entries %}
       <h3>{{ labels["in.search_screening"] }}</h3>
       <p class="sec-note">
@@ -293,6 +320,120 @@
       {% endif %}
       {% endif %}
     </section>
+
+
+    {% if model.present %}
+    <section id="model">
+      <span class="sec-num">{{ labels["sec.model"] }}</span>
+      <h2>{{ labels["sec.model"] }}</h2>
+      <p><strong>{{ model.title }}</strong> — {{ labels["model.scope"] }}: {{ model.scope.structure }} · {{ labels["model.learning"] }}: {{ model.scope.learning }} · {{ labels["model.selection"] }}: {{ model.scope.selection }} · {{ labels["model.implemented_stages"] }}: {{ model.scope.implemented_stages }}</p>
+      <p class="sec-note">{{ labels["model.note"] }}{% if model.reproduction %} {{ labels["model.reproduction"] }}: <code>{{ model.reproduction }}</code>.{% endif %}</p>
+
+      <h3>{{ labels["model.variables"] }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.symbol"] }}</th><th>{{ labels["th.variable"] }}</th><th>{{ labels["th.role"] }}</th><th>{{ labels["th.unit"] }}</th><th>{{ labels["th.baseline"] }}</th><th>{{ labels["th.range"] }}</th><th>{{ labels["th.grounding"] }}</th></tr></thead>
+          <tbody>
+          {% for v in model.variables %}
+            <tr>
+              <td data-label="{{ labels['th.symbol'] }}"><code>{{ v.symbol }}</code></td>
+              <td data-label="{{ labels['th.variable'] }}">{{ v.name }}</td>
+              <td data-label="{{ labels['th.role'] }}">{{ v.role }}</td>
+              <td data-label="{{ labels['th.unit'] }}">{{ v.unit }}</td>
+              <td data-label="{{ labels['th.baseline'] }}">{{ v.baseline }}</td>
+              <td data-label="{{ labels['th.range'] }}">{{ v.range }}</td>
+              <td data-label="{{ labels['th.grounding'] }}">{{ v.grounding }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <h3>{{ labels["model.equations"] }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.id"] }}</th><th>{{ labels["th.output"] }}</th><th>{{ labels["th.expression"] }}</th><th>{{ labels["th.source"] }}</th></tr></thead>
+          <tbody>
+          {% for e in model.equations %}
+            <tr>
+              <td data-label="{{ labels['th.id'] }}"><code>{{ e.id }}</code></td>
+              <td data-label="{{ labels['th.output'] }}"><code>{{ e.output }}</code></td>
+              <td data-label="{{ labels['th.expression'] }}"><code>{{ e.expression }}</code></td>
+              <td data-label="{{ labels['th.source'] }}">{{ e.source or "—" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <h3>{{ labels["model.cases"] }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.case"] }}</th><th>{{ labels["th.kind"] }}</th><th>{{ labels["th.values"] }}</th><th>{{ labels["th.value"] }}</th><th>{{ labels["th.decision"] }}</th><th>{{ labels["th.early_warning"] }}</th></tr></thead>
+          <tbody>
+          {% for c in model.cases %}
+            <tr>
+              <td data-label="{{ labels['th.case'] }}"><code>{{ c.id }}</code>{% if c.label %} · {{ c.label }}{% endif %}</td>
+              <td data-label="{{ labels['th.kind'] }}">{{ c.kind }}</td>
+              <td data-label="{{ labels['th.values'] }}">{{ c.inputs }}</td>
+              <td data-label="{{ labels['th.value'] }}">{{ c.outputs }}</td>
+              <td data-label="{{ labels['th.decision'] }}">{{ c.decision }}</td>
+              <td data-label="{{ labels['th.early_warning'] }}">{{ c.early_warning }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <h3>{{ labels["model.comparators"] }}</h3>
+      {% if model.comparators %}
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.comparator"] }}</th><th>{{ labels["th.cost_of_delay"] }}</th><th>{{ labels["th.staging"] }}</th><th>{{ labels["th.learning"] }}</th><th>{{ labels["th.source"] }}</th><th>{{ labels["th.where_differs"] }}</th></tr></thead>
+          <tbody>
+          {% for c in model.comparators %}
+            <tr>
+              <td data-label="{{ labels['th.comparator'] }}">{{ c.name }}{% if c.notes %}<br><small>{{ c.notes }}</small>{% endif %}</td>
+              <td data-label="{{ labels['th.cost_of_delay'] }}">{{ c.cost_of_delay }}</td>
+              <td data-label="{{ labels['th.staging'] }}">{{ c.staging }}</td>
+              <td data-label="{{ labels['th.learning'] }}">{{ c.learning }}</td>
+              <td data-label="{{ labels['th.source'] }}">{{ c.sources }}</td>
+              <td data-label="{{ labels['th.where_differs'] }}">{{ c.where }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="empty">{{ labels["in.no_evidence"] }}</p>
+      {% endif %}
+      <p><strong>{{ labels["model.baseline"] }}:</strong> {{ model.baseline.method }} · <code>{{ model.baseline.case_id }}</code>{% if model.baseline.sources %} · {{ model.baseline.sources }}{% endif %}{% if model.baseline.notes %} — {{ model.baseline.notes }}{% endif %}.</p>
+
+      <h3>{{ labels["model.sensitivity"] }}</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>{{ labels["th.parameter"] }}</th><th>{{ labels["th.values"] }}</th><th>{{ labels["th.case"] }}</th><th>{{ labels["th.breakpoint"] }}</th></tr></thead>
+          <tbody>
+          {% for s in model.sensitivity %}
+            <tr>
+              <td data-label="{{ labels['th.parameter'] }}"><code>{{ s.parameter }}</code></td>
+              <td data-label="{{ labels['th.values'] }}">{{ s["values"] }}</td>
+              <td data-label="{{ labels['th.case'] }}">{{ s.cases }}</td>
+              <td data-label="{{ labels['th.breakpoint'] }}">{{ s.breakpoint }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if model.scope.notes %}
+      <p><strong>{{ labels["model.scope_note"] }}:</strong> {{ model.scope.notes|join("; ") }}</p>
+      {% endif %}
+      {% if model.errors %}
+      <p class="sec-note"><strong>{{ labels["th.status"] }}:</strong> {{ model.errors|join("; ") }}</p>
+      {% endif %}
+    </section>
+    {% endif %}
 
     <section id="limitations">
       <span class="sec-num">{{ labels["sec.limitations"] }}</span>

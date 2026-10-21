@@ -72,6 +72,15 @@ if code and doc disagree, that's a bug (fix in the same PR, per CONTRIBUTING).
     `key_study` (default 8 for academic-paper), each with complete `review`
     fields (problem, framework, method, context, findings, limitations,
     relevance) via `sources review`.
+- **Computational / decision-framework deliverables add:**
+  - `model.json` at the project root, validated by `model check`. It must
+    declare scope (`structure`, `implemented_stages`, `learning`, `selection`),
+    sourced/assumption variables, ordered equations, a baseline, comparator
+    dimensions, at least five scenarios, and sensitivity cases for at least
+    three parameters.
+  - Every case must carry a complete input vector and every equation output;
+    outputs are recomputed and must match. Decision frameworks without a valid
+    card fail `model_artifact`.
 
 ### Phase 8 — Report
 - `report.md` exists with sections: Executive Summary, Findings, Methodology,
@@ -80,6 +89,16 @@ if code and doc disagree, that's a bug (fix in the same PR, per CONTRIBUTING).
   or `(SRC-####)`; all IDs exist; bibliography ⊇ cited sources.
 - Numbers in told claims match claim records; no placeholders (TODO/TBD/lorem/XXX).
 - Open contradictions appear in the contradiction table; weak claims labeled.
+- `evidence_depth` — for academic/decision-framework runs, every `key_study`
+  must be marked `read_depth: full-text`; a critical claim cannot rest only on
+  abstract/unknown-depth sources. Set depth with
+  `sources update --source-id SRC-#### --depth full-text`.
+- `numeric_provenance` — every numeric claim in an academic/decision-framework
+  run must have a dated source (`published` or `as_of`) and a locator; official
+  sources behind normative claims also need a document/effective date.
+- `model_scope_disclosed` — automatic scope limitations (single-stage,
+  no-learning, heuristic allocation, partial stage implementation, plus any
+  author-declared scope notes) must appear in Limitations.
 
 ### Phase 9 — Retrospect
 - `retrospective.json` with `worked[]`, `failed[]`, `budget_used{}`, `metrics{}`,
@@ -107,10 +126,19 @@ if code and doc disagree, that's a bug (fix in the same PR, per CONTRIBUTING).
     authors/publisher, and venue/publisher/url. **Hard** for academic
     deliverables, where it additionally requires year, DOI for
     journal/conference/preprint types, and a journal venue for journal articles.
+11. `model_artifact` — a decision-framework (or a finding with equations/computed
+    outputs) must ship a valid `model.json`; optional model cards are also
+    validated. Arithmetic mismatches, missing inputs, unknown sources, incomplete
+    comparator dimensions, and strawman comparator notes are hard failures.
+12. `evidence_depth` / `numeric_provenance` / `model_scope_disclosed` — hard for
+    academic and decision-framework runs, as described above.
+13. Findings tables — every numeric data row needs a `[CL-####]`, `[SRC-####]`,
+    or explicit `assumption`/`derived` marker; table rows cannot bypass the
+    uncited-findings gate.
 
 `--allow-flagged` converts gates 4–7 to warnings **and writes each downgrade into
-the report's Limitations**; gates 1–3 and 9–10 are never downgradable (fix the
-files or waive the specific requirement with a reason).
+the report's Limitations**; gates 1–3, 9–13 are never downgradable (fix the files
+or waive the specific requirement with a reason).
 
 ## Waivers
 

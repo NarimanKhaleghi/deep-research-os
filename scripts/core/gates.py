@@ -316,8 +316,9 @@ def _phase6(project, state, ledger, add) -> None:
         detail=", ".join(single) or "ok")
 
     scan_at = (state.get("ran") or {}).get("last_contradictions_scan_at") or ""
-    add("contradictions_scanned", bool(scan_at) and scan_at >= newest_claim,
-        detail=f"scan at {scan_at or 'never'} vs claims {newest_claim or 'n/a'}")
+    newest_claim_created = max((c.get("created_at") or "" for c in claims), default="")
+    add("contradictions_scanned", bool(scan_at) and scan_at >= newest_claim_created,
+        detail=f"scan at {scan_at or 'never'} vs claims {newest_claim_created or 'n/a'}")
 
     cxs = ledger.contradictions()
     open_no_reason = [c["id"] for c in cxs if c["status"] == "open" and not c.get("detail")]

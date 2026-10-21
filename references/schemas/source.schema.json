@@ -39,6 +39,8 @@
     },
     "type": { "enum": ["journal-article", "preprint", "report", "news", "statistics", "filing", "webpage", "book", "dataset", "regulation", "law", "government-report", "central-bank", "regulator", "official", "other"] },
     "abstract": { "type": ["string", "null"] },
+    "read_depth": { "enum": ["abstract", "partial", "full-text"], "description": "how much of the source was actually read; key studies require full-text" },
+    "read_at": { "type": ["string", "null"], "description": "ISO timestamp when the full text was read" },
     "service": { "type": "string", "description": "connector or mcp that yielded it" },
     "origin_key": { "type": "string", "description": "registered domain or publisher key for corroboration counting" },
     "accessed_at": { "type": "string", "description": "ISO 8601 timestamp" },

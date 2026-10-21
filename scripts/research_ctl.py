@@ -24,7 +24,7 @@ from connectors import registry  # noqa: E402
 from core import budget as budget_mod  # noqa: E402
 from core import claims as claims_mod  # noqa: E402
 from core import contradictions as contradictions_mod  # noqa: E402
-from core import credibility, extract, gates, report_builder  # noqa: E402
+from core import credibility, extract, gates, model_spec, report_builder  # noqa: E402
 from core import requirements as requirements_mod  # noqa: E402
 from core import searchlog  # noqa: E402
 from core import snapshot as snapshot_mod  # noqa: E402
@@ -624,7 +624,7 @@ def cmd_sources_update(args) -> dict:
                       ("published", "published"), ("doi", "doi"), ("as_of", "as_of"),
                       ("venue", "venue"), ("volume", "volume"), ("issue", "issue"),
                       ("pages", "pages"), ("published_doi", "published_doi"),
-                      ("preprint_doi", "preprint_doi")):
+                      ("preprint_doi", "preprint_doi"), ("read_depth", "read_depth")):
         val = getattr(args, attr, None)
         if val is not None:
             fields[key] = val
@@ -647,9 +647,32 @@ def cmd_sources_update(args) -> dict:
         rec = ledger.update_source(args.source_id, credibility=credibility.score_source(rec))
     return {"source": {k: rec.get(k) for k in ("id", "title", "type", "tier", "angles_covered",
                                                "url", "doi", "status", "exclusion_reason",
-                                               "venue", "year", "as_of")},
+                                               "venue", "year", "as_of", "read_depth")},
             "credibility": {"band": (rec.get("credibility") or {}).get("band"),
                             "score": (rec.get("credibility") or {}).get("score")}}
+
+
+def cmd_model_check(args) -> tuple[dict, int]:
+    project = _project(args)
+    state = _state(project)
+    findings = []
+    for path in sorted((project / "findings").glob("FN-*.md")):
+        meta, body = util.parse_front_matter(util.load_text(path))
+        meta["_body"] = body
+        findings.append(meta)
+    strict, reason = model_spec.is_required(state, findings)
+    result = model_spec.validate(
+        project, source_ids={s["id"] for s in Ledger(project).sources()},
+        strict_contract=strict)
+    result["required"] = strict
+    result["required_by"] = reason
+    if not strict and not result["present"]:
+        result["valid"] = True
+        result["ok"] = True
+        result["errors"] = []
+        result["warnings"] = ["model.json not present; not required for this deliverable"]
+    result.pop("_data", None)
+    return result, (0 if result["valid"] else 1)
 
 
 def cmd_sources_review(args) -> dict:
@@ -1445,6 +1468,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="why the source was excluded (required for status excluded)")
     s2.add_argument("--as-of", dest="as_of",
                     help="document/effective date for policy sources (YYYY-MM-DD)")
+    s2.add_argument("--depth", dest="read_depth",
+                    choices=["abstract", "partial", "full-text"],
+                    help="how much of the source was actually read (key studies require full-text)")
     s2.add_argument("--venue"); s2.add_argument("--year", type=int)
     s2.add_argument("--volume"); s2.add_argument("--issue"); s2.add_argument("--pages")
     s2.add_argument("--published-doi", dest="published_doi")
@@ -1543,6 +1569,12 @@ def build_parser() -> argparse.ArgumentParser:
     common(s2)
     s2.set_defaults(func=cmd_findings_new)
     s2 = fsub.add_parser("list"); common(s2); s2.set_defaults(func=cmd_findings_list)
+
+    # model
+    sp = sub.add_parser("model", help="model.json card and reproducibility checks")
+    msub = sp.add_subparsers(dest="model_cmd", required=True)
+    s2 = msub.add_parser("check", help="validate equations, inputs and recomputed outputs")
+    common(s2); s2.set_defaults(func=cmd_model_check)
 
     # report
     sp = sub.add_parser("report", help="report build/check")

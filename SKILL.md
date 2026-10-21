@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: deep-research-os contributors
-  version: "1.2.0"
+  version: "1.3.0"
   homepage: https://github.com/NarimanKhaleghi/deep-research-os
 ---
 
@@ -93,7 +93,7 @@ any time to see where you are and what is missing.
 | 4 | **Extract** | `evidence.jsonl` records | Material passages quoted verbatim with locators; no paraphrase in evidence |
 | 5 | **Assess** | credibility scores per source | Every source scored A–D by rubric; tier + retraction + COI recorded |
 | 6 | **Verify** | `claims.jsonl` + `verify_report.json` + contradictions | Every claim classified (supported/weakly/contradicted); citations verified; modality/official-source checks for normative claims; contradictions adjudicated or logged |
-| 7 | **Synthesize** | `findings/*.md` (tagged with `--kind`) | Findings reference claim IDs; strength labeled; counterpoints attached; gaps logged; academic deliverables include model/scenarios/sensitivity findings + reviewed key studies |
+| 7 | **Synthesize** | `findings/*.md` (tagged with `--kind`) + `model.json` | Findings reference claim IDs; strength labeled; counterpoints attached; gaps logged; academic deliverables include model/scenarios/sensitivity findings + reviewed key studies; computational findings pass `model check` |
 | 8 | **Report** | `report.md` (+ self-contained `report.html`, EN/FA) | `report check` passes: zero uncited claims, requirements covered, APA-7 bibliography complete, numbers consistent |
 | 9 | **Retrospect** | `retrospective.json` + feedback journal | What worked/failed journaled; capabilities candidate; preference question asked if triggered |
 
@@ -114,6 +114,8 @@ $R verify --online                           # DOI/URL/title + numbers + modalit
 $R contradictions scan
 $R sources review --source-id SRC-0003 --key --method "..." --limitations "..."
 $R findings new --title "..." --claims CL-0004 --kind scenarios
+$R sources update --source-id SRC-0003 --depth full-text
+$R model check                               # reproduce model.json cases + scope
 $R report build                              # refuses to pass hard gates silently
 # report language follows the brief/question (en|fa); force with --lang en|fa
 # HTML is self-contained (embedded fonts), print-ready, with a claim appendix
@@ -172,8 +174,9 @@ and costs: `references/integrations/mcp-catalog.md`. Budget policy:
 `references/methods/`: `academic.md` · `market.md` · `data-analysis.md` ·
 `osint.md` · `due-diligence.md` · `technical-rnd.md` · `systematic-review.md`
 (PRISMA-lite: search logging, screening reasons, key-study matrix) ·
-`decision-modeling.md` (operational models: variables → thresholds → procedure →
-worked example → baseline comparison → ≥5 scenarios → sensitivity breakpoints).
+`decision-modeling.md` (operational models: `model.json` card → variables →
+thresholds → procedure → worked example → baseline/comparator fidelity → ≥5
+scenarios → sensitivity breakpoints → declared scope).
 Read the matching one **before phase 2**; each carries its own Gotchas section.
 
 ## Coordination with other installed skills

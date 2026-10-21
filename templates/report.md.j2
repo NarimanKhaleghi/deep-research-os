@@ -83,6 +83,19 @@ _{{ labels["in.evidence"] }}: {% for c in f.claims %}[{{ c }}]{% if not loop.las
 | {{ row.angle }} | {{ row.sources }} | {{ row.evidence }} | {{ row.claims }} | {{ row.bands }} |
 {% endfor %}
 
+- **{{ labels["me.evidence_depth"] }}:** {{ labels["me.depth_summary"].format(full=evidence_depth.counts.full, partial=evidence_depth.counts.partial, abstract=evidence_depth.counts.abstract, unknown=evidence_depth.counts.unknown) }}{% if evidence_depth.key_gaps %} · {{ labels["in.gaps"] }}: {{ evidence_depth.key_gaps|join(", ") }}{% endif %}.
+- **{{ labels["me.provenance"] }}:** {{ labels["me.provenance_note"] }}
+
+{% if provenance %}
+| {{ labels["th.numeric_claim"] }} | {{ labels["th.value"] }} | {{ labels["th.source"] }} | {{ labels["th.as_of"] }} | {{ labels["th.locator"] }} | {{ labels["th.depth"] }} |
+| --- | --- | --- | --- | --- | --- |
+{% for p in provenance %}
+| {{ p.claim_id }} · {{ p.text }} | {{ p["values"] }} | {{ p.source }} | {{ p.date }} | {{ p.locator }} | {{ p.depth }} |
+{% endfor %}
+{% else %}
+{{ labels["me.provenance_empty"] }}
+{% endif %}
+
 {% if search_method.entries %}
 - **{{ labels["in.search_screening"] }}:** {{ labels["me.logged"].format(n=search_method.entries) }}{% if search_method.first_at %} {{ labels["me.between"].format(a=search_method.first_at[:10], b=search_method.last_at[:10]) }}{% endif %}; {{ labels["me.screen_outcomes"] }}: {% for k, v in search_method.status_counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}.
 
@@ -105,6 +118,67 @@ _{{ labels["in.evidence"] }}: {% for c in f.claims %}[{{ c }}]{% if not loop.las
 {% endfor %}
 {% endif %}
 {% endif %}
+{% if model.present %}
+## {{ labels["sec.model"] }}
+
+**{{ model.title }}** — {{ labels["model.scope"] }}: {{ model.scope.structure }} · {{ labels["model.learning"] }}: {{ model.scope.learning }} · {{ labels["model.selection"] }}: {{ model.scope.selection }} · {{ labels["model.implemented_stages"] }}: {{ model.scope.implemented_stages }}
+
+{{ labels["model.note"] }}{% if model.reproduction %} {{ labels["model.reproduction"] }}: `{{ model.reproduction }}`.{% endif %}
+
+### {{ labels["model.variables"] }}
+
+| {{ labels["th.symbol"] }} | {{ labels["th.variable"] }} | {{ labels["th.role"] }} | {{ labels["th.unit"] }} | {{ labels["th.baseline"] }} | {{ labels["th.range"] }} | {{ labels["th.grounding"] }} |
+| --- | --- | --- | --- | --- | --- | --- |
+{% for v in model.variables %}
+| `{{ v.symbol }}` | {{ v.name }} | {{ v.role }} | {{ v.unit }} | {{ v.baseline }} | {{ v.range }} | {{ v.grounding }} |
+{% endfor %}
+
+### {{ labels["model.equations"] }}
+
+| {{ labels["th.id"] }} | {{ labels["th.output"] }} | {{ labels["th.expression"] }} | {{ labels["th.source"] }} |
+| --- | --- | --- | --- |
+{% for e in model.equations %}
+| `{{ e.id }}` | `{{ e.output }}` | `{{ e.expression }}` | {{ e.source or "—" }} |
+{% endfor %}
+
+### {{ labels["model.cases"] }}
+
+| {{ labels["th.case"] }} | {{ labels["th.kind"] }} | {{ labels["th.values"] }} | {{ labels["th.value"] }} | {{ labels["th.decision"] }} | {{ labels["th.early_warning"] }} |
+| --- | --- | --- | --- | --- | --- |
+{% for c in model.cases %}
+| `{{ c.id }}` | {{ c.kind }} | {{ c.inputs }} | {{ c.outputs }} | {{ c.decision }} | {{ c.early_warning }} |
+{% endfor %}
+
+### {{ labels["model.comparators"] }}
+
+{% if model.comparators %}
+| {{ labels["th.comparator"] }} | {{ labels["th.cost_of_delay"] }} | {{ labels["th.staging"] }} | {{ labels["th.learning"] }} | {{ labels["th.source"] }} | {{ labels["th.where_differs"] }} |
+| --- | --- | --- | --- | --- | --- |
+{% for c in model.comparators %}
+| {{ c.name }}{% if c.notes %} ({{ c.notes }}){% endif %} | {{ c.cost_of_delay }} | {{ c.staging }} | {{ c.learning }} | {{ c.sources }} | {{ c.where }} |
+{% endfor %}
+{% else %}
+{{ labels["in.no_evidence"] }}
+{% endif %}
+
+**{{ labels["model.baseline"] }}:** {{ model.baseline.method }} · `{{ model.baseline.case_id }}`{% if model.baseline.sources %} · {{ model.baseline.sources }}{% endif %}{% if model.baseline.notes %} — {{ model.baseline.notes }}{% endif %}.
+
+### {{ labels["model.sensitivity"] }}
+
+| {{ labels["th.parameter"] }} | {{ labels["th.values"] }} | {{ labels["th.case"] }} | {{ labels["th.breakpoint"] }} |
+| --- | --- | --- | --- |
+{% for s in model.sensitivity %}
+| `{{ s.parameter }}` | {{ s["values"] }} | {{ s.cases }} | {{ s.breakpoint }} |
+{% endfor %}
+
+{% if model.scope.notes %}
+**{{ labels["model.scope_note"] }}:** {% for note in model.scope.notes %}{{ note }}{% if not loop.last %}; {% endif %}{% endfor %}
+{% endif %}
+{% if model.errors %}
+> **{{ labels["th.status"] }}:** {% for error in model.errors %}{{ error }}{% if not loop.last %}; {% endif %}{% endfor %}
+{% endif %}
+{% endif %}
+
 ## {{ labels["sec.limitations"] }}
 
 {% for l in limitations %}
