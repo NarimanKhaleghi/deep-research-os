@@ -24,9 +24,9 @@
     "cta_tertiary": "See a real report",
     "proof": [
       "10 phases",
-      "12 keyless APIs",
-      "53 tests",
-      "8/8 offline evals"
+      "18 keyless APIs",
+      "65 tests",
+      "9/9 offline evals"
     ],
     "ledger": {
       "title": "Evidence ledger",
@@ -65,15 +65,15 @@
       "label": "research phases"
     },
     {
-      "value": "12",
+      "value": "18",
       "label": "keyless APIs"
     },
     {
-      "value": "53",
+      "value": "65",
       "label": "tests green"
     },
     {
-      "value": "8/8",
+      "value": "9/9",
       "label": "offline evals"
     }
   ],
@@ -293,7 +293,7 @@
     "items": [
       {
         "q": "Does it need API keys?",
-        "a": "No. Twelve free public search APIs, web fetch and PDF extraction work without keys. Optional keys only add capacity; the pipeline is designed to run keyless."
+        "a": "No. Eighteen free public search APIs, web fetch and PDF extraction work without keys; CORE adds an optional key. Optional keys only add capacity; the pipeline is designed to run keyless."
       },
       {
         "q": "Which agents does it support?",

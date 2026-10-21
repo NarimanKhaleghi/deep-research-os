@@ -2,7 +2,7 @@
 
 > **Question.** Does intermittent fasting reduce lean mass?
 >
-> **Run.** `does-intermittent-fasting-reduce-lean-mass` · profile `quick` · generated 2026-10-21T06:29:14Z · deep-research-os v1.3.0
+> **Run.** `does-intermittent-fasting-reduce-lean-mass` · profile `quick` · generated 2026-10-21T10:24:21Z · deep-research-os v1.4.0
 > **verify.** Citation precision 1.000 · 2 sources · 2 evidence records · verify: offline
 ## Executive Summary
 

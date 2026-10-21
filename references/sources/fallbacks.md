@@ -12,8 +12,8 @@ contract for what happens when things are missing.
    need* (never preemptively).
 2. **Local infrastructure** — user's SearXNG (`http://127.0.0.1:8888`), Playwright MCP
    for JS-heavy pages, Camofox when configured. Free, private, no keys.
-3. **Built-in keyless connectors** — the 12 catalog entries. Always available (network
-   permitting). This is the guaranteed floor.
+3. **Built-in connectors** — 18 keyless entries plus CORE when `CORE_API_KEY` is set.
+   Always available (network permitting). This is the guaranteed floor.
 4. **Generic web fetch** — direct httpx + readability, when search found a URL but no
    API covers the site.
 5. **Declared gap** — write the miss into `state.source_health` and the report's
@@ -29,7 +29,7 @@ contract for what happens when things are missing.
 | No MCP, no SearXNG | Keyless connectors + DDG-lite fallback for web search |
 | Connector 429/5xx after retries | Hop to next tier; log `source_health[service].failures` |
 | Offline (`RESEARCH_OS_OFFLINE=1`) | Steps 1–4 disabled; snapshot-only verification; Limitations updated |
-| Paywalled article, Unpaywall misses | `read --metadata-only`; credibility capped; note in source record |
+| Paywalled article, lawful resolver misses | `read --metadata-only`; or `fulltext request`; add a user-supplied file to `inbox/`; never bypass the paywall |
 
 ## Budget interaction
 
@@ -54,6 +54,14 @@ contract for what happens when things are missing.
 into Limitations automatically. The learning loop reads the same table to
 re-weight routing (a consistently failing source loses mass — bounded by ±10%
 per cycle per `learning-protocol.md` §4).
+
+## Full-text ladder (academic)
+
+1. Europe PMC JATS → 2. Unpaywall → 3. OpenAlex → 4. Semantic Scholar →
+5. arXiv/bioRxiv/medRxiv/OSF → 6. DOAJ → 7. Zenodo/HAL/OpenAIRE/CORE →
+8. Crossref publisher link → 9. direct URL. Landing pages are `partial`; only a
+validated artifact with a matching hash chain is `verified`. See
+`references/sources/fulltext-catalog.md`.
 
 ## What we deliberately do NOT fall back to
 

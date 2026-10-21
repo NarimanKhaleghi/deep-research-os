@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/writing_corpus.schema.json",
+  "title": "Writing corpus profile",
+  "type": "object",
+  "properties": {
+    "documents": { "type": "integer", "minimum": 0 },
+    "genres": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "languages": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "section_rates": { "type": "object", "additionalProperties": { "type": "number" } },
+    "avg_words": { "type": "number" },
+    "avg_sentence_words": { "type": "number" },
+    "avg_hedges_per_1000": { "type": "number" },
+    "avg_citation_density_per_1000": { "type": "number" },
+    "reporting_guidelines": { "type": "array", "items": { "type": "string" } },
+    "docs": { "type": "array", "items": { "type": "object" } },
+    "errors": { "type": "array", "items": { "type": "object" } },
+    "guidance": { "type": "array", "items": { "type": "string" } },
+    "corpus_dir": { "type": "string" },
+    "generated_at": { "type": "string" }
+  }
+}

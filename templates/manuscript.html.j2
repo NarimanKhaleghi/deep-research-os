@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="{{ lang }}" dir="{{ direction }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <style>{{ manuscript_css | safe }}</style>
+</head>
+<body>
+<main class="manuscript">
+  <header class="title-block">
+    <p class="kicker">{{ venue.name }} · {{ style|upper }}</p>
+    <h1>{{ title }}</h1>
+    {% if authors_text %}<p class="authors">{{ authors_text }}</p>{% endif %}
+    {% if affiliations_text %}<p class="affiliations">{{ affiliations_text }}</p>{% endif %}
+  </header>
+  <section class="abstract">
+    <h2>Abstract</h2>
+    {{ abstract_html | safe }}
+    <p class="keywords"><strong>Keywords:</strong> {{ keywords | join("; ") }}</p>
+  </section>
+  <article class="body">
+    {{ body_html | safe }}
+  </article>
+  <section class="references">
+    <h2>References</h2>
+    <ol>
+    {% for ref in bibliography %}<li>{{ ref }}</li>{% endfor %}
+    </ol>
+  </section>
+  {% if funding %}<section><h2>Funding</h2><p>{{ funding }}</p></section>{% endif %}
+  {% if conflicts %}<section><h2>Conflicts of interest</h2><p>{{ conflicts }}</p></section>{% endif %}
+  {% if data_availability %}<section><h2>Data availability</h2><p>{{ data_availability }}</p></section>{% endif %}
+  {% if ethics %}<section><h2>Ethics and consent</h2><p>{{ ethics }}</p></section>{% endif %}
+  {% if registration %}<section><h2>Registration</h2><p>{{ registration }}</p></section>{% endif %}
+</main>
+</body>
+</html>

@@ -11,7 +11,7 @@ description: >
 license: MIT
 metadata:
   author: deep-research-os contributors
-  version: "1.3.0"
+  version: "1.4.0"
   homepage: https://github.com/NarimanKhaleghi/deep-research-os
 ---
 
@@ -53,6 +53,14 @@ engagement). **Before any phase:** read its doc in `references/phases/`.
    check → apply. See `references/learning-protocol.md`.
 8. **Resumability** — all state lives in the project directory; a new session
    resumes from `status`, never from memory.
+9. **Lawful full text** — academic work is full-text-first, but never paywall
+   bypass: no Sci-Hub/LibGen/Anna’s Archive. Use OA, PMC/Europe PMC, repositories,
+   preprints, user-supplied files, or ILL/author request. A source counts as
+   full-text only when `fulltext.status=verified` and the artifact/text/snapshot
+   hashes agree.
+10. **Manuscripts are not reports** — `academic-manuscript` uses
+    `manuscript scaffold|build|check`; `report build` remains the report-style
+    deliverable. Never paste manuscript prose into the report pipeline.
 
 ## Setup check (first run in a session)
 
@@ -105,8 +113,12 @@ $R init "UX of EV charging in the EU" --profile deep --dir ~/Research/ev-chargin
 $R requirements add --text "At least five scenarios including a combination scenario"
 $R status                                   # see gate checklists
 $R search --query "EV charging UX survey" --domains web,academic --limit 10 --angle "UX"
+$R search --query "smart charging peak load" --all-academic --oa-only --year-from 2020 --sort citations
 $R searchlog add --query "site:iea.org EV charging" --engine google --hits 40 --kept 4
 $R read --source-id SRC-0003                # fetch + extract + snapshot; returns text
+$R read --doi 10.1038/s41586-… --require-fulltext   # lawful resolver + trust chain
+$R fulltext coverage                        # verified/abstract-only ratios
+$R fulltext scan-inbox                      # user-supplied PDFs/XML
 $R credibility score                         # score all new sources
 $R evidence add --source-id SRC-0003 --quote "..." --locator "p.4"
 $R claims add --text "..." --type statistic --tags pricing,eu        # --kind normative for rules
@@ -117,6 +129,8 @@ $R findings new --title "..." --claims CL-0004 --kind scenarios
 $R sources update --source-id SRC-0003 --depth full-text
 $R model check                               # reproduce model.json cases + scope
 $R report build                              # refuses to pass hard gates silently
+# academic-manuscript alternative:
+$R manuscript scaffold && $R manuscript build && $R manuscript check
 # report language follows the brief/question (en|fa); force with --lang en|fa
 # HTML is self-contained (embedded fonts), print-ready, with a claim appendix
 $R requirements map --requirement RQ-01 --target "Findings"
@@ -157,12 +171,15 @@ All commands print JSON to stdout (parse them). `--human` gives readable output.
 
 ## Source strategy (keyless out of the box)
 
-12 built-in free connectors: OpenAlex · Crossref · arXiv · PubMed · Unpaywall ·
-GDELT · World Bank · Data Commons · US Census · Wikidata · SEC EDGAR ·
-Hacker News — plus generic web fetch (readability extraction) and PDF extraction
-(PyMuPDF → pdftotext → pypdf). Details, rate limits and etiquette:
-`references/sources/catalog.md`. Fallback ladder (MCP → local SearXNG → direct
-connectors): `references/sources/fallbacks.md`.
+19 connectors (18 keyless; CORE optional key): OpenAlex · Crossref · arXiv ·
+PubMed · Europe PMC · DOAJ · Semantic Scholar · OpenAIRE · Zenodo · HAL · CORE ·
+Unpaywall · GDELT · World Bank · Data Commons · US Census · Wikidata · SEC EDGAR ·
+Hacker News — plus generic web fetch (readability extraction) and PDF/JATS
+extraction. `search` supports `--all-academic`, `--per-source`, `--page`,
+`--year-from/--year-to`, `--oa-only`, `--type`, `--sort`. Details, rate limits
+and etiquette: `references/sources/catalog.md`. Full-text ladder and trust chain:
+`references/sources/fulltext-catalog.md`. Fallback ladder:
+`references/sources/fallbacks.md`.
 
 **Optional turbo (never required):** Firecrawl, Exa, Tavily, Brave, Apify,
 Bright Data, Zotero, Jupyter, Docling, Dialog Reddit. Ready-to-paste MCP config
@@ -171,13 +188,24 @@ and costs: `references/integrations/mcp-catalog.md`. Budget policy:
 
 ## Domain playbooks
 
-`references/methods/`: `academic.md` · `market.md` · `data-analysis.md` ·
-`osint.md` · `due-diligence.md` · `technical-rnd.md` · `systematic-review.md`
-(PRISMA-lite: search logging, screening reasons, key-study matrix) ·
-`decision-modeling.md` (operational models: `model.json` card → variables →
-thresholds → procedure → worked example → baseline/comparator fidelity → ≥5
-scenarios → sensitivity breakpoints → declared scope).
-Read the matching one **before phase 2**; each carries its own Gotchas section.
+`references/methods/`: `academic.md` · `academic-writing.md` ·
+`academic-writing-corpus.md` · `market.md` · `data-analysis.md` · `osint.md` ·
+`due-diligence.md` · `technical-rnd.md` · `systematic-review.md` (PRISMA-lite:
+search logging, screening reasons, key-study matrix) · `decision-modeling.md`
+(operational models: `model.json` card → variables → thresholds → procedure →
+worked example → baseline/comparator fidelity → ≥5 scenarios → sensitivity
+breakpoints → declared scope). Read the matching one **before phase 2**; each
+carries its own Gotchas section.
+
+### Academic manuscript mode
+
+Set `brief set --deliverable-type academic-manuscript` when the user wants a
+submission-shaped paper, not a report. Requirements: verified full text for key
+studies/critical claims, comprehensive abstract, IMRaD sections, venue profile,
+reporting guideline, and citations in APA/Vancouver/IEEE. Commands:
+`venue init` · `manuscript scaffold` · `manuscript build` · `manuscript check` ·
+`corpus analyze` · `reporting check`. See `references/methods/academic-writing.md`
+and `references/quality/manuscript-rubric.md`.
 
 ## Coordination with other installed skills
 
@@ -192,6 +220,9 @@ operations). deep-research-os remains the orchestrator of the full pipeline.
 - Contradiction protocol: `references/quality/contradiction-protocol.md`
 - Quality gates master list: `references/quality/quality-gates.md`
 - Retraction & integrity checks: `references/quality/retraction-integrity.md`
+- Manuscript rubric: `references/quality/manuscript-rubric.md`
+- Reporting guidelines: `references/quality/reporting-guidelines.md`
+- Venue quality: `references/quality/venue-quality.md`
 - JSON schemas for every ledger record: `references/schemas/`
 
 ## Failure etiquette

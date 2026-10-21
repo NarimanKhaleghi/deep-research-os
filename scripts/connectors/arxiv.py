@@ -67,13 +67,13 @@ def parse_feed(xml_text: str) -> list[dict]:
     return dedupe(out)
 
 
-def search(query: str, limit: int = 10, **kw) -> list[dict]:
+def search(query: str, limit: int = 10, offset: int = 0, **kw) -> list[dict]:
     xml = http.get_text(
         BASE,
         params={
             "search_query": f"all:{query}",
-            "start": 0,
-            "max_results": max(1, min(limit, 25)),
+            "start": max(0, offset),
+            "max_results": max(1, min(limit, 100)),
             "sortBy": "relevance",
         },
     )

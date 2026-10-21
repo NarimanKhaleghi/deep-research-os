@@ -62,12 +62,14 @@ def parse_works(payload: dict) -> list[dict]:
     return dedupe(out)
 
 
-def search(query: str, limit: int = 10, **kw) -> list[dict]:
+def search(query: str, limit: int = 10, offset: int = 0, **kw) -> list[dict]:
+    per = max(1, min(limit, 100))
     payload = http.get_json(
         f"{BASE}/works",
         params={
             "search": query,
-            "per-page": max(1, min(limit, 25)),
+            "per-page": per,
+            "page": max(1, (max(0, offset) // per) + 1),
             "mailto": MAILTO,
             "select": "id,doi,display_name,publication_year,authorships,primary_location,"
                       "abstract_inverted_index,is_retracted,cited_by_count,open_access",

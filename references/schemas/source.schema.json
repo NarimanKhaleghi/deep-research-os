@@ -4,111 +4,521 @@
   "title": "Source record",
   "description": "One collected source in the evidence ledger (sources/SRC-####.json).",
   "type": "object",
-  "required": ["id", "title", "url", "accessed_at", "tier", "angles_covered", "snapshot"],
+  "required": [
+    "id",
+    "title",
+    "url",
+    "accessed_at",
+    "tier",
+    "angles_covered",
+    "snapshot"
+  ],
   "properties": {
-    "id": { "type": "string", "pattern": "^SRC-[0-9]{4}$" },
-    "title": { "type": "string", "minLength": 1 },
-    "url": { "type": "string" },
-    "doi": { "type": ["string", "null"] },
-    "authors": { "type": "array", "items": { "type": "string" } },
-    "published": { "type": ["string", "null"], "description": "ISO date, best known" },
-    "as_of": { "type": ["string", "null"], "description": "document/effective date for policy sources (YYYY-MM-DD)" },
-    "publisher": { "type": ["string", "null"] },
-    "venue": { "type": ["string", "null"], "description": "journal/venue name (Crossref enrichment or manual)" },
-    "year": { "type": ["integer", "null"] },
-    "volume": { "type": ["string", "null"] },
-    "issue": { "type": ["string", "null"] },
-    "pages": { "type": ["string", "null"] },
-    "published_doi": { "type": ["string", "null"], "description": "DOI of the published version of record" },
-    "preprint_doi": { "type": ["string", "null"], "description": "DOI of the preprint version" },
-    "status": { "enum": ["screened", "included", "excluded"], "description": "screening outcome; excluded requires exclusion_reason" },
-    "exclusion_reason": { "type": ["string", "null"] },
-    "key_study": { "type": "boolean", "description": "reviewed as a key study for the literature matrix" },
-    "review": {
-      "type": ["object", "null"],
-      "description": "key-study comparison fields for the literature matrix",
-      "properties": {
-        "problem": { "type": "string" },
-        "framework": { "type": "string" },
-        "method": { "type": "string" },
-        "context": { "type": "string" },
-        "findings": { "type": "string" },
-        "limitations": { "type": "string" },
-        "relevance": { "type": "string" }
+    "id": {
+      "type": "string",
+      "pattern": "^SRC-[0-9]{4}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "url": {
+      "type": "string"
+    },
+    "doi": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
-    "type": { "enum": ["journal-article", "preprint", "report", "news", "statistics", "filing", "webpage", "book", "dataset", "regulation", "law", "government-report", "central-bank", "regulator", "official", "other"] },
-    "abstract": { "type": ["string", "null"] },
-    "read_depth": { "enum": ["abstract", "partial", "full-text"], "description": "how much of the source was actually read; key studies require full-text" },
-    "read_at": { "type": ["string", "null"], "description": "ISO timestamp when the full text was read" },
-    "service": { "type": "string", "description": "connector or mcp that yielded it" },
-    "origin_key": { "type": "string", "description": "registered domain or publisher key for corroboration counting" },
-    "accessed_at": { "type": "string", "description": "ISO 8601 timestamp" },
-    "tier": { "enum": [1, 2, 3] },
-    "angles_covered": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "published": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO date, best known"
+    },
+    "as_of": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "document/effective date for policy sources (YYYY-MM-DD)"
+    },
+    "publisher": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "venue": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "journal/venue name (Crossref enrichment or manual)"
+    },
+    "year": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "volume": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "issue": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "pages": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "published_doi": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "DOI of the published version of record"
+    },
+    "preprint_doi": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "DOI of the preprint version"
+    },
+    "status": {
+      "enum": [
+        "screened",
+        "included",
+        "excluded"
+      ],
+      "description": "screening outcome; excluded requires exclusion_reason"
+    },
+    "exclusion_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "key_study": {
+      "type": "boolean",
+      "description": "reviewed as a key study for the literature matrix"
+    },
+    "review": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "key-study comparison fields for the literature matrix",
+      "properties": {
+        "problem": {
+          "type": "string"
+        },
+        "framework": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        },
+        "findings": {
+          "type": "string"
+        },
+        "limitations": {
+          "type": "string"
+        },
+        "relevance": {
+          "type": "string"
+        }
+      }
+    },
+    "type": {
+      "enum": [
+        "journal-article",
+        "preprint",
+        "report",
+        "news",
+        "statistics",
+        "filing",
+        "webpage",
+        "book",
+        "dataset",
+        "regulation",
+        "law",
+        "government-report",
+        "central-bank",
+        "regulator",
+        "official",
+        "other"
+      ]
+    },
+    "abstract": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "read_depth": {
+      "enum": [
+        "abstract",
+        "partial",
+        "full-text"
+      ],
+      "description": "compatibility reading depth; verified full text is established by fulltext.status, not this field"
+    },
+    "read_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ISO timestamp when the full text was read"
+    },
+    "service": {
+      "type": "string",
+      "description": "connector or mcp that yielded it"
+    },
+    "origin_key": {
+      "type": "string",
+      "description": "registered domain or publisher key for corroboration counting"
+    },
+    "accessed_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp"
+    },
+    "tier": {
+      "enum": [
+        1,
+        2,
+        3
+      ]
+    },
+    "angles_covered": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
     "snapshot": {
       "type": "object",
-      "required": ["path", "sha256", "kind"],
+      "required": [
+        "path",
+        "sha256",
+        "kind"
+      ],
       "properties": {
-        "path": { "type": "string" },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "bytes": { "type": "integer", "minimum": 0 },
-        "kind": { "enum": ["text", "html", "metadata"] },
-        "archived_url": { "type": ["string", "null"], "description": "Wayback URL when archived" }
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "enum": [
+            "text",
+            "html",
+            "metadata",
+            "fulltext"
+          ]
+        },
+        "archived_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Wayback URL when archived"
+        }
       }
     },
     "credibility": {
-      "type": ["object", "null"],
-      "required": ["score", "band", "scored_at"],
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "score",
+        "band",
+        "scored_at"
+      ],
       "properties": {
-        "score": { "type": "integer", "minimum": 0, "maximum": 100 },
-        "band": { "enum": ["A", "B", "C", "D"] },
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "band": {
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        },
         "dimensions": {
           "type": "object",
           "properties": {
-            "authority": { "type": "number" },
-            "review": { "type": "number" },
-            "recency": { "type": "number" },
-            "evidence": { "type": "number" },
-            "coi": { "type": "number" },
-            "integrity": { "type": "number" }
+            "authority": {
+              "type": "number"
+            },
+            "review": {
+              "type": "number"
+            },
+            "recency": {
+              "type": "number"
+            },
+            "evidence": {
+              "type": "number"
+            },
+            "coi": {
+              "type": "number"
+            },
+            "integrity": {
+              "type": "number"
+            }
           }
         },
-        "rationale": { "type": "string" },
-        "scored_at": { "type": "string" },
+        "rationale": {
+          "type": "string"
+        },
+        "scored_at": {
+          "type": "string"
+        },
         "overrides": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["dimension", "delta", "reason"],
+            "required": [
+              "dimension",
+              "delta",
+              "reason"
+            ],
             "properties": {
-              "dimension": { "type": "string" },
-              "delta": { "type": "number" },
-              "reason": { "type": "string" }
+              "dimension": {
+                "type": "string"
+              },
+              "delta": {
+                "type": "number"
+              },
+              "reason": {
+                "type": "string"
+              }
             }
           }
         }
       }
     },
     "verification": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "properties": {
-        "status": { "enum": ["verified", "review", "mismatch", "unreachable", "unknown"] },
-        "title_match": { "type": ["number", "null"] },
-        "method": { "type": "string" },
-        "detail": { "type": "string" },
-        "at": { "type": "string" }
+        "status": {
+          "enum": [
+            "verified",
+            "review",
+            "mismatch",
+            "unreachable",
+            "unknown"
+          ]
+        },
+        "title_match": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "method": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string"
+        }
       }
     },
     "retraction": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "properties": {
-        "status": { "enum": ["clean", "retracted", "eoc", "corrected", "unknown"] },
-        "source_flag": { "type": ["string", "null"] },
-        "checked_at": { "type": "string" }
+        "status": {
+          "enum": [
+            "clean",
+            "retracted",
+            "eoc",
+            "corrected",
+            "unknown"
+          ]
+        },
+        "source_flag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "checked_at": {
+          "type": "string"
+        }
       }
     },
-    "notes": { "type": "string" },
-    "extra": { "type": "object" }
+    "notes": {
+      "type": "string"
+    },
+    "extra": {
+      "type": "object"
+    },
+    "fulltext": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Original artifact + extracted text trust chain",
+      "required": [
+        "status",
+        "format",
+        "text_path",
+        "text_sha256"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "verified",
+            "abstract-only",
+            "partial",
+            "needs_ocr",
+            "failed"
+          ]
+        },
+        "format": {
+          "enum": [
+            "pdf",
+            "jats",
+            "html",
+            "text",
+            "unknown"
+          ]
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pages": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text_path": {
+          "type": "string"
+        },
+        "text_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "text_chars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "version": {
+          "enum": [
+            "version-of-record",
+            "accepted-manuscript",
+            "preprint",
+            "unknown"
+          ]
+        },
+        "host": {
+          "type": "string"
+        },
+        "license": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "landing_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retrieved_from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retrieved_at": {
+          "type": "string"
+        },
+        "extractor": {
+          "type": "string"
+        },
+        "validation": {
+          "type": "object"
+        },
+        "exception": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "approved_at": {
+              "type": "string"
+            },
+            "quality": {
+              "type": "string"
+            },
+            "words": {
+              "type": "integer"
+            },
+            "score": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
   }
 }

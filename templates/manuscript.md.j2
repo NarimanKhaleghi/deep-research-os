@@ -1,0 +1,40 @@
+# {{ title }}
+
+{% if authors_text %}**Authors:** {{ authors_text }}{% endif %}
+{% if affiliations_text %}  
+**Affiliations:** {{ affiliations_text }}{% endif %}
+
+## Abstract
+
+{{ abstract }}
+
+**Keywords:** {{ keywords | join("; ") }}
+
+{{ body }}
+
+## References
+
+{% for ref in bibliography %}
+{{ loop.index }}. {{ ref }}
+{% endfor %}
+
+{% if funding %}## Funding
+
+{{ funding }}
+{% endif %}
+{% if conflicts %}## Conflicts of interest
+
+{{ conflicts }}
+{% endif %}
+{% if data_availability %}## Data availability
+
+{{ data_availability }}
+{% endif %}
+{% if ethics %}## Ethics and consent
+
+{{ ethics }}
+{% endif %}
+{% if registration %}## Registration
+
+{{ registration }}
+{% endif %}

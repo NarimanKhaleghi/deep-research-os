@@ -72,6 +72,12 @@ if code and doc disagree, that's a bug (fix in the same PR, per CONTRIBUTING).
     `key_study` (default 8 for academic-paper), each with complete `review`
     fields (problem, framework, method, context, findings, limitations,
     relevance) via `sources review`.
+- **Academic-manuscript deliverables add:**
+  - `fulltext_coverage` — ≥80% of included sources verified, ≤20% abstract-only.
+  - `fulltext_key_studies` — 100% of key studies verified.
+  - `fulltext_critical_claims` — 100% of critical claims rest on verified text.
+  - `fulltext_integrity` — artifact/text/snapshot hashes agree.
+  - `abstract_quality` — comprehensive abstract when used as an exception.
 - **Computational / decision-framework deliverables add:**
   - `model.json` at the project root, validated by `model check`. It must
     declare scope (`structure`, `implemented_stages`, `learning`, `selection`),
@@ -99,6 +105,13 @@ if code and doc disagree, that's a bug (fix in the same PR, per CONTRIBUTING).
 - `model_scope_disclosed` — automatic scope limitations (single-stage,
   no-learning, heuristic allocation, partial stage implementation, plus any
   author-declared scope notes) must appear in Limitations.
+- **Academic-manuscript deliverables:** `manuscript check` hard gates:
+  `draft_exists`, `imrad_sections`, `abstract_comprehensive`, `keywords`,
+  `title_length`, `metadata_complete`, `citations_resolve`, `citations_present`,
+  `included_sources_cited`, `key_studies_cited`, `numeric_claims_cited`,
+  `fulltext_coverage`, `fulltext_key_studies`, `fulltext_critical_claims`,
+  `fulltext_integrity`, `no_placeholders`, `reporting_guideline` (hard when
+  declared), and `venue_profile`. `venue_warning` is soft.
 
 ### Phase 9 — Retrospect
 - `retrospective.json` with `worked[]`, `failed[]`, `budget_used{}`, `metrics{}`,

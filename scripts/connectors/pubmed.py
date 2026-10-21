@@ -62,11 +62,12 @@ def parse_esummary(payload: dict) -> list[dict]:
     return dedupe(out)
 
 
-def search(query: str, limit: int = 10, **kw) -> list[dict]:
-    limit = max(1, min(limit, 25))
+def search(query: str, limit: int = 10, offset: int = 0, **kw) -> list[dict]:
+    limit = max(1, min(limit, 100))
     es = http.get_json(
         f"{EUTILS}/esearch.fcgi",
-        params={"db": "pubmed", "term": query, "retmax": limit, "retmode": "json", "sort": "relevance"},
+        params={"db": "pubmed", "term": query, "retmax": limit,
+                "retstart": max(0, offset), "retmode": "json", "sort": "relevance"},
     )
     ids = parse_esearch(es)
     if not ids:

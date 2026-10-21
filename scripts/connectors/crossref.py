@@ -73,10 +73,11 @@ def parse_items(payload: dict) -> list[dict]:
     return dedupe(out)
 
 
-def search(query: str, limit: int = 10, **kw) -> list[dict]:
+def search(query: str, limit: int = 10, offset: int = 0, **kw) -> list[dict]:
     payload = http.get_json(
         f"{BASE}/works",
-        params={"query": query, "rows": max(1, min(limit, 25)), "mailto": MAILTO},
+        params={"query": query, "rows": max(1, min(limit, 100)),
+                "offset": max(0, offset), "mailto": MAILTO},
     )
     return parse_items(payload)
 

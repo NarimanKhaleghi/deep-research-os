@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/manuscript.schema.json",
+  "title": "Manuscript metadata",
+  "description": "Front matter of manuscript/draft.md.",
+  "type": "object",
+  "required": ["title", "authors", "abstract", "keywords"],
+  "properties": {
+    "title": { "type": "string", "minLength": 4 },
+    "authors": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "affiliations": { "type": "array", "items": { "type": "string" } },
+    "keywords": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 8 },
+    "abstract": { "type": "string", "minLength": 200 },
+    "funding": { "type": ["string", "null"] },
+    "conflicts": { "type": ["string", "null"] },
+    "data_availability": { "type": ["string", "null"] },
+    "ethics": { "type": ["string", "null"] },
+    "registration": { "type": ["string", "null"] },
+    "language": { "enum": ["en", "fa"] },
+    "reporting_guidelines": { "type": "array", "items": { "enum": ["consort", "prisma", "strobe", "coreq", "care", "tripod", "arrive"] } }
+  }
+}

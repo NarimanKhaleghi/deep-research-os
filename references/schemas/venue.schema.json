@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/venue.schema.json",
+  "title": "Venue profile",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "style": { "enum": ["apa", "vancouver", "ieee"] },
+    "language": { "enum": ["en", "fa"] },
+    "word_limit": { "type": ["integer", "null"], "minimum": 0 },
+    "abstract_limit": { "type": ["integer", "null"], "minimum": 0 },
+    "title_limit": { "type": ["integer", "null"], "minimum": 0 },
+    "keyword_min": { "type": "integer", "minimum": 0 },
+    "keyword_max": { "type": "integer", "minimum": 0 },
+    "sections": { "type": "array", "items": { "type": "string" } },
+    "reporting_guidelines": { "type": "array", "items": { "enum": ["consort", "prisma", "strobe", "coreq", "care", "tripod", "arrive"] } },
+    "blind_review": { "type": "boolean" },
+    "reference_limit": { "type": ["integer", "null"] },
+    "figure_limit": { "type": ["integer", "null"] },
+    "table_limit": { "type": ["integer", "null"] }
+  }
+}

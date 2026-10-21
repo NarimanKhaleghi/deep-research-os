@@ -17,8 +17,11 @@
    into claims or delete them.
 3. **Tag the finding kind** (`--kind`): `analysis` (default), `model`, `scenarios`,
    `sensitivity`, `literature-matrix`, `methodology`, `conclusion`.
-   - Academic deliverables **must** have `model`, `scenarios`, and `sensitivity`
-     findings (gate `findings_kinds`); see `references/methods/decision-modeling.md`.
+   - `academic-paper` deliverables **must** have `model`, `scenarios`, and
+     `sensitivity` findings (gate `findings_kinds`); see
+     `references/methods/decision-modeling.md`.
+   - `academic-manuscript` deliverables use the manuscript gates instead; model
+     findings are required only when the manuscript makes a computational claim.
    - `scenarios`: ≥5 scenarios including one combination scenario (two stressors at
      once), each with driver values, model output, decision change, and an
      early-warning indicator.
@@ -78,11 +81,14 @@ $R gate --phase 7
       `supported` or `resolved`.
 - [ ] No finding references a claim whose evidence was later invalidated
       (`contradicted` without resolution).
-- [ ] Academic/PRISMA deliverables: `model`, `scenarios`, `sensitivity` findings
-      exist (`findings_kinds`); ≥ `key_studies_target` key studies with complete
-      review fields (`key_studies_reviewed`) and `read_depth: full-text`.
+- [ ] Academic/PRISMA deliverables: ≥ `key_studies_target` key studies with
+      complete review fields (`key_studies_reviewed`) and verified full text.
+- [ ] `academic-paper`: `model`, `scenarios`, `sensitivity` findings exist
+      (`findings_kinds`).
 - [ ] Decision-framework/computational findings: `model check` passes with zero
       errors (scope, sources, comparator notes, complete inputs, exact outputs).
+- [ ] `academic-manuscript`: `fulltext_coverage`, `fulltext_key_studies`,
+      `fulltext_critical_claims` and `fulltext_integrity` pass.
 
 ## Failure modes
 

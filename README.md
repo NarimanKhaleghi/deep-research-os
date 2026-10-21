@@ -41,7 +41,7 @@ disciplined research pipeline:
 > Every report passes hard quality gates. And the skill itself gets smarter —
 > with your approval — with every run.**
 
-It works with **zero API keys** (12 free public research APIs are built in),
+It works with **zero API keys** (18 free public research APIs are built in; CORE adds an optional key),
 automatically upgrades itself when it detects MCP servers or keys you already
 have, and never lets a paid dependency block the pipeline.
 
@@ -101,7 +101,7 @@ flowchart TB
     subgraph DROS["deep-research-os"]
         direction TB
         ROUTER[🔀 Search Router<br/>ε-greedy · per-domain weights]
-        CONN[🔌 12 keyless connectors<br/>OpenAlex · Crossref · arXiv · PubMed · GDELT<br/>World Bank · Census · Wikidata · SEC · HN · ...]
+        CONN[🔌 19 connectors · 18 keyless<br/>OpenAlex · Crossref · PubMed · Europe PMC · DOAJ<br/>Semantic Scholar · OpenAIRE · Zenodo · HAL · CORE<br/>GDELT · World Bank · Census · Wikidata · SEC · HN]
         LEDGER[(🧾 Evidence Ledger<br/>sources · evidence · claims<br/>contradictions · findings)]
         QUAL[⚖️ Quality Engine<br/>credibility rubric · citation verify<br/>retraction checks · numeric checks]
         GATE[🚦 Report Gates<br/>0 uncited claims · bibliography<br/>precision metrics]
@@ -151,6 +151,29 @@ the SKILL.md workflow takes over.
 
 **Platform targets:** `./install.sh --platform claude|opencode|codex|cursor|all|generic --dest <path>`
 (symlink mode with `--link` for development).
+
+### New in 1.4 — full-text truth + academic manuscripts
+
+- **Lawful full-text-first acquisition** — `read --doi` walks a ranked OA ladder
+  (Europe PMC JATS → Unpaywall → OpenAlex → Semantic Scholar → DOAJ →
+  Zenodo/HAL/OpenAIRE/CORE → publisher), validates identity (DOI/title/abstract),
+  archives the original artifact, and records an artifact→text→snapshot SHA-256
+  chain. No Sci-Hub, LibGen, or paywall bypass.
+- **Real coverage gates** — key studies and critical claims require
+  `fulltext.status=verified`; reports must meet ≥80% verified / ≤20%
+  abstract-only coverage. `read_depth` alone can no longer fake full text.
+- **Academic manuscript deliverable** — `academic-manuscript` ships
+  `manuscript scaffold|build|check`, IMRaD templates, comprehensive-abstract
+  checks, APA 7 / Vancouver / IEEE citations, `venue.json`, reporting-guideline
+  checks (CONSORT, PRISMA, STROBE, COREQ, CARE, TRIPOD, ARRIVE), and a
+  Markdown + print-ready HTML pair.
+- **Broader academic search** — 19 connectors (Europe PMC, DOAJ, Semantic
+  Scholar, OpenAIRE, Zenodo, HAL, CORE added) plus `--all-academic`,
+  `--per-source`, `--page`, `--year-from/--year-to`, `--oa-only`, `--type`,
+  `--sort`.
+- **Safer exports** — `export` omits full-text artifacts by default;
+  `--include-fulltext` is an explicit private-backup choice.
+- **Harder QA** — 65 tests, 9 offline evals.
 
 ### New in 1.3 — the rigor pack
 
@@ -331,7 +354,14 @@ All built-in. No keys, no signup. Polite-pool etiquette built in.
 | **OpenAlex** | academic | 240M+ works, citation graph, retraction flags |
 | **Crossref** | academic | DOI metadata, update-to (retraction) relations |
 | **arXiv** | academic (preprints) | Atom API, category search |
-| **PubMed (E-utilities)** | biomedical | esearch + efetch |
+| **PubMed (E-utilities)** | biomedical | esearch + esummary |
+| **Europe PMC** | biomedical + preprints | search, PMC JATS full text |
+| **DOAJ** | open-access journals | peer-reviewed OA articles |
+| **Semantic Scholar** | academic graph | citations + `openAccessPdf` |
+| **OpenAIRE** | funded research | repository products, access rights |
+| **Zenodo** | open repository | records, datasets, preprints |
+| **HAL** | French open archive | multidisciplinary OA |
+| **CORE** | OA aggregator | optional `CORE_API_KEY` |
 | **Unpaywall** | OA availability | DOI → legal OA PDF links |
 | **GDELT** | news / global events | 2.0 Doc API, tone & geography |
 | **World Bank** | economics | indicator time series, 200+ economies |
@@ -362,6 +392,8 @@ See [`references/integrations/mcp-catalog.md`](references/integrations/mcp-catal
   (precision-aware, `96.555% ≠ 97%`).
 - **Source permanence:** every source is snapshotted locally with SHA-256 — your
   report stays auditable even if the web changes.
+- **Full-text integrity:** academic sources keep the original artifact plus
+  extracted text; `fulltext verify` checks the entire hash chain and coverage.
 
 ---
 
@@ -376,10 +408,10 @@ python evals/run_evals.py --offline   # CI-ready, fixture-driven, network-free
 python evals/run_evals.py --live      # real sources, real queries
 ```
 
-Eight scenario suites with **planted traps** — fake DOI citations, planted
+Nine scenario suites with **planted traps** — fake DOI citations, planted
 contradictions, silent number drift, single-origin echo chambers, multilingual
 (Persian) coverage, a quick-profile budget-discipline test, requirement
-coverage, and normative-claim overreach.
+coverage, normative-claim overreach, and a full-text/manuscript gate.
 Methodology: [`evals/rubrics.md`](evals/rubrics.md).
 
 ---
@@ -394,9 +426,9 @@ deep-research-os/
 │   ├── research_ctl.py         # main CLI (init/status/gate/search/verify/report/learn)
 │   ├── doctor.py               # environment + capability discovery
 │   ├── lib/                    # http (retries/async), paths, utils
-│   ├── connectors/             # 12 keyless connectors + router (ε-greedy)
+│   ├── connectors/             # 19 connectors (18 keyless) + router
 │   ├── core/                   # ledger · claims · credibility · contradictions
-│   │                           # verify · extract · snapshot · budget · reports
+│   │                           # verify · extract · snapshot · fulltext · manuscript
 │   └── learning/               # feedback · stats · preferences · proposals
 │                               # maintain · upstream scans
 ├── references/                 # protocol · phases/ · methods/ · sources/
@@ -416,9 +448,9 @@ deep-research-os/
 
 ## 🗺 Roadmap
 
-- [ ] Semantic Scholar & OpenCitations connectors; connector plugin API
-- [ ] `v1.3` — local embedding backend (optional) for preference similarity
-- [ ] `v1.4` — GitHub App mode for org-wide vaults; per-team learning profiles
+- [ ] OpenCitations connector; connector plugin API
+- [ ] Local embedding backend (optional) for preference similarity
+- [ ] GitHub App mode for org-wide vaults; per-team learning profiles
 - [ ] `v2.0` — multimodal evidence (charts/tables extraction with source anchoring)
 
 ---

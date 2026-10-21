@@ -9,7 +9,8 @@ research-grounded policy/technical questions.
 
 ## Inputs
 - Brief angles phrased as researchable constructs (not topics).
-- Access to the academic shelf: OpenAlex, Crossref, arXiv, PubMed, Unpaywall.
+- Access to the academic shelf: OpenAlex, Crossref, PubMed, Europe PMC, DOAJ,
+  Semantic Scholar, OpenAIRE, Zenodo, HAL, arXiv, CORE (optional key), Unpaywall.
 
 ## Procedure
 1. **Construct vocabulary** (phase 1): expand each construct into synonyms and
@@ -17,7 +18,8 @@ research-grounded policy/technical questions.
    field jargon. Keep a term ledger; you will reuse it for every query.
 2. **Search broadly, then snowball:**
    - Broad pass: each construct × (synonym set) on OpenAlex (relevance) and
-     Crossref (metadata).
+     Crossref (metadata); use `search --all-academic --oa-only` when coverage
+     matters more than latency.
    - Backward snowball: from the 2–3 seed papers, mine references (OpenAlex
      `referenced_works`) for classics.
    - Forward snowball: `cited_by` for the seeds to find what superseded them.
@@ -38,7 +40,11 @@ research-grounded policy/technical questions.
 ## Source strategy
 - OpenAlex first (coverage + citation graph), Crossref to confirm canonical DOI
   metadata, PubMed when biomedical, arXiv for CS/ML frontiers (label preprints).
-- Unpaywall to legally reach OA full texts; `read --metadata-only` otherwise.
+- Full-text ladder: Europe PMC JATS → Unpaywall → OpenAlex → Semantic Scholar →
+  DOAJ → repositories (Zenodo/HAL/OpenAIRE/CORE) → publisher OA. `read --doi
+  --require-fulltext` tries the ladder and verifies identity/hashes. Use
+  `--metadata-only` for context only; `--allow-abstract` only with a comprehensive
+  abstract and a reason. See `references/sources/fulltext-catalog.md`.
 
 ## Verification requirements
 - Every cited work resolves (DOI verified) and is not retracted.
@@ -49,7 +55,8 @@ research-grounded policy/technical questions.
 
 ## Gotchas
 - **Abstract-only claims:** the abstract's number often differs from the paper's
-  (rounder, less qualified). Prefer full-text numbers; else mark precision loss.
+  (rounder, less qualified). Prefer verified full-text numbers; abstract-only
+  sources cannot support key studies or critical claims.
 - **Citation context drift:** a famous paper often doesn't say what others cite it
   for — verify in the original, not in secondary citations.
 - **Prestige ≠ fit:** a Nature paper 3 fields away is not evidence for your construct.

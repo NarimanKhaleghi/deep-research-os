@@ -35,7 +35,7 @@ def _pkg_version() -> str:
         with open(paths.repo_root() / "pyproject.toml", "rb") as fh:
             return str(tomllib.load(fh)["project"]["version"])
     except Exception:  # noqa: BLE001
-        return "1.3.0"
+        return "1.4.0"
 
 
 # ------------------------------------------------------------------ build
@@ -410,14 +410,22 @@ def _evidence_depth(sources: list[dict], claims: list[dict],
                     evidence: list[dict]) -> dict:
     counts = {"full": 0, "partial": 0, "abstract": 0, "unknown": 0}
     for source in sources:
-        depth = str(source.get("read_depth") or "unknown")
-        key = {"full-text": "full", "partial": "partial",
-               "abstract": "abstract"}.get(depth, "unknown")
+        ft_status = (source.get("fulltext") or {}).get("status")
+        if ft_status:
+            key = {"verified": "full", "partial": "partial",
+                   "abstract-only": "abstract"}.get(ft_status, "unknown")
+        else:
+            depth = str(source.get("read_depth") or "unknown")
+            key = {"full-text": "full", "partial": "partial",
+                   "abstract": "abstract"}.get(depth, "unknown")
         counts[key] += 1
     by_id = {e.get("id"): e for e in evidence}
     source_by_id = {s.get("id"): s for s in sources}
     key_gaps = [s["id"] for s in sources
-                if s.get("key_study") and str(s.get("read_depth") or "") != "full-text"]
+                if s.get("key_study")
+                and ((s.get("fulltext") or {}).get("status") != "verified"
+                     if (s.get("fulltext") or {}).get("status")
+                     else str(s.get("read_depth") or "") != "full-text")]
     critical_abstract = []
     for claim in claims:
         if not claim.get("critical"):
@@ -425,8 +433,13 @@ def _evidence_depth(sources: list[dict], claims: list[dict],
         used = [source_by_id.get((by_id.get(eid) or {}).get("source_id"))
                 for eid in claim.get("evidence_ids") or []]
         used = [s for s in used if s]
-        if used and all(str(s.get("read_depth") or "unknown")
-                        in {"abstract", "unknown"} for s in used):
+        def _not_verified(src: dict) -> bool:
+            status = (src.get("fulltext") or {}).get("status")
+            if status:
+                return status != "verified"
+            return str(src.get("read_depth") or "unknown") in {"abstract", "unknown"}
+
+        if used and all(_not_verified(s) for s in used):
             critical_abstract.append(claim.get("id"))
     return {"counts": counts, "key_gaps": key_gaps,
             "critical_abstract": critical_abstract,

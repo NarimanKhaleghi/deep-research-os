@@ -16,6 +16,9 @@
    the Requirement Coverage table, the search & screening (PRISMA-lite) block, the
    evidence-depth/provenance block, the optional Model & Reproducibility section,
    and the Literature Comparison Matrix.
+   - `academic-manuscript` does **not** use `report build`. Use
+     `manuscript scaffold` → write `manuscript/draft.md` → `manuscript build`,
+     then `manuscript check`.
 2. **Satisfy the requirements contract** — `report build` refuses to pass while any
    RQ-## is unmet: map each requirement to a report section or finding id
    (`requirements map --requirement RQ-01 --target "Sensitivity analysis"`) whose
@@ -45,6 +48,8 @@
 $R model check
 $R report build
 $R report check                 # exit 1 if hard gate fails
+$R manuscript build             # academic-manuscript alternative
+$R manuscript check             # exit 1 if hard gate fails
 $R report check --allow-flagged # downgrades named checks to warnings (recorded)
 $R requirements map --requirement RQ-01 --target "Sensitivity analysis"
 $R requirements waive --requirement RQ-04 --reason "prompt asked for paywalled dataset"
@@ -72,6 +77,11 @@ $R gate --phase 8
 - [ ] Academic/decision-framework: `evidence_depth`, `numeric_provenance` and
       (when a model is present/required) `model_artifact` + `model_scope_disclosed`
       pass; numeric table rows carry IDs or explicit assumption/derived markers.
+- [ ] Academic-manuscript: `manuscript check` passes all hard checks, including
+      `abstract_comprehensive`, `imrad_sections`, `fulltext_coverage`,
+      `fulltext_key_studies`, `fulltext_critical_claims`, `fulltext_integrity`,
+      `citations_present`, `numeric_claims_cited`, `no_placeholders` and
+      `venue_profile`.
 
 ## Failure modes
 

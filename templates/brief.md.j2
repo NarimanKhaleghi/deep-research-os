@@ -45,7 +45,7 @@ created: "{{ created_at }}"
 
 {{ deliverable or "research memo with cited findings" }}
 
-- **Deliverable type:** `{{ deliverable_type or "report" }}`{% if deliverable_type == "academic-paper" %} — activates the review-protocol, key-study matrix and analysis-finding gates{% endif %}
+- **Deliverable type:** `{{ deliverable_type or "report" }}`{% if deliverable_type == "academic-paper" %} — activates the review-protocol, key-study matrix and analysis-finding gates{% endif %}{% if deliverable_type == "academic-manuscript" %} — activates full-text-first coverage, manuscript, citation, reporting-guideline and venue gates{% endif %}
 - **Review protocol:** `{{ review_protocol or "none" }}`{% if review_protocol == "prisma" %} — every search is logged (`searchlog`), excluded sources need reasons, and the report embeds the screening flow{% endif %}
 {% if key_studies_target %}- **Key-study matrix target:** {{ key_studies_target }} studies need `sources review` comparison fields
 {% endif %}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deep-research-os.dev/schemas/fulltext.schema.json",
+  "title": "Full-text artifact",
+  "description": "Original bytes -> extracted text -> snapshot trust chain for one source.",
+  "type": "object",
+  "required": ["status", "format", "text_path", "text_sha256", "retrieved_at"],
+  "properties": {
+    "status": { "enum": ["verified", "abstract-only", "partial", "needs_ocr", "failed"] },
+    "format": { "enum": ["pdf", "jats", "html", "text", "unknown"] },
+    "path": { "type": ["string", "null"] },
+    "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "bytes": { "type": "integer", "minimum": 0 },
+    "pages": { "type": "integer", "minimum": 0 },
+    "text_path": { "type": "string" },
+    "text_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "text_chars": { "type": "integer", "minimum": 0 },
+    "version": { "enum": ["version-of-record", "accepted-manuscript", "preprint", "unknown"] },
+    "host": { "type": "string" },
+    "license": { "type": ["string", "null"] },
+    "landing_url": { "type": ["string", "null"] },
+    "retrieved_from": { "type": ["string", "null"] },
+    "retrieved_at": { "type": "string" },
+    "extractor": { "type": "string" },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "ok": { "type": "boolean" },
+        "doi_match": { "type": "boolean" },
+        "doi_conflict": { "type": "boolean" },
+        "title_match": { "type": ["number", "null"] },
+        "abstract_match": { "type": ["number", "null"] },
+        "chars": { "type": "integer" },
+        "pages": { "type": "integer" },
+        "abstract_only": { "type": "boolean" },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "exception": {
+      "type": ["object", "null"],
+      "required": ["reason"],
+      "properties": {
+        "reason": { "type": "string", "minLength": 3 },
+        "approved_at": { "type": "string" },
+        "quality": { "type": "string" },
+        "words": { "type": "integer" },
+        "score": { "type": "integer" }
+      }
+    }
+  }
+}

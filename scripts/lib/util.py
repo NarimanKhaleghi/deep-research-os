@@ -137,6 +137,15 @@ def atomic_write_text(path: Path, text: str) -> None:
     tmp.replace(path)
 
 
+def atomic_write_bytes(path: Path, data: bytes) -> None:
+    path = Path(path)
+    ensure_dir(path.parent)
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "wb") as fh:
+        fh.write(data)
+    tmp.replace(path)
+
+
 # ---------------------------------------------------------------- hashing
 
 def sha256_text(text: str) -> str:

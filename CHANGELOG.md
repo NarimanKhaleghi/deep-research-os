@@ -4,6 +4,66 @@ All notable changes to **deep-research-os** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-10-21
+
+The “full-text truth + manuscripts” release: academic work becomes lawful
+full-text-first, coverage is machine-verified, and a submission-shaped
+manuscript deliverable ships alongside the report pipeline.
+
+### Added
+
+- **Lawful full-text resolver** (`scripts/core/resolver.py`,
+  `scripts/core/fulltext.py`, `scripts/core/fulltext_store.py`): ranked OA
+  candidates (Europe PMC JATS, Unpaywall, OpenAlex, Semantic Scholar, DOAJ,
+  Zenodo, HAL, OpenAIRE, CORE, arXiv/bioRxiv/medRxiv, publisher, direct),
+  identity validation, original-artifact archival, extracted text, and an
+  artifact → text → snapshot SHA-256 chain. Pirate hosts and SSRF targets are
+  blocked on the initial URL and re-validated before each redirect hop is
+  followed.
+- **Full-text CLI**: `read --doi/--file/--metadata-only/--require-fulltext/
+  --allow-abstract/--abstract-reason/--refresh/--no-preprint/--force`,
+  `fulltext assess|verify|coverage|request|scan-inbox`.
+- **Full-text gates**: `fulltext_integrity`, `fulltext_coverage` (≥80% verified,
+  ≤20% abstract-only), `fulltext_key_studies` (100%), `fulltext_critical_claims`
+  (100%), `abstract_quality`, `fulltext_not_claimed`.
+- **Academic manuscript deliverable**: `manuscript scaffold|build|check|show`,
+  IMRaD Markdown + print-ready HTML, comprehensive-abstract checks, APA 7 /
+  Vancouver / IEEE citation rendering, `venue.json` profiles, and
+  CONSORT/PRISMA/STROBE/COREQ/CARE/TRIPOD/ARRIVE checklist checks.
+- **Writing corpus analyzer**: `corpus analyze|show` profiles user-supplied
+  papers for structural/rhetorical guidance without copying text.
+- **Academic connectors**: Europe PMC, DOAJ, Semantic Scholar, OpenAIRE,
+  Zenodo, HAL, and optional-key CORE (19 connectors total; 18 keyless).
+- **Search filters/pagination**: `--all-academic`, `--per-source`, `--page`,
+  `--year-from`, `--year-to`, `--oa-only`, `--type`, `--sort`; per-connector
+  limits raised to 100.
+- **Safer export**: full-text artifacts are excluded by default;
+  `--include-fulltext` opts into a private backup; manuscripts and venue
+  profiles are copied.
+- **New references**: `sources/fulltext-catalog.md`, `methods/academic-writing.md`,
+  `methods/academic-writing-corpus.md`, `quality/manuscript-rubric.md`,
+  `quality/reporting-guidelines.md`, `quality/venue-quality.md`.
+- **Eval**: `manuscript_fulltext_gate` (9 offline scenarios total).
+
+### Changed
+
+- `read --metadata-only` stores a partial metadata snapshot instead of failing
+  when the abstract is missing or short.
+- `manuscript build` checks the draft body (not rendered Markdown), so citation
+  markers remain visible to gate checks; numeric-claim scanning excludes the
+  abstract.
+- Academic `read_depth` is now advisory; only `fulltext.status=verified` with a
+  matching hash chain satisfies full-text gates.
+- Version bumped to `1.4.0`; test suite is 65 tests, offline evals 9/9.
+
+### Fixed
+
+- Citation gates no longer report zero cited sources after rendering.
+- `numeric_claims_cited` no longer demands markers for numeric abstract
+  findings.
+- Manuscript abstract gate passes comprehensive structured abstracts without a
+  rigid word-count cliff.
+
 ## [1.3.0] — 2026-10-20
 
 The “rigor pack” release: computational models become reproducible artifacts,

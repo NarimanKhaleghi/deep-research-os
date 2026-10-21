@@ -30,6 +30,20 @@ CATALOG: dict[str, dict] = {
               "about": "Preprints (CS/ML/physics); label as preprint"},
     "pubmed": {"kind": "search", "domains": ["academic"], "tier": 1,
                "about": "Biomedical literature, MeSH terms, retraction types"},
+    "europepmc": {"kind": "search", "domains": ["academic"], "tier": 1,
+                  "about": "Biomedical literature plus PMC JATS full text and preprints"},
+    "doaj": {"kind": "search", "domains": ["academic"], "tier": 1,
+             "about": "Peer-reviewed open-access journals (DOAJ)"},
+    "semanticscholar": {"kind": "search", "domains": ["academic"], "tier": 1,
+                        "about": "Citation graph and open-access PDFs"},
+    "openaire": {"kind": "search", "domains": ["academic"], "tier": 1,
+                 "about": "Funded research outputs and repository records"},
+    "zenodo": {"kind": "search", "domains": ["academic"], "tier": 1,
+               "about": "Open repository records, datasets and preprints"},
+    "hal": {"kind": "search", "domains": ["academic"], "tier": 1,
+            "about": "French open archive across disciplines"},
+    "core": {"kind": "search", "domains": ["academic"], "tier": 1,
+             "about": "Aggregated open-access repositories (needs CORE_API_KEY)"},
     "gdelt": {"kind": "search", "domains": ["news"], "tier": 2,
               "about": "Global multilingual news coverage (artlist API)"},
     "worldbank": {"kind": "search", "domains": ["economics", "statistics"], "tier": 1,
@@ -115,6 +129,15 @@ def route(
     profile: str = "standard",
     override_source: str | None = None,
     seed: int | None = None,
+    all_academic: bool = False,
+    per_source: int | None = None,
+    offset: int = 0,
+    page: int = 1,
+    year_from: int | None = None,
+    year_to: int | None = None,
+    oa_only: bool = False,
+    types: list[str] | None = None,
+    sort: str = "relevance",
 ) -> dict:
     """Run the chosen connectors and aggregate normalized records.
 
@@ -125,6 +148,8 @@ def route(
         if override_source not in CATALOG:
             raise ValueError(f"unknown source '{override_source}'")
         chosen = [override_source]
+    elif all_academic:
+        chosen = searchable(["academic"])
     else:
         k = PICK_COUNT.get(profile, 3)
         chosen = choose_sources(domains, k, seed=seed)
@@ -132,12 +157,14 @@ def route(
     records: list[dict] = []
     failures: list[dict] = []
     provenance: dict[str, int] = {}
-    per_source = max(2, limit // max(1, len(chosen)))
+    per = per_source or max(2, limit // max(1, len(chosen)))
+    per = max(1, min(int(per), 100))
+    offset = max(0, offset) + (max(1, int(page)) - 1) * per
 
     for name in chosen:
         try:
             mod = _load(name)
-            got = mod.search(query, limit=per_source)
+            got = mod.search(query, limit=per, offset=max(0, offset))
             for r in got:
                 r.setdefault("service", name)
             provenance[name] = len(got)
@@ -147,12 +174,81 @@ def route(
             provenance[name] = 0
 
     merged = _merge_provenance(records)
+    merged = apply_filters(merged, year_from=year_from, year_to=year_to,
+                           oa_only=oa_only, types=types)
+    merged = sort_records(merged, sort)
     return {
         "records": merged[: max(limit, 1) * 2],
         "chosen": chosen,
         "provenance": provenance,
         "failures": failures,
+        "filters": {"year_from": year_from, "year_to": year_to,
+                    "oa_only": oa_only, "types": types or [], "sort": sort,
+                    "all_academic": all_academic, "per_source": per,
+                    "offset": offset, "page": max(1, int(page))},
     }
+
+
+def _year(record: dict) -> int | None:
+    raw = str(record.get("published") or record.get("year") or "")
+    m = re.search(r"(19|20)\d{2}", raw)
+    return int(m.group(0)) if m else None
+
+
+def _is_oa(record: dict) -> bool:
+    extra = record.get("extra") or {}
+    if extra.get("is_oa") is not None:
+        return bool(extra.get("is_oa"))
+    if extra.get("open_access") is not None:
+        return bool(extra.get("open_access"))
+    if extra.get("oa_status"):
+        return str(extra["oa_status"]).lower() not in ("closed", "none")
+    return False
+
+
+def _type_matches(record: dict, wanted: set[str]) -> bool:
+    if not wanted:
+        return True
+    rtype = str(record.get("type") or "other").lower()
+    aliases = {
+        "article": {"journal-article"}, "journal": {"journal-article"},
+        "preprint": {"preprint"}, "review": {"review", "journal-article"},
+        "dataset": {"dataset"}, "book": {"book"}, "conference": {"conference", "proceedings"},
+        "report": {"report"},
+    }
+    for want in wanted:
+        if rtype == want or rtype in aliases.get(want, {want}):
+            return True
+    return False
+
+
+def apply_filters(records: list[dict], *, year_from: int | None = None,
+                  year_to: int | None = None, oa_only: bool = False,
+                  types: list[str] | None = None) -> list[dict]:
+    wanted = {t.strip().lower() for t in (types or []) if t.strip()}
+    out = []
+    for r in records:
+        y = _year(r)
+        if year_from is not None and (y is None or y < year_from):
+            continue
+        if year_to is not None and (y is None or y > year_to):
+            continue
+        if oa_only and not _is_oa(r):
+            continue
+        if not _type_matches(r, wanted):
+            continue
+        out.append(r)
+    return out
+
+
+def sort_records(records: list[dict], sort: str = "relevance") -> list[dict]:
+    if sort == "citations":
+        return sorted(records, key=lambda r: int((r.get("extra") or {}).get("cited_by_count")
+                                                 or (r.get("extra") or {}).get("cited_by") or 0),
+                      reverse=True)
+    if sort == "date":
+        return sorted(records, key=lambda r: str(r.get("published") or ""), reverse=True)
+    return records
 
 
 def _merge_provenance(records: list[dict]) -> list[dict]:

@@ -24,13 +24,18 @@
    - cherry-pick breadth per tier: don't let Tier-3 reads eat Tier-1 budget.
    - Exclusions are decisions too: `sources update --source-id SRC-000X --status excluded --exclude-reason "…"`.
      `status: screened` marks title/abstract-level candidates that were not read.
-3. **`read` does the boring work** — fetch, extract (readability/PDF), snapshot to
-   `sources/SRC-####.txt`, hash (SHA-256), metadata record. One `read` = one source.
+3. **`read` does the boring work** — fetch, extract (readability/PDF/JATS), snapshot,
+   hash (SHA-256), metadata record. One `read` = one source.
+   - Academic `read --doi` uses the lawful full-text resolver, validates identity,
+     stores the original artifact + extracted text, and records the hash chain.
    - Record how much you actually read: `sources update --source-id SRC-#### --depth
-     abstract|partial|full-text`. Key studies need `full-text` in academic and
-     decision-framework runs; `--metadata-only` sources stay `abstract`.
-   - Paywalled/unfetchable? `read --metadata-only` (abstract-level source; credibility
-     will cap accordingly) — never fake a snapshot.
+     abstract|partial|full-text`. `read_depth` is a hint; only
+     `fulltext.status=verified` satisfies full-text gates.
+   - Paywalled/unfetchable? `read --metadata-only` (context only), `read
+     --allow-abstract --abstract-reason "…"` only for a comprehensive abstract, or
+     add a user-supplied PDF/XML to `inbox/` and run `fulltext scan-inbox`. Never
+     fake a snapshot and never use a pirate source.
+   - Audit: `fulltext verify`, `fulltext coverage`, `fulltext assess --source-id …`.
 4. **Tag angles** at read time: `--angles "a;b"`. Coverage is checked here, and later
    fetched by the coverage table.
 5. **Saturation check per angle** while budget remains: if 2 consecutive new reads add
@@ -48,11 +53,14 @@
 - `state.json.counters` updated (`searches`, `sources_read`).
 
 ```bash
-$R search --query "…" --domains academic,web --limit 10 --angle "pricing"
+$R search --query "…" --domains academic --all-academic --per-source 20 --oa-only --angle "efficacy"
+$R search --query "…" --year-from 2020 --type article,preprint --sort citations --page 2
 $R searchlog add --query "site:oecd.org …" --engine google --hits 40 --kept 3 --angle "regulation"
 $R read --url "https://…" --angles "pricing; adoption" --title "…" --published 2026-03-02
-$R read --doi "10.1038/s41586-…" --angles "efficacy"
+$R read --doi "10.1038/s41586-…" --angles "efficacy" --require-fulltext
 $R read --file ~/downloads/report.pdf --angles "cost"
+$R fulltext coverage
+$R fulltext scan-inbox
 $R sources update --source-id SRC-0003 --depth full-text
 $R sources update --source-id SRC-0004 --status excluded --exclude-reason "off-topic"
 $R searchlog list
@@ -70,6 +78,9 @@ $R gate --phase 3
 - [ ] `state.counters.sources_read` ≤ profile ceiling (or `budget_exceptions` recorded).
 - [ ] Academic/PRISMA deliverables: ≥1 search logged (`search_logged`) and every
       excluded source carries a reason (`screening_reasons`).
+- [ ] Academic-manuscript deliverables: `fulltext coverage` meets the policy
+      (≥80% verified, ≤20% abstract-only, 100% key studies verified) or a
+      documented exception is recorded.
 
 ## Failure modes
 

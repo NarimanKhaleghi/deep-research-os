@@ -24,7 +24,10 @@ from connectors import registry  # noqa: E402
 from core import budget as budget_mod  # noqa: E402
 from core import claims as claims_mod  # noqa: E402
 from core import contradictions as contradictions_mod  # noqa: E402
-from core import credibility, extract, gates, model_spec, report_builder  # noqa: E402
+from core import credibility, extract, fulltext, fulltext_store, gates, model_spec  # noqa: E402
+from core import manuscript as manuscript_mod  # noqa: E402
+from core import report_builder, reporting_guidelines, resolver  # noqa: E402
+from core import venue_profile, writing_corpus  # noqa: E402
 from core import requirements as requirements_mod  # noqa: E402
 from core import searchlog  # noqa: E402
 from core import snapshot as snapshot_mod  # noqa: E402
@@ -195,7 +198,8 @@ def cmd_init(args) -> dict:
 
     deliverable_type = args.deliverable_type
     review_protocol = args.review_protocol or ("prisma" if deliverable_type == "academic-paper" else "none")
-    key_studies_target = args.key_studies_target or (8 if deliverable_type == "academic-paper" else 0)
+    key_studies_target = args.key_studies_target or (
+        8 if deliverable_type in ("academic-paper", "academic-manuscript") else 0)
 
     now = util.utcnow_iso()
     cutoff = args.cutoff or (datetime.now(timezone.utc) + timedelta(days=30)).strftime("%Y-%m-%d")
@@ -390,9 +394,19 @@ def cmd_search(args) -> dict:
     if not query:
         fail("query required: `search --query \"…\"`")
     domains = [d.strip() for d in args.domains.split(",") if d.strip()] if args.domains else None
-    result = registry.route(query, domains=domains, limit=args.limit,
-                            profile=state.get("profile", "standard"),
-                            override_source=args.source, seed=args.seed)
+    result = registry.route(
+        query, domains=domains, limit=args.limit,
+        profile=state.get("profile", "standard"),
+        override_source=args.source, seed=args.seed,
+        all_academic=bool(getattr(args, "all_academic", False)),
+        per_source=getattr(args, "per_source", None),
+        page=getattr(args, "page", 1),
+        year_from=getattr(args, "year_from", None),
+        year_to=getattr(args, "year_to", None),
+        oa_only=bool(getattr(args, "oa_only", False)),
+        types=[t.strip() for t in (getattr(args, "type_filter", None) or "").split(",") if t.strip()] or None,
+        sort=getattr(args, "sort", "relevance"),
+    )
     _bump(state, "searches")
     for name, count in result["provenance"].items():
         sources_learning.record_search(name, domains, count)
@@ -409,8 +423,13 @@ def cmd_search(args) -> dict:
             "title": r.get("title"), "url": r.get("url"), "doi": r.get("doi"),
             "service": r.get("service"), "published": r.get("published"),
             "authors": (r.get("authors") or [])[:3],
+            "type": r.get("type"),
             "abstract": util.truncate(r.get("abstract") or "", 300),
             "seen_in": (r.get("extra") or {}).get("seen_in", []),
+            "is_oa": (r.get("extra") or {}).get("is_oa"),
+            "citations": (r.get("extra") or {}).get("cited_by_count")
+                         or (r.get("extra") or {}).get("cited_by"),
+            "pdf_url": (r.get("extra") or {}).get("pdf_url"),
         })
     entry = searchlog.append(project, {
         "query": query, "engine": "connector-route", "manual": False,
@@ -422,10 +441,11 @@ def cmd_search(args) -> dict:
         "kept": len(records),
         "urls": [r["url"] for r in records if r.get("url")][:60],
         "notes": getattr(args, "notes", None),
+        "filters": result.get("filters"),
     })
     return {"query": query, "chosen": result["chosen"], "provenance": result["provenance"],
-            "failures": result["failures"], "count": len(records), "records": records,
-            "search_log_id": entry["id"]}
+            "failures": result["failures"], "filters": result.get("filters"),
+            "count": len(records), "records": records, "search_log_id": entry["id"]}
 
 
 def cmd_searchlog_add(args) -> dict:
@@ -523,22 +543,146 @@ def _infer_tier(stype: str, service: str) -> int:
     return 2
 
 
-def cmd_read(args) -> dict:
-    project = _project(args)
-    state = _state(project)
-    ledger = Ledger(project)
+def _norm_doi(value: str | None) -> str | None:
+    return fulltext.normalize_doi(value)
 
-    existing = None
-    url = args.url
-    if args.source_id:
-        existing = ledger.source(args.source_id)
-        if existing is None:
-            fail(f"source {args.source_id} not found")
-        url = existing.get("url") or (f"https://doi.org/{existing['doi']}" if existing.get("doi") else None)
-    if not url:
-        fail("pass a URL or --source-id")
 
-    title = args.title or (existing or {}).get("title")
+def _find_source(ledger: Ledger, *, source_id: str | None = None,
+                 doi: str | None = None, url: str | None = None) -> dict | None:
+    if source_id:
+        return ledger.source(source_id)
+    want = _norm_doi(doi)
+    want_url = util.normalize_text(url or "")
+    for src in ledger.sources():
+        if want and _norm_doi(src.get("doi")) == want:
+            return src
+        if want and _norm_doi(src.get("published_doi")) == want:
+            return src
+        if want_url and util.normalize_text(src.get("url") or "") == want_url:
+            return src
+    return None
+
+
+def _metadata_for_doi(doi: str) -> dict:
+    from connectors import crossref, openalex
+
+    rec = crossref.get_work(doi)
+    if rec:
+        return rec
+    rec = openalex.get_work(doi)
+    return rec or {"title": "", "url": f"https://doi.org/{doi}", "doi": doi,
+                   "authors": [], "published": None, "publisher": None,
+                   "type": "journal-article", "abstract": None, "extra": {}}
+
+
+def _new_source(ledger: Ledger, rec: dict, *, angles: list[str] | None = None,
+                service: str = "fulltext") -> dict:
+    title = (rec.get("title") or "").strip() or (rec.get("doi") or "Untitled source")
+    url = (rec.get("url") or "").strip() or (
+        f"https://doi.org/{rec['doi']}" if rec.get("doi") else "local://untitled")
+    doi = _norm_doi(rec.get("doi"))
+    return ledger.add_source({
+        "url": url, "doi": doi, "title": title,
+        "authors": rec.get("authors") or [],
+        "publisher": rec.get("publisher") or util.domain_of(url),
+        "published": rec.get("published"),
+        "accessed_at": util.utcnow_iso(), "service": service,
+        "type": rec.get("type") or "journal-article",
+        "tier": _infer_tier(rec.get("type") or "journal-article", service),
+        "origin_key": util.domain_of(url), "angles_covered": angles or ["unassigned"],
+        "abstract": rec.get("abstract"),
+        "status": "included", "extra": rec.get("extra") or {},
+        "read_depth": "abstract",
+    })
+
+
+def _merge_source_metadata(ledger: Ledger, source: dict, rec: dict) -> dict:
+    fields = {}
+    for key in ("title", "doi", "url", "publisher", "published", "abstract"):
+        if rec.get(key) and not source.get(key):
+            fields[key] = rec[key]
+    if rec.get("authors") and not source.get("authors"):
+        fields["authors"] = rec["authors"]
+    if rec.get("extra"):
+        extra = dict(source.get("extra") or {})
+        for k, v in rec["extra"].items():
+            extra.setdefault(k, v)
+        fields["extra"] = extra
+    return ledger.update_source(source["id"], **fields) if fields else source
+
+
+def _record_attempt(state: dict, provider: str, ok: bool, error: str | None = None) -> None:
+    _health(state, provider or "fulltext", ok, error)
+
+
+def _try_fulltext_candidate(project: Path, ledger: Ledger, source: dict,
+                            candidate: dict, state: dict) -> dict:
+    sid = source["id"]
+    tmp = Path(project) / "sources" / f".{sid}.download"
+    try:
+        info = http.download(candidate["url"], tmp, timeout=90, retries=1,
+                             allowed_content_types=http.FULLTEXT_CONTENT_TYPES)
+        data = tmp.read_bytes()
+        artifact = fulltext.extract_artifact(
+            data, filename=candidate.get("url", "").split("?")[0],
+            content_type=info.get("content_type"))
+        validation = fulltext.validate_identity(source, artifact, strict=True)
+        if not validation["ok"]:
+            raise ValueError("identity check failed: " + "; ".join(validation["reasons"]))
+        if artifact.get("format") == "html":
+            raise ValueError("only a landing page was available (HTML is partial, not verified)")
+        status = "verified"
+        if int(validation.get("chars") or 0) < 1200:
+            status = "needs_ocr"
+            raise ValueError(f"extracted text too short ({validation.get('chars')} chars)")
+        origin = {
+            "url": candidate["url"], "final_url": info.get("final_url") or candidate["url"],
+            "host": candidate.get("host") or util.domain_of(candidate["url"]),
+            "bytes": info.get("bytes") or len(data),
+            "license": candidate.get("license"),
+            "landing_url": candidate.get("landing_url"),
+        }
+        rec = fulltext_store.store_artifact(
+            project, ledger, source, data, artifact, origin, status=status,
+            version=candidate.get("version") or "unknown",
+            license_=candidate.get("license"), validation=validation,
+        )
+        rec = ledger.update_source(sid, read_at=util.utcnow_iso(),
+                                   abstract=source.get("abstract") or artifact.get("abstract") or None)
+        _record_attempt(state, candidate.get("provider") or "fulltext", True)
+        return {"source": rec, "candidate": candidate, "validation": validation,
+                "artifact": artifact}
+    except Exception as exc:  # noqa: BLE001
+        _record_attempt(state, candidate.get("provider") or "fulltext", False,
+                        f"{type(exc).__name__}: {exc}")
+        raise
+    finally:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+
+
+def _store_abstract_only(project: Path, ledger: Ledger, source: dict,
+                         abstract: str, *, reason: str, state: dict) -> dict:
+    quality = fulltext.assess_abstract(abstract, title=source.get("title") or "")
+    if quality["verdict"] != "comprehensive":
+        fail("abstract is not comprehensive enough for an abstract-only exception "
+             f"(verdict={quality['verdict']}, words={quality['words']}, score={quality['score']}); "
+             "supply full text or use --metadata-only for context-only metadata")
+    exception = {"reason": reason, "approved_at": util.utcnow_iso(),
+                 "quality": quality["verdict"], "words": quality["words"],
+                 "score": quality["score"]}
+    rec = fulltext_store.store_abstract(project, ledger, source, abstract,
+                                        quality=quality, exception=exception)
+    _record_attempt(state, "abstract", True)
+    return rec
+
+
+def _legacy_read(project: Path, state: dict, ledger: Ledger, source: dict,
+                 url: str, args) -> dict:
+    """Web/news page snapshot path retained for non-academic sources."""
+    title = args.title or source.get("title")
     published = None
     text = ""
     try:
@@ -546,8 +690,7 @@ def cmd_read(args) -> dict:
             data = http.get_bytes(url)
             text, _ = extract.extract_pdf(data)
             if text and not title:
-                first_line = next((l for l in text.splitlines() if l.strip()), "")
-                title = util.truncate(first_line.strip(), 120)
+                title = util.truncate(next((l for l in text.splitlines() if l.strip()), ""), 120)
         else:
             page = extract.fetch_page(url)
             text = page.get("text") or ""
@@ -560,60 +703,162 @@ def cmd_read(args) -> dict:
         _health(state, args.service or "web", False, f"{type(exc).__name__}: {exc}")
         _save(project, state)
         fail(f"fetch failed: {type(exc).__name__}: {exc}")
-
     text = (text or "").strip()
     if len(text) < 200:
         _health(state, args.service or "web", False, "extracted text too short")
         _save(project, state)
         fail(f"extracted text too short ({len(text)} chars) — page may be JS-rendered; "
              "try the Playwright/SearXNG ladder in references/sources/fallbacks.md")
-
-    if existing:
-        sid = existing["id"]
-    else:
-        sid = util.next_id("SRC", [s["id"] for s in ledger.sources()])
+    sid = source["id"]
     snap = snapshot_mod.snapshot_text(project, sid, text, "text")
     if not http.is_offline() and args.wayback:
         snap["archived_url"] = snapshot_mod.wayback_lookup(url)
-
-    stype = args.type or (existing or {}).get("type") or ("news" if args.service == "gdelt" else "webpage")
-    angles = ([a.strip() for a in args.angles.split(",") if a.strip()] if args.angles
-              else (existing or {}).get("angles_covered") or [])
-    service = args.service or (existing or {}).get("service") or "web"
-    rec = {
-        "id": sid, "url": url,
-        "doi": (existing or {}).get("doi") or registry.extract_doi_from_url(url),
-        "title": title or url, "authors": (existing or {}).get("authors") or [],
-        "publisher": (existing or {}).get("publisher") or util.domain_of(url),
-        "published": (existing or {}).get("published") or published,
-        "accessed_at": util.utcnow_iso(), "service": service, "type": stype,
-        "tier": args.tier or (existing or {}).get("tier") or _infer_tier(stype, service),
-        "origin_key": util.domain_of(url), "angles_covered": angles,
-        "snapshot": snap,
-        "status": (existing or {}).get("status") or "included",
-        "extra": (existing or {}).get("extra") or {},
+    fields = {
+        "url": url, "title": title or url, "published": source.get("published") or published,
+        "accessed_at": util.utcnow_iso(), "snapshot": snap, "read_depth": "partial",
     }
-    if existing:
-        rec = ledger.update_source(sid, **{k: v for k, v in rec.items() if k != "id"})
-    else:
-        rec = ledger.add_source(rec)
+    rec = ledger.update_source(sid, **fields)
     cred = credibility.score_source(rec)
     rec = ledger.update_source(sid, credibility=cred)
-
     _bump(state, "sources_read")
     state.setdefault("ran", {})["last_credibility_at"] = util.utcnow_iso()
-    _health(state, service, True)
+    _health(state, args.service or rec.get("service") or "web", True)
     _save(project, state)
+    return {"source_id": sid, "title": rec["title"], "service": rec.get("service"),
+            "type": rec.get("type"), "status": "partial",
+            "words": len(text.split()), "chars": len(text), "snapshot": snap,
+            "credibility": {"band": cred["band"], "score": cred["score"]},
+            "text_path": str(project / snap["path"]), "excerpt": text[:2500],
+            "warnings": ["web page stored as partial snapshot; use --doi/--require-fulltext for academic full text"]}
 
-    warnings = [] if angles else ["no angles assigned — `sources update --angles …` before the phase-3 gate"]
+
+def cmd_read(args) -> dict:
+    project = _project(args)
+    state = _state(project)
+    ledger = Ledger(project)
+
+    url = args.url
+    doi = _norm_doi(getattr(args, "doi", None))
+    file_path = Path(args.file).expanduser() if getattr(args, "file", None) else None
+    existing = _find_source(ledger, source_id=args.source_id, doi=doi, url=url)
+
+    if file_path:
+        if not file_path.exists():
+            fail(f"file not found: {file_path}")
+        data = file_path.read_bytes()
+        artifact = fulltext.extract_artifact(data, filename=file_path.name)
+        if existing is None:
+            rec = {"title": artifact.get("title") or file_path.stem,
+                   "url": f"local://{file_path.name}", "doi": artifact.get("doi"),
+                   "authors": artifact.get("authors") or [], "type": "journal-article",
+                   "abstract": artifact.get("abstract") or None, "extra": {}}
+            existing = _new_source(ledger, rec, angles=args.angles.split(",") if args.angles else None,
+                                   service="local-file")
+        validation = fulltext.validate_identity(existing, artifact, strict=not args.force)
+        if not validation["ok"] and not args.force:
+            fail("identity check failed: " + "; ".join(validation["reasons"]))
+        if validation.get("abstract_only") and not args.allow_abstract:
+            fail("file looks abstract-only; pass --allow-abstract with a reason to store it")
+        if validation.get("abstract_only"):
+            return _read_result(project, state, ledger, existing,
+                                _store_abstract_only(project, ledger, existing,
+                                                     artifact.get("text") or "",
+                                                     reason=args.abstract_reason or "user-supplied abstract",
+                                                     state=state), "abstract-only")
+        origin = {"url": str(file_path), "final_url": str(file_path),
+                  "host": "local", "bytes": len(data)}
+        rec = fulltext_store.store_artifact(
+            project, ledger, existing, data, artifact, origin,
+            status="verified", version="unknown", validation=validation)
+        rec = ledger.update_source(existing["id"], read_at=util.utcnow_iso())
+        _bump(state, "sources_read")
+        _save(project, state)
+        return _read_result(project, state, ledger, rec, {"validation": validation}, "verified")
+
+    if doi and existing is None:
+        meta = _metadata_for_doi(doi)
+        existing = _new_source(ledger, meta, angles=args.angles.split(",") if args.angles else None,
+                               service="doi")
+    elif existing is None and url:
+        existing = _new_source(ledger, {"title": args.title or url, "url": url,
+                                        "doi": registry.extract_doi_from_url(url),
+                                        "authors": [], "type": "webpage", "extra": {}},
+                               angles=args.angles.split(",") if args.angles else None,
+                               service=args.service or "web")
+    if existing is None:
+        fail("pass a URL, --doi, --file or --source-id")
+    doi = doi or _norm_doi(existing.get("doi"))
+    if doi and existing.get("doi") != doi:
+        existing = ledger.update_source(existing["id"], doi=doi)
+
+    if (not doi and not args.require_fulltext and not args.metadata_only
+            and not args.allow_abstract and url):
+        return _legacy_read(project, state, ledger, existing, url, args)
+
+    abstract = existing.get("abstract") or ""
+    if args.metadata_only:
+        rec = fulltext_store.store_metadata(
+            project, ledger, existing, abstract,
+            reason=args.abstract_reason or "metadata-only read")
+        _save(project, state)
+        return _read_result(project, state, ledger, rec, {}, "metadata-only")
+
+    if not args.refresh and (existing.get("fulltext") or {}).get("status") == "verified":
+        check = fulltext_store.verify(project, existing)
+        if check["ok"]:
+            return _read_result(project, state, ledger, existing,
+                                {"already_verified": True}, "verified")
+
+    candidates = resolver.resolve(existing, doi=doi or existing.get("doi"), url=url,
+                                  include_preprint=not args.no_preprint)
+    attempts: list[dict] = []
+    for cand in candidates:
+        try:
+            result = _try_fulltext_candidate(project, ledger, existing, cand, state)
+            _bump(state, "sources_read")
+            state.setdefault("ran", {})["last_credibility_at"] = util.utcnow_iso()
+            _save(project, state)
+            return _read_result(project, state, ledger, result["source"],
+                                {"candidate": cand, "validation": result["validation"],
+                                 "attempts": attempts}, "verified")
+        except Exception as exc:  # noqa: BLE001
+            attempts.append({"provider": cand.get("provider"), "url": cand.get("url"),
+                             "error": util.truncate(f"{type(exc).__name__}: {exc}", 300)})
+
+    if abstract and args.allow_abstract:
+        rec = _store_abstract_only(project, ledger, existing, abstract,
+                                   reason=args.abstract_reason or "no lawful full text found",
+                                   state=state)
+        _save(project, state)
+        return _read_result(project, state, ledger, rec,
+                            {"attempts": attempts}, "abstract-only")
+
+    _save(project, state)
+    if args.require_fulltext:
+        fail("no lawful verified full text found; attempts: " + json.dumps(attempts, ensure_ascii=False))
+    fail("no lawful full text found; use --allow-abstract for a documented exception, "
+         "or add a PDF to inbox/ and run `fulltext scan-inbox`; attempts: "
+         + json.dumps(attempts, ensure_ascii=False))
+
+
+def _read_result(project: Path, state: dict, ledger: Ledger, source: dict,
+                 extra: dict, status: str) -> dict:
+    text = fulltext_store.read_text(project, source)
+    cred = source.get("credibility") or credibility.score_source(source)
+    if not source.get("credibility"):
+        source = ledger.update_source(source["id"], credibility=cred)
+    snap = source.get("snapshot") or {}
     return {
-        "source_id": sid, "title": rec["title"], "service": service, "type": stype,
+        "source_id": source["id"], "title": source.get("title"), "service": source.get("service"),
+        "type": source.get("type"), "status": status,
+        "fulltext": source.get("fulltext"),
         "words": len(text.split()), "chars": len(text),
-        "snapshot": snap, "credibility": {"band": cred["band"], "score": cred["score"]},
-        "text_path": str(project / snap["path"]),
+        "snapshot": snap, "credibility": {"band": cred.get("band"), "score": cred.get("score")},
+        "text_path": str(project / snap["path"]) if snap.get("path") else None,
         "excerpt": text[:2500],
-        "warnings": warnings,
+        **extra,
     }
+
 
 
 def cmd_sources_update(args) -> dict:
@@ -974,20 +1219,43 @@ def cmd_export(args) -> dict:
     project = _project(args)
     out_dir = Path(args.out) if args.out else project / "exports" / util.today_iso()
     util.ensure_dir(out_dir)
-    copied = []
-    for pattern in ("report.md", "report.html", "brief.md", "plan.md", "verify_report.json",
+    include_fulltext = bool(getattr(args, "include_fulltext", False))
+    ledger = Ledger(project)
+    artifacts = set()
+    for src in ledger.sources():
+        rel = (src.get("fulltext") or {}).get("path")
+        if rel:
+            artifacts.add(Path(rel).as_posix())
+    copied, skipped = [], []
+    for pattern in ("report.md", "report.html", "brief.md", "plan.md", "manuscript.md",
+                    "manuscript.html", "venue.json", "verify_report.json",
                     "retrospective.json", "evidence.jsonl", "claims.jsonl", "contradictions.jsonl"):
         f = project / pattern
         if f.exists():
             util.atomic_write_text(out_dir / f.name, f.read_text(encoding="utf-8"))
             copied.append(f.name)
-    for sub in ("sources", "findings"):
+    for sub in ("sources", "findings", "manuscript"):
         for f in (project / sub).glob("*"):
+            if not f.is_file():
+                continue
+            rel = f.relative_to(project).as_posix()
+            if not include_fulltext and rel in artifacts:
+                skipped.append(rel)
+                continue
+            util.ensure_dir(out_dir / sub)
+            (out_dir / sub / f.name).write_bytes(f.read_bytes())
+            copied.append(rel)
+    if include_fulltext:
+        for f in (project / "sources" / "archive").glob("*"):
             if f.is_file():
-                util.ensure_dir(out_dir / sub)
-                (out_dir / sub / f.name).write_bytes(f.read_bytes())
-                copied.append(f"{sub}/{f.name}")
-    return {"out": str(out_dir), "files": copied}
+                rel = f.relative_to(project).as_posix()
+                util.ensure_dir(out_dir / "sources" / "archive")
+                (out_dir / rel).write_bytes(f.read_bytes())
+                copied.append(rel)
+    return {"out": str(out_dir), "files": copied,
+            "fulltext_artifacts_excluded": 0 if include_fulltext else len(skipped),
+            "skipped": skipped,
+            "note": "full-text artifacts are local-only; use --include-fulltext for a private backup"}
 
 
 # ================================================================== learn
@@ -1315,6 +1583,188 @@ def _module(name: str) -> bool:
 
 # ================================================================ parser
 
+def cmd_fulltext_assess(args) -> dict:
+    project = _project(args)
+    ledger = Ledger(project)
+    source = ledger.source(args.source_id)
+    if source is None:
+        fail(f"source {args.source_id} not found")
+    check = fulltext_store.verify(project, source)
+    ft = source.get("fulltext") or {}
+    quality = None
+    if ft.get("status") == "abstract-only":
+        quality = fulltext.assess_abstract(fulltext_store.read_text(project, source),
+                                           title=source.get("title") or "")
+    return {"source_id": source["id"], "title": source.get("title"),
+            "read_depth": source.get("read_depth"), "fulltext": ft,
+            "verify": check, "abstract_quality": quality}
+
+
+def cmd_fulltext_verify(args) -> dict:
+    project = _project(args)
+    ledger = Ledger(project)
+    sources = ledger.sources()
+    if getattr(args, "source_id", None):
+        sources = [s for s in sources if s["id"] == args.source_id]
+    results = []
+    for source in sources:
+        check = fulltext_store.verify(project, source)
+        results.append({"source_id": source["id"], "status": (source.get("fulltext") or {}).get("status"),
+                        "ok": check["ok"], "problems": check["problems"]})
+    return {"ok": all(r["ok"] for r in results), "results": results}
+
+
+def cmd_fulltext_coverage(args) -> dict:
+    project = _project(args)
+    ledger = Ledger(project)
+    sources = ledger.sources()
+    key_ids = {s["id"] for s in sources if s.get("key_study")}
+    return fulltext_store.coverage(sources, key_ids=key_ids)
+
+
+def cmd_fulltext_request(args) -> dict:
+    project = _project(args)
+    source = Ledger(project).source(args.source_id)
+    if source is None:
+        fail(f"source {args.source_id} not found")
+    return resolver.request_template(source)
+
+
+def cmd_fulltext_scan_inbox(args) -> dict:
+    project = _project(args)
+    state = _state(project)
+    ledger = Ledger(project)
+    inbox = Path(args.inbox).expanduser() if args.inbox else project / "inbox"
+    if not inbox.exists():
+        return {"inbox": str(inbox), "found": 0, "stored": [], "skipped": [],
+                "note": "inbox/ does not exist; create it and copy PDFs/XML there"}
+    stored, skipped, failed = [], [], []
+    for path in sorted(inbox.iterdir()):
+        if not path.is_file() or path.suffix.lower() not in (".pdf", ".xml", ".jats", ".html", ".htm", ".txt"):
+            continue
+        try:
+            data = path.read_bytes()
+            artifact = fulltext.extract_artifact(data, filename=path.name)
+            source = _find_source(ledger, doi=artifact.get("doi"))
+            if source is None:
+                best = 0.0
+                for src in ledger.sources():
+                    if src.get("title") and artifact.get("title"):
+                        score = util.fuzzy(util.normalize_text(src["title"]),
+                                           util.normalize_text(artifact["title"]))
+                        if score > best:
+                            best, source = score, src
+                if best < 0.90:
+                    source = None
+            if source is None:
+                rec = {"title": artifact.get("title") or path.stem,
+                       "url": f"local://{path.name}", "doi": artifact.get("doi"),
+                       "authors": artifact.get("authors") or [], "type": "journal-article",
+                       "abstract": artifact.get("abstract") or None, "extra": {}}
+                source = _new_source(ledger, rec, angles=args.angles.split(",") if args.angles else None,
+                                     service="inbox")
+            validation = fulltext.validate_identity(source, artifact, strict=True)
+            if not validation["ok"]:
+                skipped.append({"file": path.name, "source_id": source["id"],
+                                "reason": "; ".join(validation["reasons"])})
+                continue
+            if validation.get("abstract_only"):
+                skipped.append({"file": path.name, "source_id": source["id"],
+                                "reason": "abstract-only; use `read --file … --allow-abstract`"})
+                continue
+            origin = {"url": str(path), "final_url": str(path), "host": "local",
+                      "bytes": len(data)}
+            rec = fulltext_store.store_artifact(
+                project, ledger, source, data, artifact, origin,
+                status="verified", version="unknown", validation=validation)
+            rec = ledger.update_source(source["id"], read_at=util.utcnow_iso())
+            stored.append({"file": path.name, "source_id": rec["id"],
+                           "chars": validation.get("chars")})
+        except Exception as exc:  # noqa: BLE001
+            failed.append({"file": path.name, "error": util.truncate(f"{type(exc).__name__}: {exc}", 300)})
+    if stored:
+        _bump(state, "sources_read", len(stored))
+        _save(project, state)
+    return {"inbox": str(inbox), "stored": stored, "skipped": skipped, "failed": failed}
+
+
+def cmd_manuscript_scaffold(args) -> dict:
+    project = _project(args)
+    return manuscript_mod.scaffold(project, force=args.force)
+
+
+def cmd_manuscript_build(args) -> tuple[dict, int]:
+    project = _project(args)
+    try:
+        result = manuscript_mod.build(project, style=args.style, lang=args.lang)
+    except (FileNotFoundError, ValueError) as exc:
+        fail(str(exc))
+    return result, (0 if result.get("ok") else 1)
+
+
+def cmd_manuscript_check(args) -> tuple[dict, int]:
+    project = _project(args)
+    result = manuscript_mod.check(project, style=args.style, lang=args.lang)
+    return result, (0 if result.get("ok") else 1)
+
+
+def cmd_manuscript_show(args) -> dict:
+    project = _project(args)
+    path = project / "manuscript.md"
+    if not path.exists():
+        path = manuscript_mod.draft_path(project)
+    if not path.exists():
+        fail("no manuscript.md or manuscript/draft.md — run `manuscript scaffold`")
+    return {"path": str(path), "text": util.load_text(path)}
+
+
+def cmd_corpus_analyze(args) -> dict:
+    project = _project(args)
+    try:
+        return writing_corpus.build(project, Path(args.dir).expanduser() if args.dir else None)
+    except FileNotFoundError as exc:
+        fail(str(exc))
+
+
+def cmd_corpus_show(args) -> dict:
+    project = _project(args)
+    profile = writing_corpus.load(project)
+    if not profile:
+        fail("no corpus profile — run `corpus analyze --dir /path/to/papers`")
+    return profile
+
+
+def cmd_venue_init(args) -> dict:
+    project = _project(args)
+    return venue_profile.write_default(project)
+
+
+def cmd_venue_check(args) -> dict:
+    project = _project(args)
+    path = project / "manuscript.md"
+    if not path.exists():
+        path = manuscript_mod.draft_path(project)
+    if not path.exists():
+        fail("no manuscript text — run `manuscript build` or scaffold the draft")
+    meta, body = manuscript_mod.load_draft(project)
+    return venue_profile.check(project, util.load_text(path), abstract=str(meta.get("abstract") or ""),
+                               keywords=meta.get("keywords") or [])
+
+
+def cmd_reporting_check(args) -> dict:
+    project = _project(args)
+    path = Path(args.file).expanduser() if args.file else project / "manuscript.md"
+    if not path.exists():
+        path = manuscript_mod.draft_path(project)
+    if not path.exists():
+        fail("no manuscript text — run `manuscript build` or scaffold the draft")
+    text = util.load_text(path)
+    guideline = args.guideline or reporting_guidelines.detect(text)
+    if not guideline:
+        fail("cannot detect a reporting guideline; pass --guideline consort|prisma|strobe|coreq|care|tripod|arrive")
+    return reporting_guidelines.check(text, guideline)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="research_ctl", description="deep-research-os agent CLI")
     sub = p.add_subparsers(dest="command", required=True)
@@ -1342,10 +1792,10 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--dir", help="exact project directory (user-chosen folder for the outputs)")
     sp.add_argument("--force", action="store_true", help="allow --dir into a non-empty folder")
     sp.add_argument("--deliverable-type",
-                    choices=["report", "academic-paper", "decision-framework", "memo",
-                             "osint-brief", "dataset"],
+                    choices=["report", "academic-paper", "academic-manuscript",
+                             "decision-framework", "memo", "osint-brief", "dataset"],
                     default="report",
-                    help="academic-paper activates review-protocol + analysis gates")
+                    help="academic-manuscript adds full-text-first gates; academic-paper keeps report-style analysis gates")
     sp.add_argument("--review-protocol", choices=["none", "prisma"], default=None,
                     help="systematic-review protocol (academic-paper defaults to prisma)")
     sp.add_argument("--key-studies-target", type=int, default=None,
@@ -1374,8 +1824,8 @@ def build_parser() -> argparse.ArgumentParser:
     s2.add_argument("--maintenance", choices=["ok", "due"])
     s2.add_argument("--privacy"); s2.add_argument("--angles"); s2.add_argument("--success")
     s2.add_argument("--deliverable-type",
-                    choices=["report", "academic-paper", "decision-framework", "memo",
-                             "osint-brief", "dataset"])
+                    choices=["report", "academic-paper", "academic-manuscript",
+                             "decision-framework", "memo", "osint-brief", "dataset"])
     s2.add_argument("--review-protocol", choices=["none", "prisma"])
     s2.add_argument("--key-studies-target", type=int)
     common(s2); s2.set_defaults(func=cmd_brief_set)
@@ -1397,6 +1847,16 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--domains", help="comma-separated: academic,news,statistics,economics,filings,tech,entities,web")
     sp.add_argument("--limit", type=int, default=10)
     sp.add_argument("--source", help="override router with one connector")
+    sp.add_argument("--all-academic", action="store_true",
+                    help="query every enabled academic connector (slower, broader)")
+    sp.add_argument("--per-source", type=int, help="results requested from each connector (max 100)")
+    sp.add_argument("--page", type=int, default=1, help="1-based result page")
+    sp.add_argument("--year-from", type=int, help="minimum publication year")
+    sp.add_argument("--year-to", type=int, help="maximum publication year")
+    sp.add_argument("--oa-only", action="store_true", help="keep open-access records only")
+    sp.add_argument("--type", dest="type_filter",
+                    help="comma-separated: article,preprint,review,dataset,book,conference,report")
+    sp.add_argument("--sort", choices=["relevance", "citations", "date"], default="relevance")
     sp.add_argument("--seed", type=int)
     sp.add_argument("--angle", help="research angle this search serves (logged for PRISMA)")
     sp.add_argument("--notes", help="free-text note stored in the search log")
@@ -1448,11 +1908,85 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("read", help="fetch + extract + snapshot a source")
     sp.add_argument("url", nargs="?")
     sp.add_argument("--source-id")
+    sp.add_argument("--doi", help="resolve legal full text for a DOI")
+    sp.add_argument("--file", help="read a local PDF/JATS/HTML/text artifact")
     sp.add_argument("--title"); sp.add_argument("--service"); sp.add_argument("--type")
     sp.add_argument("--tier", type=int); sp.add_argument("--angles")
     sp.add_argument("--pdf", action="store_true", help="treat as PDF")
     sp.add_argument("--wayback", action="store_true", help="look up an archive URL")
+    sp.add_argument("--metadata-only", dest="metadata_only", action="store_true",
+                    help="store abstract/metadata only; no full-text claim")
+    sp.add_argument("--require-fulltext", dest="require_fulltext", action="store_true",
+                    help="fail unless a verified lawful full text is stored")
+    sp.add_argument("--allow-abstract", dest="allow_abstract", action="store_true",
+                    help="allow a comprehensive abstract as a documented exception")
+    sp.add_argument("--abstract-reason", dest="abstract_reason",
+                    help="reason recorded with an abstract-only exception")
+    sp.add_argument("--refresh", action="store_true", help="re-resolve even if verified")
+    sp.add_argument("--no-preprint", dest="no_preprint", action="store_true",
+                    help="do not use preprint servers")
+    sp.add_argument("--force", action="store_true",
+                    help="skip strict identity rejection for local files")
     common(sp); sp.set_defaults(func=cmd_read)
+
+    # fulltext
+    sp = sub.add_parser("fulltext", help="full-text artifacts and coverage")
+    fsub = sp.add_subparsers(dest="fulltext_cmd", required=True)
+    s2 = fsub.add_parser("assess", help="verify one source's full-text trust chain")
+    s2.add_argument("--source-id", "--source", dest="source_id", required=True)
+    common(s2); s2.set_defaults(func=cmd_fulltext_assess)
+    s2 = fsub.add_parser("verify", help="verify stored artifact/text/snapshot hashes")
+    s2.add_argument("--source-id", "--source", dest="source_id")
+    common(s2); s2.set_defaults(func=cmd_fulltext_verify)
+    s2 = fsub.add_parser("coverage", help="verified/abstract/partial coverage metrics")
+    common(s2); s2.set_defaults(func=cmd_fulltext_coverage)
+    s2 = fsub.add_parser("request", help="author/institution full-text request template")
+    s2.add_argument("--source-id", "--source", dest="source_id", required=True)
+    common(s2); s2.set_defaults(func=cmd_fulltext_request)
+    s2 = fsub.add_parser("scan-inbox", help="match PDFs/XML in inbox/ to sources")
+    s2.add_argument("--inbox"); s2.add_argument("--angles")
+    common(s2); s2.set_defaults(func=cmd_fulltext_scan_inbox)
+
+    # manuscript
+    sp = sub.add_parser("manuscript", help="academic manuscript scaffold/build/check")
+    msub = sp.add_subparsers(dest="manuscript_cmd", required=True)
+    s2 = msub.add_parser("scaffold", help="create manuscript/draft.md")
+    s2.add_argument("--force", action="store_true")
+    common(s2); s2.set_defaults(func=cmd_manuscript_scaffold)
+    s2 = msub.add_parser("build", help="render manuscript.md and manuscript.html")
+    s2.add_argument("--style", choices=["apa", "vancouver", "ieee"])
+    s2.add_argument("--lang", choices=["en", "fa"])
+    common(s2); s2.set_defaults(func=cmd_manuscript_build)
+    s2 = msub.add_parser("check", help="run manuscript hard gates")
+    s2.add_argument("--style", choices=["apa", "vancouver", "ieee"])
+    s2.add_argument("--lang", choices=["en", "fa"])
+    common(s2); s2.set_defaults(func=cmd_manuscript_check)
+    s2 = msub.add_parser("show", help="print manuscript.md or the draft")
+    common(s2); s2.set_defaults(func=cmd_manuscript_show)
+
+    # corpus
+    sp = sub.add_parser("corpus", help="academic writing corpus profile")
+    csub = sp.add_subparsers(dest="corpus_cmd", required=True)
+    s2 = csub.add_parser("analyze", help="analyze PDFs/XML/text into corpus/profile.json")
+    s2.add_argument("--dir")
+    common(s2); s2.set_defaults(func=cmd_corpus_analyze)
+    s2 = csub.add_parser("show"); common(s2); s2.set_defaults(func=cmd_corpus_show)
+
+    # venue
+    sp = sub.add_parser("venue", help="venue profile (style, limits, checklist)")
+    vsub = sp.add_subparsers(dest="venue_cmd", required=True)
+    s2 = vsub.add_parser("init", help="write a default venue.json")
+    common(s2); s2.set_defaults(func=cmd_venue_init)
+    s2 = vsub.add_parser("check", help="check the manuscript against venue.json")
+    common(s2); s2.set_defaults(func=cmd_venue_check)
+
+    # reporting
+    sp = sub.add_parser("reporting", help="reporting-guideline checklist")
+    rsub = sp.add_subparsers(dest="reporting_cmd", required=True)
+    s2 = rsub.add_parser("check", help="check CONSORT/PRISMA/STROBE/... items")
+    s2.add_argument("--guideline", choices=["consort", "prisma", "strobe", "coreq", "care", "tripod", "arrive"])
+    s2.add_argument("--file")
+    common(s2); s2.set_defaults(func=cmd_reporting_check)
 
     # sources
     sp = sub.add_parser("sources", help="source records")
@@ -1589,8 +2123,10 @@ def build_parser() -> argparse.ArgumentParser:
     common(s2); s2.set_defaults(func=cmd_report_check)
 
     # export
-    sp = sub.add_parser("export", help="copy run artifacts")
+    sp = sub.add_parser("export", help="copy run artifacts (full text excluded by default)")
     sp.add_argument("--out")
+    sp.add_argument("--include-fulltext", action="store_true",
+                    help="include original full-text artifacts (private backup only)")
     common(sp); sp.set_defaults(func=cmd_export)
 
     # learn

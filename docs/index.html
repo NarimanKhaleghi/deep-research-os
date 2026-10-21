@@ -35,7 +35,7 @@
 <link rel="preload" href="assets/fonts/instrument-serif.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/source-serif-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/site.css?v=f79519493f">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"deep-research-os","description":"An open-source research operating system for AI agents. Every claim traces to a verbatim quote, every source to a SHA-256 snapshot, every report to hard gates. MIT, zero API keys.","url":"https://narimankhaleghi.github.io/deep-research-os/","image":"https://narimankhaleghi.github.io/deep-research-os/assets/og.png","inLanguage":"en","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","softwareVersion":"1.3.0","codeRepository":"https://github.com/NarimanKhaleghi/deep-research-os","license":"https://opensource.org/license/mit","author":{"@type":"Person","name":"Nariman Khaleghi"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Evidence ledger","Citation verification","Contradiction protocol","Rigor gates","PRISMA-lite search log","Bilingual reports"]},{"@type":"FAQPage","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Does it need API keys?","acceptedAnswer":{"@type":"Answer","text":"No. Twelve free public search APIs, web fetch and PDF extraction work without keys. Optional keys only add capacity; the pipeline is designed to run keyless."}},{"@type":"Question","name":"Which agents does it support?","acceptedAnswer":{"@type":"Answer","text":"Claude Code, OpenCode, Codex, Cursor and any generic skill directory. The installer auto-detects platforms; SKILL.md carries the workflow."}},{"@type":"Question","name":"What does one run produce?","acceptedAnswer":{"@type":"Answer","text":"A brief and plan, a search journal, source snapshots, an evidence ledger, a verification report, findings, report.md, a self-contained report.html and a retrospective."}},{"@type":"Question","name":"Is the Persian output real RTL?","acceptedAnswer":{"@type":"Answer","text":"Yes. Reports are rendered in English or Persian (auto-detected or --lang fa), with RTL layout, embedded Vazirmatn, translated labels and APA 7 references."}},{"@type":"Question","name":"What do the hard gates check?","acceptedAnswer":{"@type":"Answer","text":"IDs resolve, every fact line is cited, numbers and their source dates match, no placeholders, open contradictions stay visible, weak claims are labeled, requirements are covered, bibliography fields are complete, and computational claims ship a reproducible model check."}}]},{"@type":"HowTo","name":"Sixty seconds to a governed run.","description":"Python 3.11+. No API keys. The installer creates a venv, links the skill into your agent platform and verifies the environment.","inLanguage":"en","url":"https://narimankhaleghi.github.io/deep-research-os/#install","step":[{"@type":"HowToStep","position":1,"name":"Clone","text":"Clone: git clone https://github.com/NarimanKhaleghi/deep-research-os\ncd deep-research-os"},{"@type":"HowToStep","position":2,"name":"Install the skill","text":"Install the skill: ./install.sh"},{"@type":"HowToStep","position":3,"name":"Verify","text":"Verify: python scripts/research_ctl.py doctor"},{"@type":"HowToStep","position":4,"name":"Start a run","text":"Start a run: python scripts/research_ctl.py init \"Your research question\" --profile deep --dir ~/Research/your-topic"}]}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"deep-research-os","description":"An open-source research operating system for AI agents. Every claim traces to a verbatim quote, every source to a SHA-256 snapshot, every report to hard gates. MIT, zero API keys.","url":"https://narimankhaleghi.github.io/deep-research-os/","image":"https://narimankhaleghi.github.io/deep-research-os/assets/og.png","inLanguage":"en","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS, Windows","softwareVersion":"1.4.0","codeRepository":"https://github.com/NarimanKhaleghi/deep-research-os","license":"https://opensource.org/license/mit","author":{"@type":"Person","name":"Nariman Khaleghi"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Evidence ledger","Citation verification","Contradiction protocol","Rigor gates","PRISMA-lite search log","Bilingual reports"]},{"@type":"FAQPage","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Does it need API keys?","acceptedAnswer":{"@type":"Answer","text":"No. Eighteen free public search APIs, web fetch and PDF extraction work without keys; CORE adds an optional key. Optional keys only add capacity; the pipeline is designed to run keyless."}},{"@type":"Question","name":"Which agents does it support?","acceptedAnswer":{"@type":"Answer","text":"Claude Code, OpenCode, Codex, Cursor and any generic skill directory. The installer auto-detects platforms; SKILL.md carries the workflow."}},{"@type":"Question","name":"What does one run produce?","acceptedAnswer":{"@type":"Answer","text":"A brief and plan, a search journal, source snapshots, an evidence ledger, a verification report, findings, report.md, a self-contained report.html and a retrospective."}},{"@type":"Question","name":"Is the Persian output real RTL?","acceptedAnswer":{"@type":"Answer","text":"Yes. Reports are rendered in English or Persian (auto-detected or --lang fa), with RTL layout, embedded Vazirmatn, translated labels and APA 7 references."}},{"@type":"Question","name":"What do the hard gates check?","acceptedAnswer":{"@type":"Answer","text":"IDs resolve, every fact line is cited, numbers and their source dates match, no placeholders, open contradictions stay visible, weak claims are labeled, requirements are covered, bibliography fields are complete, and computational claims ship a reproducible model check."}}]},{"@type":"HowTo","name":"Sixty seconds to a governed run.","description":"Python 3.11+. No API keys. The installer creates a venv, links the skill into your agent platform and verifies the environment.","inLanguage":"en","url":"https://narimankhaleghi.github.io/deep-research-os/#install","step":[{"@type":"HowToStep","position":1,"name":"Clone","text":"Clone: git clone https://github.com/NarimanKhaleghi/deep-research-os\ncd deep-research-os"},{"@type":"HowToStep","position":2,"name":"Install the skill","text":"Install the skill: ./install.sh"},{"@type":"HowToStep","position":3,"name":"Verify","text":"Verify: python scripts/research_ctl.py doctor"},{"@type":"HowToStep","position":4,"name":"Start a run","text":"Start a run: python scripts/research_ctl.py init \"Your research question\" --profile deep --dir ~/Research/your-topic"}]}]}</script>
 <script>
 (function(){document.documentElement.classList.add("js");try{var t=localStorage.getItem("dro.theme");if(t){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();
 </script>
@@ -81,7 +81,7 @@
           <a class="link-arrow" href="samples/report.html">See a real report <span aria-hidden="true">↗</span></a>
         </div>
         <ul class="proof">
-<li>10 phases</li><li>12 keyless APIs</li><li>53 tests</li><li>8/8 offline evals</li>        </ul>
+<li>10 phases</li><li>18 keyless APIs</li><li>65 tests</li><li>9/9 offline evals</li>        </ul>
       </div>
       <div class="hero-art">
         <div class="slip">43 sources · 11 key studies</div>
@@ -118,9 +118,9 @@
     <div class="wrap">
       <div class="band">
         <div class="metric"><div class="mvalue" data-count="10">10</div><div class="mlabel">research phases</div></div>
-        <div class="metric"><div class="mvalue" data-count="12">12</div><div class="mlabel">keyless APIs</div></div>
-        <div class="metric"><div class="mvalue" data-count="53">53</div><div class="mlabel">tests green</div></div>
-        <div class="metric"><div class="mvalue" data-count="8/8">8/8</div><div class="mlabel">offline evals</div></div>
+        <div class="metric"><div class="mvalue" data-count="18">18</div><div class="mlabel">keyless APIs</div></div>
+        <div class="metric"><div class="mvalue" data-count="65">65</div><div class="mlabel">tests green</div></div>
+        <div class="metric"><div class="mvalue" data-count="9/9">9/9</div><div class="mlabel">offline evals</div></div>
       </div>
     </div>
   </section>
@@ -372,7 +372,7 @@ cd deep-research-os</code></pre>
       <div class="faq-list reveal">
         <details>
           <summary>Does it need API keys?</summary>
-          <p>No. Twelve free public search APIs, web fetch and PDF extraction work without keys. Optional keys only add capacity; the pipeline is designed to run keyless.</p>
+          <p>No. Eighteen free public search APIs, web fetch and PDF extraction work without keys; CORE adds an optional key. Optional keys only add capacity; the pipeline is designed to run keyless.</p>
         </details>
         <details>
           <summary>Which agents does it support?</summary>
@@ -407,7 +407,7 @@ cd deep-research-os</code></pre>
       <a href="samples/report.html">Sample report</a>
     </div>
     <div class="foot-legal">
-      <span>Built by Nariman Khaleghi · MIT licensed · v v1.3.0</span>
+      <span>Built by Nariman Khaleghi · MIT licensed · v v1.4.0</span>
       <span>Open source. No telemetry. Your research stays in your folder.</span>
     </div>
   </div>

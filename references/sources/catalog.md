@@ -1,117 +1,139 @@
-# Source Catalog — the 12 keyless connectors (+ web/PDF)
+# Source Catalog — 19 connectors (+ web/PDF)
 
-Every connector below is **free and keyless**. Etiquette is enforced in code
-(descriptive User-Agent, backoff on 429/5xx, conservative default limits).
-`classify()` in the router reads this file's tags; keep tags in sync.
+Every connector below is free; `CORE` needs a free API key and is skipped without
+one. Etiquette is enforced in code (descriptive User-Agent, backoff on 429/5xx,
+conservative default limits). Domain tags: `academic · news · economics ·
+statistics · entities · filings · tech · web`.
 
-Conventions: `search(query, limit)` returns normalized records
+Conventions: `search(query, limit, offset)` returns normalized records
 (`title, url, doi, authors, published, publisher, type, abstract, service, extra`).
-Domain tags: `academic · news · economics · statistics · entities · filings ·
-tech · web`.
-
----
+`extra.is_oa`, `extra.pdf_url`, `extra.cited_by` and `extra.license` drive the
+`--oa-only`, `--sort citations` and full-text resolver paths.
 
 ## Academic
 
-### 1. OpenAlex — `academic` · tier 1
-- Base: `https://api.openalex.org/works?search=…&per-page=…` (+ `mailto=` polite pool).
+### OpenAlex
+- Base: `https://api.openalex.org/works?search=…&per-page=…&page=…` (+ `mailto=`).
 - 240M+ works; `is_retracted`, citation counts, OA links in each record.
-- Limits: ~10 req/s polite; we cap 5 req/s with backoff.
-- Quirks: abstract is inverted index — de-inverted by the connector; scores are
+- Quirks: abstract is an inverted index — de-inverted by the connector; scores are
   relevance, not similarity — never present as confidence.
 
-### 2. Crossref — `academic` · tier 1
-- Base: `https://api.crossref.org/works?query=…&rows=…`.
-- Best for: DOI metadata truth (publisher, year, container-title) and update-to
-  (retraction/correction) relations. Used by `verify` for DOI resolution.
-- Limits: polite pool via `mailto`; 50 req/s shared — we stay far below.
+### Crossref
+- Base: `https://api.crossref.org/works?query=…&rows=…&offset=…`.
+- DOI metadata truth (publisher, year, container-title), update-to
+  (retraction/correction) relations. Used by `verify` and `read --doi`.
 
-### 3. arXiv — `academic (preprints)` · tier 2
-- Base: `http://export.arxiv.org/api/query?search_query=…` (Atom XML).
-- Preprints only: credibility rubric caps at B unless peer-reviewed version found
-  (check DOI/`journal_ref`).
-- Rate: 1 req / 3 s sustained — the connector enforces a sleep.
+### arXiv
+- Base: `https://export.arxiv.org/api/query?search_query=…` (Atom XML).
+- Preprints only: credibility rubric caps at B unless a peer-reviewed version is
+  found (check DOI/`journal_ref`). Pagination via `start`.
 
-### 4. PubMed (E-utilities) — `academic (biomed)` · tier 1
-- Base: `esearch.fcgi` → `efetch` (JSON/XML). Keyless ≤3 req/s.
-- Provides PMIDs, MeSH terms (great for building synonym sets), retraction flags
-  via `pubmed` publication type ("Retracted Publication").
+### PubMed (E-utilities)
+- `esearch.fcgi` → `esummary.fcgi` (JSON). Keyless ≤3 req/s.
+- PMIDs, MeSH terms, retraction publication types. Pagination via `retstart`.
 
-### 5. Unpaywall — `academic (OA links)` · helper, not a search source
+### Europe PMC
+- Base: `https://www.ebi.ac.uk/europepmc/webservices/rest/search`.
+- Biomedical literature plus PMC JATS full text and preprints (`source=PPR`).
+- `extra.pmcid` feeds the resolver’s `fullTextXML` path.
+
+### DOAJ
+- Base: `https://doaj.org/api/search/articles/{query}`.
+- Peer-reviewed open-access journals; every record is OA. Pagination via `page`.
+
+### Semantic Scholar
+- Base: `https://api.semanticscholar.org/graph/v1/paper/search`.
+- Citation graph and `openAccessPdf`; keyless but rate-limited. Pagination via
+  `offset`.
+
+### OpenAIRE
+- Base: `https://api.openaire.eu/graph/v1/researchProducts`.
+- Funded research outputs and repository records; `bestAccessRight` drives OA.
+
+### Zenodo
+- Base: `https://zenodo.org/api/records`.
+- Open repository records, datasets and preprints. Pagination via `page`.
+
+### HAL
+- Base: `https://api.archives-ouvertes.fr/search/`.
+- French open archive across disciplines; `openAccess_bool` drives OA.
+
+### CORE
+- Base: `https://api.core.ac.uk/v3/search/works`.
+- Aggregated open-access repositories. Set `CORE_API_KEY` to enable; without it
+  the connector returns an empty list (not a failure).
+
+### Unpaywall — helper, not a search source
 - `https://api.unpaywall.org/v2/{doi}?email=…` → legal OA PDF locations.
-- Used by `read --doi` to find an open full text before giving up.
+- Used by `read --doi` and `resolver` to find lawful full text.
 
 ## News & events
 
-### 6. GDELT 2.0 — `news` · tier 2 (context; tier 1 for *existence of coverage*)
-- Base: `https://api.gdeltproject.org/api/v2/doc/doc?query=…&mode=artlist&format=json`.
-- Global, multilingual (works for Persian queries). Tone/`sourcelang` fields.
-- Quirks: `maxrecords` ≤250; timespan syntax (`7d`, `24h`); dedupe near-identical
-  syndications (router drops same-title clusters).
+### GDELT 2.0 — `news`
+- `https://api.gdeltproject.org/api/v2/doc/doc?query=…&mode=artlist&format=json`.
+- Global, multilingual. `maxrecords` ≤250; dedupe syndications.
 
 ## Economics & statistics
 
-### 7. World Bank — `economics` · tier 1
-- Base: `https://api.worldbank.org/v2/country/{iso}/indicator/{code}?format=json`.
-- Indicator time series (200+ economies). Great for anchoring macro numbers with
-  a primary, citable source instead of news figures.
-- Quirks: two-element JSON array `[meta, data]`; pagination via `page=`.
+### World Bank — `economics`
+- `https://api.worldbank.org/v2/country/{iso}/indicator/{code}?format=json`.
+- Indicator time series (200+ economies). Two-element JSON array `[meta, data]`.
 
-### 8. Data Commons — `statistics` · tier 1
-- Base: `https://api.datacommons.org/v2/observation` (POST) or v1 fallback.
-- Knowledge-graph statistics across gov datasets; optional API key raises limits —
-  keyless path kept as default.
-- Used for: population/GDP/health/energy series by place & time.
+### Data Commons — `statistics`
+- `https://api.datacommons.org/v2/observation` (POST) or v1 fallback.
+- Knowledge-graph statistics across government datasets.
 
-### 9. US Census — `statistics (US)` · tier 1
-- Base: `https://api.census.gov/data/{year}/{dataset}?get=…&for=…`.
-- ACS/decennial tables; keyless ≤500 queries/day — fine for research profiles.
-- Quirks: rows are arrays with a header row; connector converts to dicts.
+### US Census — `statistics (US)`
+- `https://api.census.gov/data/{year}/{dataset}?get=…&for=…`.
+- ACS/decennial tables; keyless ≤500 queries/day. Rows are arrays with a header.
 
 ## Entities, filings, tech
 
-### 10. Wikidata — `entities` · tier 2 (tier 1 for *identity/relationships*, not facts-under-dispute)
-- Base: `https://www.wikidata.org/w/api.php?action=wbsearchentities…` plus entity fetch.
-- Use for disambiguation: canonical names, HQ locations, parent orgs, IDs
-  (LEI, ISIN, ticker) to anchor other queries. Never the sole source for numbers.
+### Wikidata — `entities`
+- `https://www.wikidata.org/w/api.php?action=wbsearchentities…`.
+- Disambiguation only: canonical names, HQ, parent orgs, IDs. Never the sole
+  source for a disputed number.
 
-### 11. SEC EDGAR — `filings (US public cos)` · tier 1
-- Base: `https://efts.sec.gov/LATEST/search-index?q=…` (full-text) and
-  submissions JSON per CIK. Company facts API for XBRL numbers.
-- The canonical upstream for public-company financials — prefer over press releases.
-- Etiquette: declared User-Agent mandatory (we send one); ≤10 req/s.
+### SEC EDGAR — `filings (US public cos)`
+- `https://efts.sec.gov/LATEST/search-index?q=…` + submissions/XBRL APIs.
+- Canonical upstream for public-company financials. Declared User-Agent mandatory.
 
-### 12. Hacker News (Algolia) — `tech` · tier 3 (lead generation only)
-- Base: `https://hn.algolia.com/api/v1/search?query=…&tags=story`.
-- Early signal for tooling/technologies; discussions point to primary sources.
-- Never load-bearing; always promote to the linked primary source before citing.
+### Hacker News (Algolia) — `tech`
+- `https://hn.algolia.com/api/v1/search?query=…&tags=story`.
+- Tier 3 lead generation only; promote to the linked primary source.
 
-## Web & files (infrastructure, not "sources")
+## Web & files (infrastructure, not “sources”)
 
-- **`web fetch`** — direct fetch + readability extraction (trafilatura) with
+- **`read --url`** — direct fetch + readability extraction (trafilatura) with
   snapshot + hash; the catch-all when no API covers it.
-- **`pdf extract`** — PyMuPDF → `pdftotext` → pypdf ladder; page markers preserved
-  so evidence locators can say "p.12".
-- **Local browser infra (optional)** — user's SearXNG (127.0.0.1:8888) is used as
-  a *web search* shelf when detected; results are candidates only and must be
-  `read` like anything else.
+- **PDF/XML extraction** — PyMuPDF → `pdftotext` → pypdf ladder; page markers
+  preserved so evidence locators can say “p.12”. JATS uses structured XML.
+- **Local browser infra (optional)** — user’s SearXNG (`127.0.0.1:8888`) is a
+  web-search shelf; results are candidates and must be `read` like anything else.
+
+## Search filters and pagination
+
+`search` supports `--all-academic`, `--per-source`, `--page`, `--year-from`,
+`--year-to`, `--oa-only`, `--type` and `--sort relevance|citations|date`.
+Filters apply after cross-service dedupe; `--all-academic` queries every enabled
+academic connector (slower, broader) instead of the ε-greedy subset.
 
 ## Source tier → credibility ceiling (quick reference)
 
-| Tier | Examples here | Ceiling band* |
+| Tier | Examples | Ceiling band* |
 | --- | --- | --- |
-| 1 | OpenAlex, Crossref, PubMed, World Bank, Census, EDGAR, Data Commons | A |
+| 1 | OpenAlex, Crossref, PubMed, Europe PMC, DOAJ, World Bank, Census, EDGAR | A |
 | 2 | arXiv, GDELT, Wikidata, quality journalism | B (A with corroboration) |
 | 3 | HN, blogs, forums | C–D (leads only) |
 
 \* Ceiling assumes no COI and adequate recency; the rubric can lower it further.
 
-## Rate-limit & failure notes (operational)
+## Rate-limit & failure notes
 
 - All HTTP goes through `lib/http.py`: 15 s timeout, 2 retries with exponential
-  backoff, jittered; 429 → honor `Retry-After`; 5xx → single retry then fall down
-  the ladder (protocol §9).
+  backoff and jitter; 429 honours `Retry-After`; 5xx retries then falls down the
+  ladder.
 - Offline mode (`RESEARCH_OS_OFFLINE=1`) disables all network calls — connectors
-  raise `OfflineError` and the phase doc's offline path takes over.
-- Every connector failure is logged to the run's `state.json.source_health` so the
-  report's Limitations can name degraded shelves honestly.
+  raise `OfflineError` and the phase doc’s offline path takes over.
+- Every connector failure is logged to `state.source_health`; the report’s
+  Limitations names degraded shelves honestly.

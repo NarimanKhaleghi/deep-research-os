@@ -20,7 +20,7 @@ from core import budget as budget_mod  # noqa: E402
 from core import report_builder  # noqa: E402
 from core import requirements as requirements_mod  # noqa: E402
 from core import searchlog  # noqa: E402
-from core import snapshot as snapshot_mod  # noqa: E402
+from core import fulltext_store, snapshot as snapshot_mod  # noqa: E402
 from core.evidence_store import Ledger  # noqa: E402
 from lib import paths, util  # noqa: E402
 
@@ -33,9 +33,13 @@ CLAIM_STATUSES = {"supported", "weakly_supported", "contradicted",
 
 
 def _strict(state: dict) -> bool:
-    """Academic deliverables follow PRISMA-style reproducibility hard gates."""
+    """Report-style academic deliverables follow PRISMA-style reproducibility gates."""
     return (state.get("deliverable_type") == "academic-paper"
             or state.get("review_protocol") in ("prisma", "systematic-review"))
+
+
+def _manuscript(state: dict) -> bool:
+    return state.get("deliverable_type") == "academic-manuscript"
 
 
 def run(project: Path, phase: int, waivers: list[dict] | None = None, persist: bool = True) -> dict:
@@ -387,6 +391,10 @@ def _phase7(project, state, ledger, add) -> None:
                 offenders.append(f"{meta.get('id')}→{cid}")
     add("findings_supported", not offenders, detail=", ".join(offenders) or "ok")
 
+    # full-text integrity and coverage (academic-manuscript; also enforced in report check)
+    if _manuscript(state):
+        _fulltext_gates(project, ledger, state, add)
+
     # academic deliverables: the model / scenarios / sensitivity findings must exist
     if _strict(state):
         kinds = []
@@ -414,9 +422,79 @@ def _phase7(project, state, ledger, add) -> None:
             detail=detail or f"{len(keys)} key studies reviewed")
 
 
+def _fulltext_gates(project, ledger, state, add) -> None:
+    from core import fulltext
+
+    sources = ledger.sources()
+    included = [s for s in sources if s.get("status") != "excluded"]
+    key_ids = {s["id"] for s in included if s.get("key_study")}
+    cov = fulltext_store.coverage(included, key_ids=key_ids)
+
+    integrity_bad = []
+    for src in included:
+        ft = src.get("fulltext") or {}
+        if ft.get("status") != "verified":
+            continue
+        check = fulltext_store.verify(project, src)
+        if not check["ok"]:
+            integrity_bad.append(f"{src['id']}({'; '.join(check['problems'])})")
+    add("fulltext_integrity", not integrity_bad,
+        detail=", ".join(integrity_bad[:5]) or "ok")
+
+    add("fulltext_coverage",
+        cov["verified_ratio"] >= 0.80 and cov["abstract_ratio"] <= 0.20,
+        detail=(f"verified {cov['verified_ratio']:.0%} / abstract {cov['abstract_ratio']:.0%} "
+                f"of {cov['total']} included source(s); target ≥80% verified, ≤20% abstract"))
+
+    add("fulltext_key_studies", not cov["key_gaps"],
+        detail=", ".join(cov["key_gaps"]) or "ok")
+
+    critical_bad = []
+    for claim in ledger.claims():
+        if not claim.get("critical"):
+            continue
+        for src in ledger.evidence_sources_for_claim(claim):
+            if (src.get("fulltext") or {}).get("status") != "verified":
+                critical_bad.append(f"{claim['id']}→{src['id']}")
+    add("fulltext_critical_claims", not critical_bad,
+        detail=", ".join(critical_bad[:5]) or "ok")
+
+    abstract_bad = []
+    for src in included:
+        ft = src.get("fulltext") or {}
+        if ft.get("status") != "abstract-only":
+            continue
+        exc = ft.get("exception") or {}
+        quality = (ft.get("validation") or {}).get("abstract_quality") or {}
+        if not exc.get("reason"):
+            abstract_bad.append(f"{src['id']}(no exception reason)")
+        elif quality.get("verdict") != "comprehensive":
+            abstract_bad.append(f"{src['id']}(not comprehensive)")
+    add("abstract_quality", not abstract_bad,
+        detail=", ".join(abstract_bad[:5]) or "ok")
+
+    claimed_bad = [s["id"] for s in included
+                   if s.get("read_depth") == "full-text"
+                   and (s.get("fulltext") or {}).get("status") != "verified"]
+    add("fulltext_not_claimed", not claimed_bad,
+        detail=", ".join(claimed_bad) or "ok")
+
+
 # --------------------------------------------------------------- phase 8
 
 def _phase8(project, state, add) -> None:
+    if _manuscript(state):
+        from core import manuscript
+
+        if not (project / "manuscript.md").exists():
+            add("manuscript_exists", False,
+                detail="manuscript.md missing — run `manuscript build`")
+            return
+        add("manuscript_exists", True, detail="ok")
+        result = manuscript.check(project)
+        for c in result["checks"]:
+            add(c["name"], c["ok"], detail=c["detail"])
+        return
     if not (project / "report.md").exists():
         add("report_exists", False, detail="report.md missing — run `report build`")
         return
