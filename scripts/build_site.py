@@ -300,7 +300,7 @@ def build(out: Path = DOCS, samples: bool = True, quiet: bool = False) -> dict[s
         shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
     if cname:
-        _write(out / "CNAME", cname + "\n")
+        _write(out / "CNAME", cname)
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(TEMPLATES)),
