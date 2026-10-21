@@ -9,7 +9,7 @@ import pytest
 
 from conftest import add_source, run_cli, seed_project
 
-from core import fulltext, fulltext_store, gates, resolver
+from core import fulltext, fulltext_store, gates, manuscript, resolver
 from core.evidence_store import Ledger
 from lib import http, util
 
@@ -63,6 +63,25 @@ def test_jats_extraction_and_identity(env):
     assert rec["fulltext"]["format"] == "jats"
     assert rec["fulltext"]["text_chars"] > 1200
     assert fulltext_store.verify(project, rec)["ok"]
+
+
+def test_plain_text_artifacts_are_detected():
+    data = "Urban heat islands raise night-time temperatures. " * 20
+    assert fulltext.detect_format(data.encode(), "notes.txt") == "text"
+    assert fulltext.detect_format(data.encode(), "notes.md") == "text"
+    artifact = fulltext.extract_artifact(data.encode(), filename="notes.txt")
+    assert artifact["format"] == "text" and "Urban heat" in artifact["text"]
+
+
+def test_structured_abstract_without_word_count_cliff():
+    text = ("Background: heat exposure is common in dense cities. Objective: we measured heat mortality across cities. "
+            "Methods: we built a panel of 42 cities and fitted negative binomial models with city and year fixed effects. " * 4
+            + "Results: each degree raised mortality by 2.1% (95% CI 1.4 to 2.8; p < 0.001). "
+              "Conclusions: tree canopy attenuated risk and cooling policies should be evaluated prospectively.")
+    result = fulltext.assess_abstract(text)
+    assert 120 <= result["words"] < 180
+    assert result["structured"] and result["score"] == 5
+    assert result["verdict"] == "comprehensive"
 
 
 def test_abstract_quality():
@@ -120,6 +139,12 @@ def test_download_validates_redirect_hops_before_following(tmp_path):
         assert not (tmp_path / "bad.pdf").exists()
     finally:
         server.shutdown()
+
+
+def test_section_aliases_support_persian_headings():
+    body = "## مقدمه\n\nمتن\n\n## ۲. روش‌ها\n\nمتن\n\n## یافته‌ها\n\nمتن\n"
+    sections = manuscript._sections(body)
+    assert set(sections) == {"introduction", "methods", "results"}
 
 
 def test_manuscript_build_passes_with_verified_fulltext(env):

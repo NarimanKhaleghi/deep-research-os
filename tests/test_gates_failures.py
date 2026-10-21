@@ -66,6 +66,15 @@ def test_number_drift_marks_weak_and_report_flags_label(env):
     assert "Gate downgrades via --allow-flagged" in report_text
 
 
+def test_placeholder_regex_catches_bracket_and_ellipsis():
+    from core import manuscript, report_builder
+
+    for rx in (manuscript.PLACEHOLDER_RE, report_builder.PLACEHOLDER_RE):
+        assert rx.search("see [insert citation] here")
+        assert rx.search("TODO: tighten")
+        assert not rx.search("sha256 abc123…")
+
+
 def test_placeholder_marker_fails_report(env):
     project, ids = full_quick_run(env)
     finding = project / "findings" / "FN-01.md"

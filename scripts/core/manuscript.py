@@ -22,8 +22,21 @@ from core.evidence_store import Ledger  # noqa: E402
 from lib import paths, util  # noqa: E402
 
 MARKER_RE = re.compile(r"\[@SRC-\d{4}(?:\s*;\s*@?SRC-\d{4})*\]")
-PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX|lorem ipsum|\[insert|placeholder|…)\b", re.I)
+PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX|lorem ipsum|placeholder)\b|\[insert", re.I)
 REQUIRED_SECTIONS = ("introduction", "methods", "results", "discussion", "conclusion")
+SECTION_ALIASES = {
+    "مقدمه": "introduction",
+    "روش": "methods", "روش‌ها": "methods", "روشها": "methods",
+    "مواد و روش‌ها": "methods", "مواد و روشها": "methods",
+    "یافته": "results", "یافته‌ها": "results", "یافتهها": "results", "نتایج": "results",
+    "بحث": "discussion", "بحث و نتیجه‌گیری": "discussion",
+    "نتیجه": "conclusion", "نتیجه‌گیری": "conclusion", "نتیجهگیری": "conclusion",
+    "محدودیت": "limitations", "محدودیت‌ها": "limitations", "محدودیتها": "limitations",
+    "اخلاق": "ethics", "اخلاق و رضایت": "ethics",
+    "حمایت مالی": "funding", "منابع مالی": "funding",
+    "تضاد منافع": "conflicts", "تعارض منافع": "conflicts",
+    "دسترسی به داده": "data availability", "دسترسی داده": "data availability",
+}
 
 
 def draft_path(project: Path) -> Path:
@@ -160,7 +173,9 @@ def _section(body: str, name: str) -> str:
 def _sections(body: str) -> dict[str, str]:
     out = {}
     for m in re.finditer(r"^##\s+(.+?)\s*$(.*?)(?=^##\s|\Z)", body, re.M | re.S):
-        out[m.group(1).strip().lower()] = m.group(2).strip()
+        key = re.sub(r"\s+", " ", m.group(1).strip().lower())
+        key = re.sub(r"^[\d۰-۹]+[.)\s-]*", "", key)
+        out[SECTION_ALIASES.get(key, key)] = m.group(2).strip()
     return out
 
 

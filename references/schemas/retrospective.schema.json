@@ -4,45 +4,133 @@
   "title": "Retrospective record",
   "description": "retrospective.json (phase 9 output feeding the learning loop).",
   "type": "object",
-  "required": ["project", "at", "worked", "failed", "budget_used", "metrics", "suggestions", "capability_candidate"],
+  "required": [
+    "slug",
+    "at",
+    "worked",
+    "failed",
+    "budget_used",
+    "metrics",
+    "suggestions",
+    "capability_candidate"
+  ],
   "properties": {
-    "project": { "type": "string" },
-    "at": { "type": "string" },
-    "worked": { "type": "array", "minItems": 0, "items": { "type": "string" } },
-    "failed": { "type": "array", "minItems": 0, "items": { "type": "string" } },
+    "slug": {
+      "type": "string"
+    },
+    "at": {
+      "type": "string"
+    },
+    "worked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "failed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "budget_used": {
       "type": "object",
       "properties": {
-        "searches": { "type": "integer" },
-        "sources_read": { "type": "integer" },
-        "evidence": { "type": "integer" },
-        "claims": { "type": "integer" },
-        "verify_passes": { "type": "integer" },
-        "spent_usd": { "type": "number" }
+        "searches": {
+          "type": "integer"
+        },
+        "sources_read": {
+          "type": "integer"
+        },
+        "evidence": {
+          "type": "integer"
+        },
+        "claims": {
+          "type": "integer"
+        },
+        "verify_passes": {
+          "type": "integer"
+        },
+        "spent_usd": {
+          "type": "number"
+        }
       }
     },
     "metrics": {
       "type": "object",
       "properties": {
-        "citation_precision": { "type": ["number", "null"] },
-        "contradictions_found": { "type": "integer" },
-        "contradictions_resolved": { "type": "integer" },
-        "gates_passed_first_attempt": { "type": "integer" },
-        "gate_attempts": { "type": "integer" },
-        "weak_claims_shipped": { "type": "integer" }
+        "citation_precision": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "verify_mode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "contradictions": {
+          "type": "object",
+          "properties": {
+            "total": {
+              "type": "integer"
+            },
+            "adjudicated": {
+              "type": "integer"
+            },
+            "open": {
+              "type": "integer"
+            }
+          }
+        },
+        "phases_completed": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
       }
     },
-    "suggestions": { "type": "array", "items": { "type": "string" } },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "capability_candidate": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "properties": {
-        "name": { "type": "string" },
-        "trigger": { "type": "string" },
-        "why": { "type": "string" },
-        "capability_id": { "type": ["string", "null"] }
+        "name": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "why": {
+          "type": "string"
+        },
+        "capability_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
-    "feedback_skipped": { "type": "boolean", "default": false },
-    "feedback_skip_reason": { "type": ["string", "null"] }
+    "feedback_skipped": {
+      "type": "boolean",
+      "default": false
+    },
+    "feedback_skip_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
   }
 }

@@ -23,7 +23,7 @@ STRENGTH_RANK = {"established": 0, "supported": 1, "tentative": 2}
 CONF_RANK = {"high": 0, "medium": 1, "low": 2}
 WEAK_CLAIM_STATUSES = {"weakly_supported", "contradicted", "unverifiable"}
 
-PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX|lorem ipsum|\[insert|placeholder)\b", re.I)
+PLACEHOLDER_RE = re.compile(r"\b(TODO|TBD|FIXME|XXX|lorem ipsum|placeholder)\b|\[insert", re.I)
 ID_RE = re.compile(r"\b(FN-\d{2}|CL-\d{4}|CX-\d{4}|SRC-\d{4}|EV-\d{4})\b")
 
 

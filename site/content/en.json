@@ -25,7 +25,7 @@
     "proof": [
       "10 phases",
       "18 keyless APIs",
-      "65 tests",
+      "71 tests",
       "9/9 offline evals"
     ],
     "ledger": {
@@ -69,7 +69,7 @@
       "label": "keyless APIs"
     },
     {
-      "value": "65",
+      "value": "71",
       "label": "tests green"
     },
     {

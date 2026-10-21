@@ -54,7 +54,7 @@ manuscript deliverable ships alongside the report pipeline.
   abstract.
 - Academic `read_depth` is now advisory; only `fulltext.status=verified` with a
   matching hash chain satisfies full-text gates.
-- Version bumped to `1.4.0`; test suite is 65 tests, offline evals 9/9.
+- Version bumped to `1.4.0`; test suite is 71 tests, offline evals 9/9.
 
 ### Fixed
 
@@ -62,7 +62,20 @@ manuscript deliverable ships alongside the report pipeline.
 - `numeric_claims_cited` no longer demands markers for numeric abstract
   findings.
 - Manuscript abstract gate passes comprehensive structured abstracts without a
-  rigid word-count cliff.
+  rigid word-count cliff: a structured abstract with all five components is
+  accepted from 120 words.
+- Full-text downloads validate every redirect hop before requesting it, so
+  blocked or private targets are never contacted.
+- `no_placeholders` catches `[insert …]` markers in reports and manuscripts.
+- Plain-text artifacts (`.txt`/`.md`) are detected correctly, so `read --file`
+  and `corpus analyze` work on text corpora instead of raising `TypeError`.
+- JATS extraction keeps section titles on their own lines, so text snapshots
+  retain IMRaD structure and re-reading an exported `.txt` passes identity
+  checks.
+- Manuscript section checks accept Persian headings (مقدمه، روش‌ها، نتایج،
+  بحث، نتیجه‌گیری) alongside English IMRaD names.
+- Schemas match emitted artifacts: optional plan front-matter, retrospective
+  `slug`/metrics shape, nullable `vault_base` for `--dir` projects.
 
 ## [1.3.0] — 2026-10-20
 

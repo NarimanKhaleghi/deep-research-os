@@ -59,7 +59,8 @@ def detect_format(data: bytes, filename: str | None = None,
     ctype = (content_type or "").lower()
     if head.startswith(PDF_MAGIC) or suffix == ".pdf" or "pdf" in ctype:
         return "pdf"
-    if suffix in (".xml", ".jats") or "xml" in ctype or any(h in head[:512].lower() for h in XML_HINTS):
+    head_text = head[:512].decode("utf-8", errors="ignore").lower()
+    if suffix in (".xml", ".jats") or "xml" in ctype or any(h in head_text for h in XML_HINTS):
         return "jats"
     if suffix in (".html", ".htm") or "html" in ctype:
         return "html"
@@ -134,7 +135,7 @@ def extract_jats(data: bytes) -> dict:
                 heading = _xml_text(title_el).lower()
                 if heading and heading not in sections:
                     sections.append(heading)
-    body = _xml_text(body_el) if body_el is not None else ""
+    body = _jats_body_text(body_el) if body_el is not None else ""
     refs = _find_first(root, {"ref-list", "references"})
     ref_count = len(_find_all(refs, {"ref"})) if refs is not None else 0
     year = ""
@@ -164,6 +165,31 @@ def _pdf_metadata(data: bytes) -> dict:
                 "pages": pages, "first_page": first}
     except Exception:
         return {"pdf_title": "", "pdf_author": "", "pages": 0, "first_page": ""}
+
+
+def _jats_body_text(body_el) -> str:
+    """Flatten JATS body text while keeping section titles on their own lines."""
+    parts: list[str] = []
+
+    def walk(el) -> None:
+        for child in el:
+            tag = _local(child.tag)
+            if tag == "sec":
+                title = _find_first(child, {"title"})
+                if title is not None:
+                    heading = _xml_text(title)
+                    if heading:
+                        parts.append("## " + heading)
+                walk(child)
+            elif tag == "title":
+                continue
+            else:
+                text = _xml_text(child)
+                if text:
+                    parts.append(text)
+
+    walk(body_el)
+    return "\n\n".join(parts)
 
 
 def _headings_from_text(text: str) -> list[str]:
@@ -206,6 +232,8 @@ def assess_abstract(text: str, *, title: str = "") -> dict:
         abstract, re.I))
     if words < 120:
         verdict = "insufficient"
+    elif structured and score >= 5:
+        verdict = "comprehensive"
     elif score >= 4 and words >= 200:
         verdict = "comprehensive"
     elif structured and words >= 180 and score >= 3:

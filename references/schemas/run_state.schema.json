@@ -67,8 +67,8 @@
       "description": "absolute path where the project lives (user-chosen output location)"
     },
     "vault_base": {
-      "type": "string",
-      "description": "vault root the project was created under"
+      "type": ["string", "null"],
+      "description": "vault root the project was created under (null when --dir was used)"
     },
     "privacy_mode": {
       "type": "boolean",

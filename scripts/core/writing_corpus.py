@@ -62,12 +62,12 @@ def _classify(text: str, name: str) -> str:
     return "empirical"
 
 
-def analyze_text(text: str, *, name: str = "") -> dict:
+def analyze_text(text: str, *, name: str = "", headings: list[str] | None = None) -> dict:
     words = _words(text)
     sents = _sentences(text)
     n = max(1, len(words))
     low = text.lower()
-    sections = fulltext.section_presence(text)
+    sections = fulltext.section_presence(text, headings)
     hedges = sum(1 for w in words if w in HEDGES)
     boosters = sum(1 for w in words if w in BOOSTERS)
     first = sum(1 for w in words if w in FIRST_PERSON)
@@ -99,7 +99,8 @@ def analyze_files(paths: Iterable[Path]) -> dict:
         try:
             data = path.read_bytes()
             artifact = fulltext.extract_artifact(data, filename=path.name)
-            docs.append(analyze_text(artifact.get("text") or "", name=path.name))
+            docs.append(analyze_text(artifact.get("text") or "", name=path.name,
+                                     headings=artifact.get("sections") or []))
         except Exception as exc:  # noqa: BLE001
             errors.append({"file": path.name, "error": f"{type(exc).__name__}: {exc}"})
     if not docs:

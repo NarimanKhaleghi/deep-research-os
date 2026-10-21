@@ -2,9 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://deep-research-os.dev/schemas/plan.schema.json",
   "title": "Plan front-matter",
-  "description": "Front-matter of plan.md (phases 1–2 contract). Body sections are checked by the phase gates.",
+  "description": "Optional front-matter of plan.md (phases 1–2 contract). Plan files without front-matter validate as an empty object; body sections are checked by the phase gates.",
   "type": "object",
-  "required": ["planned_at"],
   "properties": {
     "planned_at": { "type": "string" },
     "queries": {

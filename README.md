@@ -173,7 +173,7 @@ the SKILL.md workflow takes over.
   `--sort`.
 - **Safer exports** — `export` omits full-text artifacts by default;
   `--include-fulltext` is an explicit private-backup choice.
-- **Harder QA** — 65 tests, 9 offline evals.
+- **Harder QA** — 71 tests, 9 offline evals.
 
 ### New in 1.3 — the rigor pack
 

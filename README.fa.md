@@ -148,7 +148,7 @@ python scripts/research_ctl.py status
 - **خروجی دست‌نوشتهٔ آکادمیک** — `academic-manuscript` با `manuscript scaffold|build|check`، قالب IMRaD، بررسی چکیدهٔ جامع، استناد APA 7 / Vancouver / IEEE، `venue.json`، چک‌لیست‌های CONSORT/PRISMA/STROBE/COREQ/CARE/TRIPOD/ARRIVE و خروجی Markdown + HTML آمادهٔ چاپ.
 - **جستجوی آکادمیک گسترده‌تر** — ۱۹ اتصال‌گر (Europe PMC، DOAJ، Semantic Scholar، OpenAIRE، Zenodo، HAL، CORE) و فیلترهای `--all-academic`، `--per-source`، `--page`، `--year-from/--year-to`، `--oa-only`، `--type`، `--sort`.
 - **خروجی امن‌تر** — `export` به‌طور پیش‌فرض فایل‌های متن کامل را کنار می‌گذارد؛ `--include-fulltext` یک انتخاب صریح برای پشتیبان خصوصی است.
-- **کیفیت سخت‌گیرانه** — ۶۵ تست و ۹ ارزیابی آفلاین.
+- **کیفیت سخت‌گیرانه** — ۷۱ تست و ۹ ارزیابی آفلاین.
 
 ### تازه‌های نسخهٔ ۱.۳ — بستهٔ دقت
 
